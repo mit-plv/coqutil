@@ -1,0 +1,10 @@
+.coqdeps.d
+Makefile.coq.*
+*.vo
+*~
+*.glob
+*.aux
+.depend
+.lia.cache
+.nia.cache
+\#*\#
