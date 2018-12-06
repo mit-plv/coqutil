@@ -1,16 +1,18 @@
 Require Import coqutil.Decidable.
 Require Import coqutil.Tactics.
-Require Import coqutil.Maps.Map.
+Require Import coqutil.Map.Interface.
+Require Import coqutil.Map.Properties.
+
+Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_map_defs.
 
 Ltac one_rew_map_specs e rewriter :=
   match e with
-  | context[get ?m] =>
+  | context[map.get ?m] =>
     lazymatch m with
-    | empty_map => rewriter get_empty
-    | remove_key _ _ => rewriter (get_remove_key (keq := _))
-    | put _ _ _ => rewriter (get_put (keq := _))
-    | intersect_map _ _ => rewriter (get_intersect_map (veq := _))
-    | put_map _ _ => rewriter get_put_map
+    | map.empty => rewriter map.get_empty
+    | map.remove _ _ => rewriter (map.get_remove_dec (key_eq_dec := _))
+    | map.put _ _ _ => rewriter (map.get_put_dec (key_eq_dec := _))
+    | map.putmany _ _ => rewriter map.get_putmany_dec
     end
   end.
 

@@ -1,19 +1,19 @@
 Require Import coqutil.Decidable.
 Require Import coqutil.PropSet.
-Require Import coqutil.Maps.Map.
-Require Import coqutil.Maps.Solver.
+Require Import coqutil.Map.Interface.
+Require Import coqutil.Map.Solver.
 
 
 Section Tests.
-
+  Import map.
   Context {var: Type}. (* variable name (key) *)
   Context {dec_eq_var: DecidableEq var}.
   Context {val: Type}. (* value *)
   Context {dec_eq_val: DecidableEq val}.
 
-  Context {stateMap: MapFunctions var val}.
-  Context {stateMapSpecs: MapSpecs stateMap}.
-  Notation state := (map var val).
+  Context {stateMap: map.map var val}.
+  Context {stateMapSpecs: map.ok stateMap}.
+  Notation state := (@map.rep var val).
 
   Ltac t := map_solver var val.
 
@@ -24,26 +24,6 @@ Section Tests.
       extends s1 s2 ->
       extends s2 s3 ->
       extends s1 s3.
-  Proof. t. Qed.
-
-  Lemma extends_intersect_map_l: forall r1 r2,
-      extends r1 (intersect_map r1 r2).
-  Proof. t. Qed.
-
-  Lemma extends_intersect_map_r:
-    forall r1 r2, extends r2 (intersect_map r1 r2).
-  Proof. t. Qed.
-
-  Lemma extends_intersect_map_lr: forall m11 m12 m21 m22,
-      extends m11 m21 ->
-      extends m12 m22 ->
-      extends (intersect_map m11 m12) (intersect_map m21 m22).
-  Proof. t. Qed.
-
-  Lemma intersect_map_extends: forall m1 m2 m,
-      extends m1 m ->
-      extends m2 m ->
-      extends (intersect_map m1 m2) m.
   Proof. t. Qed.
 
   Lemma only_differ_union_l: forall s1 s2 r1 r2,

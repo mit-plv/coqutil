@@ -1,8 +1,9 @@
 Require Import coqutil.Decidable.
 Require Import coqutil.PropSet.
-Require Import coqutil.Maps.Map.
-Require Import coqutil.Maps.Solver.
+Require Import coqutil.Map.Interface.
+Require Import coqutil.Map.Solver.
 
+(* 
 Section TestGoals.
   Context {K V: Type}.
   Context {Map: MapFunctions K V}.
@@ -297,3 +298,5 @@ Section TestGoals.
   Qed.
 
 End TestGoals.
+
+*)
