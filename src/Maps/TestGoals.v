@@ -6,6 +6,7 @@ Require Import coqutil.Maps.Solver.
 Section TestGoals.
   Context {K V: Type}.
   Context {Map: MapFunctions K V}.
+  Context {mapspecs: MapSpecs Map}.
   Context {K_eq_dec: DecidableEq K}.
   Context {V_eq_dec: DecidableEq V}.
 

@@ -10,32 +10,35 @@ Class MapFunctions(K V: Type) := mkMap {
   get: map -> K -> option V;
 
   empty_map: map;
+  remove_key: map -> K -> map;
+  put: map -> K -> V -> map;
+  intersect_map: map -> map -> map;
+  put_map: map -> map -> map;
+}.
+
+Arguments map _ _ {_}.
+
+Class MapSpecs{K V: Type}(MF: MapFunctions K V) := {
   empty_is_empty: forall (k: K), get empty_map k = None;
 
-  remove_key: map -> K -> map;
   get_remove_same: forall m k, get (remove_key m k) k = None;
   get_remove_diff: forall m k1 k2, k1 <> k2 -> get (remove_key m k1) k2 = get m k2;
 
-  put: map -> K -> V -> map;
-  get_put_same: forall (m: map) (k: K) (v: V), get (put m k v) k = Some v;
-  get_put_diff: forall (m: map) (k1 k2: K) (v: V), k1 <> k2 -> get (put m k1 v) k2 = get m k2;
+  get_put_same: forall (m: map K V) (k: K) (v: V),
+      get (put m k v) k = Some v;
+  get_put_diff: forall (m: map K V) (k1 k2: K) (v: V),
+      k1 <> k2 -> get (put m k1 v) k2 = get m k2;
 
-  intersect_map: map -> map -> map;
   intersect_map_spec: forall k v m1 m2,
       get (intersect_map m1 m2) k = Some v <-> get m1 k = Some v /\ get m2 k = Some v;
 
-  put_map: map -> map -> map;
   get_put_map_l: forall m1 m2 k,
       get m2 k = None ->
       get (put_map m1 m2) k = get m1 k;
   get_put_map_r: forall m1 m2 k v,
       get m2 k = Some v ->
       get (put_map m1 m2) k = Some v;
-
 }.
-
-Arguments map _ _ {_}.
-
 
 Hint Resolve
   empty_is_empty
@@ -53,6 +56,7 @@ Section MapDefinitions.
 
   Context {K V: Type}.
   Context {KVmap: MapFunctions K V}.
+  Context {KVmapspecs: MapSpecs KVmap}.
 
   Context {keq: DecidableEq K}.
   Context {veq: DecidableEq V}.

@@ -12,6 +12,7 @@ Section Tests.
   Context {dec_eq_val: DecidableEq val}.
 
   Context {stateMap: MapFunctions var val}.
+  Context {stateMapSpecs: MapSpecs stateMap}.
   Notation state := (map var val).
 
   Ltac t := map_solver var val.
