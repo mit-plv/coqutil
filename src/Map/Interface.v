@@ -38,14 +38,14 @@ Module map.
     Definition disjoint (a b : map) := forall k v1 v2, get a k = Some v1 -> get b k = Some v2 -> False.
     Definition split m m1 m2 := m = (putmany m1 m2) /\ disjoint m1 m2.
 
-    Fixpoint of_list_starting (keys : list key) (values : list value) (init : rep) {struct keys} : option map :=
+    Fixpoint putmany_of_list (keys : list key) (values : list value) (init : rep) {struct keys} : option map :=
       match keys, values with
       | nil, nil => Some init
       | cons k keys, cons v values =>
-        of_list_starting keys values (put init k v)
+        putmany_of_list keys values (put init k v)
       | _, _ => None
       end.
-    Definition of_list keys values := of_list_starting keys values empty.
+    Definition of_list keys values := putmany_of_list keys values empty.
   End WithMap.
 End map. Local Notation map := map.map.
 Global Coercion map.rep : map >-> Sortclass.
