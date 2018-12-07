@@ -1,4 +1,5 @@
 Require Import coqutil.Decidable.
+Require Import coqutil.Option.
 Require Import coqutil.Tactics.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Properties.
@@ -35,7 +36,7 @@ Ltac canonicalize_all K V :=
   repeat match goal with
          | H: _ |- _ => progress canonicalize_map_hyp H
          end;
-  invert_Some_eq_Some;
+  repeat inversion_option;
   rew_map_specs_in_goal.
 
 Ltac map_solver_should_destruct K V d :=
