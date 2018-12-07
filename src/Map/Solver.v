@@ -10,10 +10,10 @@ Ltac one_rew_map_specs e rewriter :=
   match e with
   | context[map.get ?m] =>
     lazymatch m with
-    | map.empty => rewriter map.get_empty
-    | map.remove _ _ => rewriter (map.get_remove_dec (key_eq_dec := _))
-    | map.put _ _ _ => rewriter (map.get_put_dec (key_eq_dec := _))
-    | map.putmany _ _ => rewriter map.get_putmany_dec
+    | map.empty       => rewriter (map.get_empty       (ok := _))
+    | map.remove _ _  => rewriter (map.get_remove_dec  (ok := _) (key_eq_dec := _))
+    | map.put _ _ _   => rewriter (map.get_put_dec     (ok := _) (key_eq_dec := _))
+    | map.putmany _ _ => rewriter (map.get_putmany_dec (ok := _))
     end
   end.
 
