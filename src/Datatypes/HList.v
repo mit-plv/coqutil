@@ -1,5 +1,5 @@
 Require Import Coq.Lists.List.
-Require Import coqutil.PrimitivePair. Import pair.
+Require Import coqutil.Datatypes.PrimitivePair. Import pair.
 Local Set Universe Polymorphism.
 Fixpoint arrows (argts : list Type) : Type -> Type :=
   match argts with

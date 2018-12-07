@@ -1,6 +1,6 @@
 Require Import coqutil.Decidable.
-Require Import coqutil.Option.
-Require Import coqutil.Tactics.
+Require Import coqutil.Datatypes.Option.
+Require Import coqutil.Tactics.Tactics.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Properties.
 
