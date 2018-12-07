@@ -3,24 +3,21 @@ Require Import coqutil.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 
-(* 
+(*
 Section TestGoals.
-  Context {K V: Type}.
-  Context {Map: MapFunctions K V}.
-  Context {mapspecs: MapSpecs Map}.
-  Context {K_eq_dec: DecidableEq K}.
-  Context {V_eq_dec: DecidableEq V}.
+  Import map.
+  Context {key value} {map : map.map key value} {map_ok : map.ok map} {key_eq_dec : DecidableEq key}.
 
   (** *** Part 1: Lemmas which hold *)
 
   Goal False. idtac "Part 1a: Small goals (originally took <5s each)". Abort.
 
   Lemma flattenExpr_correct_aux_lemma1:
-    forall (resVar : K) (initialH initialL : map K V) (fvngs1 : K -> Prop) (v0 : V),
+    forall (resVar : key) (initialH initialL : map) (fvngs1 : key -> Prop) (v0 : value),
       extends initialL initialH ->
       undef_on initialH fvngs1 -> get (put initialL resVar v0) resVar = Some v0.
   Proof.
-    Time map_solver K V.
+    Time map_solver key value.
   Qed.
 
   Lemma flattenExpr_correct_aux_lemma2:

@@ -3,11 +3,15 @@ Require Import Coq.Arith.Compare_dec.
 Require Import Coq.ZArith.BinInt.
 Require Import Coq.NArith.NArith.
 
+Local Set Primitive Projections.
+Local Set Universe Polymorphism.
+Local Unset Refine Instance Mode.
+
 Class Decidable (P : Prop) := dec : {P} + {~P}.
 Arguments dec _%type_scope {_}.
 
 Notation DecidableRel R := (forall x y, Decidable (R x y)).
-Notation DecidableEq T := (forall (x y: T), Decidable (x = y)).
+Notation DecidableEq T := (DecidableRel (@eq T)).
 
 Global Instance dec_eq_nat : DecidableEq nat := Nat.eq_dec.
 Global Instance dec_le_nat : DecidableRel le := Compare_dec.le_dec.
@@ -24,37 +28,42 @@ Global Instance dec_ge_Z : DecidableRel BinInt.Z.ge := ZArith_dec.Z_ge_dec.
 Global Instance dec_eq_N : DecidableEq N := N.eq_dec.
 
 Global Instance dec_Empty_set: DecidableEq Empty_set.
+Proof.
   intro x. destruct x.
 Defined.
 
 Global Instance decidable_eq_option {A} `{DecidableEq A}: DecidableEq (option A).
-  intros. unfold Decidable. destruct x; destruct y.
-  - destruct (DecidableEq0 a a0).
-    + subst. left. reflexivity.
-    + right. unfold not in *. intro E. inversion E. auto.
-  - right. intro. discriminate.
-  - right. intro. discriminate.
-  - left. reflexivity.
+Proof.
+  refine (fun a b =>
+            match a, b with
+            | Some x, Some y =>
+              match dec (x=y) with left _ => left _ | right _ => right _ end
+            | None, None => left _
+            | _,_ => right _ end
+         ); abstract intuition congruence.
 Defined.
 
 Global Instance dec_eq_pair{T1 T2: Type}(eq1: DecidableEq T1)(eq2: DecidableEq T2):
   DecidableEq (T1 * T2).
+Proof.
 refine (fun '(x1, x2) '(y1, y2) => match eq1 x1 y1, eq2 x2 y2 with
                                    | left E1, left E2 => left _
                                    | right N1, _ => right _
                                    | _, right N2 => right _
-                                   end).
-all: congruence.
+                                   end); abstract intuition congruence.
 Defined.
 
 Global Instance dec_and {A B} `{Decidable A, Decidable B} : Decidable (A /\ B).
+Proof.
   unfold Decidable in *; destruct H; destruct H0; tauto.
 Defined.
 
 Global Instance dec_or {A B} `{Decidable A, Decidable B} : Decidable (A \/ B).
+Proof.
   unfold Decidable in *; destruct H; destruct H0; tauto.
 Defined.
 
 Global Instance dec_not {A} `{Decidable A} : Decidable (~ A).
+Proof.
   unfold Decidable in *. destruct H; tauto.
 Defined.
