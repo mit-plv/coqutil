@@ -58,7 +58,7 @@ Ltac destruct_one_map_match K V :=
 Require Import Coq.Program.Tactics.
 Ltac propositional :=
   repeat match goal with
-         | |- forall _, _ => progress intros until 0
+         | |- forall _, _ => progress intros
          | |- _ -> _ => let H := fresh "Hyp" in intro H
          | [ H: _ /\ _ |- _ ] =>
            let H1 := fresh H "_l" in
@@ -101,7 +101,7 @@ Ltac map_solver K V :=
   repeat autounfold with unf_set_defs unf_map_defs in *;
   destruct_products;
   repeat match goal with
-         | |- forall _, _ => progress intros until 0
+         | |- forall _, _ => progress intros
          | |- _ -> _ => let H := fresh "Hyp" in intro H
          end;
   canonicalize_all K V;
