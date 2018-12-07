@@ -61,6 +61,7 @@ Section TestGoals.
       subset mvs0 (diff fvngs1 fvn) ->
       get midL v = Some w -> only_differ initialL mvs0 midL -> extends midL initialH.
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
@@ -95,6 +96,7 @@ Section TestGoals.
       only_differ initialL mvs0 midL ->
       get preFinalL v0 = Some w0 -> only_differ midL mvs1 preFinalL -> get preFinalL v = Some w.
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
@@ -113,6 +115,7 @@ Section TestGoals.
       get initial2L v = Some cv ->
       only_differ initialL mvcondL initial2L -> extends initial2L initialH.
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
@@ -160,6 +163,7 @@ Section TestGoals.
       v0 \in mvs ->
       subset mvs (diff fvngs fvngs') -> extends (put prefinalL lhs v) (put initialH lhs v).
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
@@ -179,6 +183,7 @@ Section TestGoals.
       subset mvs (diff fvngs fvn) ->
       extends prefinalL initialH.
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
@@ -215,6 +220,7 @@ Section TestGoals.
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> get finalL v = Some av.
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
@@ -234,6 +240,7 @@ Section TestGoals.
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> get finalL v = Some av.
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
@@ -296,6 +303,7 @@ Section TestGoals.
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> extends finalL initialH.
   Proof.
+    autounfold with unf_set_defs in *.
     Time map_solver K V.
   Qed.
 
