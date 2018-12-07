@@ -29,4 +29,4 @@ Hint Unfold
      remove
      subset
      disjoint
-  : unf_set_defs.
+  : unf_map_defs (* FIXME: currently we rely on map solver unfolding these *).

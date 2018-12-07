@@ -3,6 +3,8 @@ Require Import coqutil.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 
+Require Import coqutil.PropSet. (* FIXME: this is so that the map solver picks up hints from PropSet *)
+
 
 Section TestGoals.
   Context {K V: Type}.

@@ -98,7 +98,7 @@ Ltac pick_one_existential :=
 Ltac map_solver K V :=
   hard_assert_is_sort K;
   hard_assert_is_sort V;
-  repeat autounfold with unf_set_defs unf_map_defs in *;
+  repeat autounfold with unf_map_defs in *;
   destruct_products;
   repeat match goal with
          | |- forall _, _ => progress intros *
