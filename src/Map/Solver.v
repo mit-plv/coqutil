@@ -4,6 +4,8 @@ Require Import coqutil.Tactics.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Properties.
 
+Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_map_defs.
+
 Ltac one_rew_map_specs e rewriter :=
   match e with
   | context[map.get ?m] =>
@@ -93,12 +95,10 @@ Ltac pick_one_existential :=
   | x: ?T |- exists (_: ?T), _ => exists x
   end.
 
-
-Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : __map_solver_unf_map_defs.
 Ltac map_solver K V :=
   hard_assert_is_sort K;
   hard_assert_is_sort V;
-  repeat autounfold with __map_solver_unf_map_defs in *;
+  repeat autounfold with unf_set_defs unf_map_defs in *;
   destruct_products;
   repeat match goal with
          | |- forall _, _ => progress intros *
