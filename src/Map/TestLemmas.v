@@ -1,5 +1,4 @@
 Require Import coqutil.Decidable.
-Require Import coqutil.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 
