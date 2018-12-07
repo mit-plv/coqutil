@@ -1,3 +1,5 @@
+From coqutil Require Import sanity.
+
 Module map.
   Class map {key value} := mk {
     rep : Type;

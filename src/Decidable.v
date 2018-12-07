@@ -1,11 +1,8 @@
+From coqutil Require Import sanity.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.ZArith.BinInt.
 Require Import Coq.NArith.NArith.
-
-Local Set Primitive Projections.
-Local Set Universe Polymorphism.
-Local Unset Refine Instance Mode.
 
 Class Decidable (P : Prop) := dec : {P} + {~P}.
 Arguments dec _%type_scope {_}.
@@ -25,12 +22,10 @@ Global Instance dec_le_Z : DecidableRel BinInt.Z.le := ZArith_dec.Z_le_dec.
 Global Instance dec_gt_Z : DecidableRel BinInt.Z.gt := ZArith_dec.Z_gt_dec.
 Global Instance dec_ge_Z : DecidableRel BinInt.Z.ge := ZArith_dec.Z_ge_dec.
 
-Global Instance dec_eq_N : DecidableEq N := N.eq_dec.
-
 Global Instance dec_Empty_set: DecidableEq Empty_set.
-Proof.
-  intro x. destruct x.
-Defined.
+Proof. intro x. destruct x. Defined.
+Global Instance dec_eq_unit: DecidableEq unit.
+Proof. intros x y. destruct x, y; exact (left eq_refl). Defined.
 
 Global Instance decidable_eq_option {A} `{DecidableEq A}: DecidableEq (option A).
 Proof.
@@ -54,16 +49,10 @@ refine (fun '(x1, x2) '(y1, y2) => match eq1 x1 y1, eq2 x2 y2 with
 Defined.
 
 Global Instance dec_and {A B} `{Decidable A, Decidable B} : Decidable (A /\ B).
-Proof.
-  unfold Decidable in *; destruct H; destruct H0; tauto.
-Defined.
+Proof. cbv [Decidable] in *; destruct H; destruct H0; tauto. Defined.
 
 Global Instance dec_or {A B} `{Decidable A, Decidable B} : Decidable (A \/ B).
-Proof.
-  unfold Decidable in *; destruct H; destruct H0; tauto.
-Defined.
+Proof. cbv [Decidable] in *; destruct H; destruct H0; tauto. Defined.
 
 Global Instance dec_not {A} `{Decidable A} : Decidable (~ A).
-Proof.
-  unfold Decidable in *. destruct H; tauto.
-Defined.
+Proof. cbv [Decidable] in *. destruct H; tauto. Defined.

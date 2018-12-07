@@ -1,5 +1,6 @@
 Global Unset Refine Instance Mode.
 Global Set Universe Polymorphism.
+Global Set Primitive Projections.
 
 (** Work around some counter-intuitive defaults. *)
 
