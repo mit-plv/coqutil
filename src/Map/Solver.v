@@ -55,6 +55,7 @@ Ltac map_solver_should_destruct K V d :=
 Ltac destruct_one_map_match K V :=
   destruct_one_match_hyporgoal_test ltac:(map_solver_should_destruct K V) ltac:(fun H => rew_map_specs_in H).
 
+Require Import Coq.Program.Tactics.
 Ltac propositional :=
   repeat match goal with
          | |- forall _, _ => progress intros until 0
@@ -87,7 +88,7 @@ Ltac propositional_ors :=
          | [ |- _ \/ _ ] => (left + right); congruence
          end.
 
-Ltac ensure_no_body H := not (clearbody H).
+Ltac ensure_no_body H := assert_fails (clearbody H).
 
 Ltac pick_one_existential :=
   multimatch goal with
@@ -95,8 +96,8 @@ Ltac pick_one_existential :=
   end.
 
 Ltac map_solver K V :=
-  assert_is_type K;
-  assert_is_type V;
+  hard_assert_is_sort K;
+  hard_assert_is_sort V;
   repeat autounfold with unf_set_defs unf_map_defs in *;
   destruct_products;
   repeat match goal with

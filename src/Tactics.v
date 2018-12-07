@@ -1,14 +1,6 @@
-Require Export Coq.Program.Tactics.
-Require Import coqutil.Decidable.
+Require coqutil.Decidable.
 
-
-(** Test if a tactic succeeds, but always roll-back the results *)
-Tactic Notation "test" tactic3(tac) :=
-  try (first [ tac | fail 2 tac "does not succeed" ]; fail 0 tac "succeeds"; [](* test for [t] solved all goals *)).
-
-(** [not tac] is equivalent to [fail tac "succeeds"] if [tac] succeeds, and is equivalent to [idtac] if [tac] fails *)
-Tactic Notation "not" tactic3(tac) := try ((test tac); fail 1 tac "succeeds").
-
+Tactic Notation "forget" constr(X) "as" ident(y) := set (y:=X) in *; clearbody y.
 
 Ltac destruct_one_match :=
   match goal with
@@ -16,12 +8,6 @@ Ltac destruct_one_match :=
       is_var e; destruct e
   | [ |- context[match ?e with _ => _ end] ] =>
       let E := fresh "E" in destruct e eqn: E
-  end.
-
-Ltac destruct_one_dec_eq :=
-  match goal with
-  (* we use an explicit type T because otherwise the inferred type might differ *)
-  | |- context[dec (@eq ?T ?t1 ?t2)] => destruct (dec (@eq T t1 t2)); [subst *|]
   end.
 
 Ltac destruct_one_match_hyp_test type_test :=
@@ -51,19 +37,11 @@ Ltac destruct_one_match_hyp :=
 Ltac repeat_at_least_once tac := tac; repeat tac.
 Tactic Notation "repeatplus" tactic(t) := (repeat_at_least_once t).
 
-Ltac destruct_pair_eqs := repeatplus
- (idtac; (* to make sure match is only executed later *)
-  match goal with
-  | H: (_, _) = (_, _) |- _ => inversion H; clear H
-  end).
-
 Ltac ensure_new H :=
   let t := type of H in
-  not (clear H; match goal with
+  assert_fails (clear H; match goal with
                 | A: t |- _ => idtac
                 end).
-
-Tactic Notation "forget" constr(X) "as" ident(y) := set (y:=X) in *; clearbody y.
 
 Ltac destruct_products :=
   repeat match goal with
@@ -81,23 +59,25 @@ Tactic Notation "unique" "pose" "proof" constr(defn) "as" ident(H) :=
   | _ => pose proof defn as H
   end.
 
-Ltac assert_is_type E :=
+Ltac hard_assert_is_sort E :=
   let T := type of E in
-  first
-  [ unify T Set
-  | unify T Prop
-  | unify T Type
+  lazymatch T with
+  | Set => idtac
+  | Prop => idtac
+  | Type => idtac
+  | _ =>
   (* this error is almost certainly a bug, so we let it bubble up with level 10000, instead
      of being swallowed by try, repeat, ||, etc *)
-  | fail 10000 "type of" E "is" T "but should be Set, Prop or Type" ].
+    fail 10000 "type of" E "is" T "but should be Set, Prop or Type"
+  end.
 
 Ltac specialize_with E :=
   (* Catch errors such as E is something like "@name: NameWithEq -> Set" instead of "name: Set" *)
-  assert_is_type E;
+  hard_assert_is_sort E;
   repeat match goal with
   | H: forall (x: E), _, y: E |- _ =>
     match type of H with
-    | DecidableEq E => fail 1
+    | Decidable.DecidableEq E => fail 1
     | _ => let H' := fresh H y in unique pose proof (H y) as H'
     end
   end.
@@ -161,4 +141,11 @@ Ltac destruct_one_match_hyporgoal_test check cleanup :=
   match goal with
   | |- context[match ?d with _ => _ end]      => check d; destructE d
   | H: context[match ?d with _ => _ end] |- _ => check d; destructE d; cleanup H
+  end.
+
+Require Import Coq.Program.Tactics.
+Ltac destruct_one_dec_eq :=
+  match goal with
+  (* we use an explicit type T because otherwise the inferred type might differ *)
+  | |- context[Decidable.dec (@eq ?T ?t1 ?t2)] => destruct (Decidable.dec (@eq T t1 t2)); [subst *|]
   end.
