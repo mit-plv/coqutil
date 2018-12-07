@@ -59,6 +59,8 @@ Section WithWidth.
     eqb x y := Z.eqb (unsigned x) (unsigned y);
     ltu x y := Z.ltb (unsigned x) (unsigned y);
     lts x y := Z.ltb (signed x) (signed y);
+
+    sextend oldwidth z := wrap ((unsigned z + 2^(oldwidth-1)) mod 2^oldwidth - 2^(oldwidth-1));
   |}.
 
   Lemma eq_unsigned {x y : rep} : unsigned x = unsigned y -> x = y.

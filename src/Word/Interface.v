@@ -47,9 +47,11 @@ Module word.
     gts x y := lts y x;
 
     swrap z := (z + 2^(width-1)) mod 2^width - 2^(width-1);
+
+    sextend: Z -> rep -> rep; (* Z is bitwidth of input *)
   }.
   Arguments word : clear implicits.
-  
+
   Class ok {width} {word : word width} := {
     wrap z := z mod 2^width;
 
