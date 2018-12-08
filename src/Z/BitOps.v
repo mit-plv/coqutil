@@ -1,6 +1,6 @@
 Require Import Coq.ZArith.ZArith.
 Require Import Coq.micromega.Lia.
-Require Import coqutil.Z.div_mod_to_quot_rem.
+Require Import coqutil.Z.div_mod_to_equations.
 
 
 Local Open Scope Z_scope.
@@ -171,7 +171,7 @@ Proof.
   assert (0 < 2 ^ n)%Z. {
     apply Z.pow_pos_nonneg; omega.
   }
-  Z.div_mod_to_quot_rem.
+  Z.div_mod_to_equations.
   rewrite H2 in * by lia.
   clear H2 v.
   rewrite Z.add_assoc.

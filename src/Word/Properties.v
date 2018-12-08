@@ -1,9 +1,41 @@
-Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt.
+Require Import Coq.ZArith.BinInt.
+Require Import coqutil.Z.div_mod_to_equations.
 Require Import Lia Btauto.
 Require Coq.setoid_ring.Ring_theory.
 Local Open Scope Z_scope.
-Require Import coqutil.Z.ZLib.
-Require Import coqutil.Z.div_mod_to_quot_rem.
+
+(* NOTE: this stuff does not really belong here, we should pull them out to a minimal bitwise Z library. *)
+Module Z.
+  Lemma testbit_minus1 i (H:0<=i) : Z.testbit (-1) i = true.
+  Proof. destruct i; try lia; exact eq_refl. Qed.
+  Lemma testbit_mod_pow2 a n i (H:0<=n)
+    : Z.testbit (a mod 2 ^ n) i = ((i <? n) && Z.testbit a i)%bool.
+  Proof.
+    destruct (Z.ltb_spec i n); rewrite
+      ?Z.mod_pow2_bits_low, ?Z.mod_pow2_bits_high by auto; auto.
+  Qed.
+  Lemma testbit_ones n i (H : 0 <= n) : Z.testbit (Z.ones n) i = ((0 <=? i) && (i <? n))%bool.
+  Proof.
+    destruct (Z.leb_spec 0 i), (Z.ltb_spec i n); cbn;
+      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by lia; trivial.
+  Qed.
+  Lemma testbit_ones_nonneg n i (Hn : 0 <= n) (Hi: 0 <= i) : Z.testbit (Z.ones n) i = (i <? n)%bool.
+  Proof.
+    rewrite testbit_ones by lia.
+    destruct (Z.leb_spec 0 i); cbn; solve [trivial | lia]. 
+  Qed.
+
+  (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)
+  Hint Rewrite
+       Z.shiftl_spec_low Z.lxor_spec Z.lor_spec Z.land_spec Z.lnot_spec Z.ldiff_spec Z.shiftl_spec Z.shiftr_spec Z.ones_spec_high Z.shiftl_spec_alt Z.ones_spec_low Z.shiftr_spec_aux Z.shiftl_spec_high Z.ones_spec_iff Z.testbit_spec 
+       Z.div_pow2_bits Z.pow2_bits_eqb Z.bits_opp Z.testbit_0_l
+       Z.testbit_mod_pow2 Z.testbit_ones_nonneg Z.testbit_minus1
+       using solve [auto with zarith] : z_bitwise.
+  Hint Rewrite <-Z.ones_equiv
+       using solve [auto with zarith] : z_bitwise.
+End Z.
+Local Ltac mia := Z.div_mod_to_equations; nia.
+
 Require Import coqutil.Word.Interface. Import word.
 
 Module word.
@@ -140,6 +172,7 @@ Module word.
 
     Lemma signed_sub x y : signed (sub x y) = swrap (Z.sub (signed x) (signed y)).
     Proof.
+      (* Z.push_modulo; Z.pull_modulo; f_equal; lia. *)
       rewrite !signed_eq_swrap_unsigned; autorewrite with word_laws.
       cbv [wrap swrap]; rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
@@ -157,6 +190,7 @@ Module word.
 
     Lemma signed_opp x : signed (opp x) = swrap (Z.opp (signed x)).
     Proof.
+      (* Z.push_modulo; Z.pull_modulo; f_equal; lia. *)
       rewrite !signed_eq_swrap_unsigned; autorewrite with word_laws.
       cbv [wrap swrap]; rewrite <-(wrap_unsigned x).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
@@ -171,6 +205,7 @@ Module word.
 
     Lemma signed_mul x y : signed (mul x y) = swrap (Z.mul (signed x) (signed y)).
     Proof.
+      (* Z.push_modulo; Z.pull_modulo; f_equal; lia. *)
       rewrite !signed_eq_swrap_unsigned; autorewrite with word_laws.
       cbv [wrap swrap]. rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
