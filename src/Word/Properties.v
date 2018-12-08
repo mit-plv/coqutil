@@ -2,59 +2,8 @@ Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt.
 Require Import Lia Btauto.
 Require Coq.setoid_ring.Ring_theory.
 Local Open Scope Z_scope.
-
-(* NOTE: this stuff does not really belong here, but this way this file is self-contained. *)
-Module Z.
-  (* from https://github.com/coq/coq/pull/8062/files#diff-c73fff6c197eb53a5ca574b51e21bf82 *)
-  Lemma mod_0_r_ext x y : y = 0 -> x mod y = 0.
-  Proof. intro; subst; destruct x; reflexivity. Qed.
-  Lemma div_0_r_ext x y : y = 0 -> x / y = 0.
-  Proof. intro; subst; destruct x; reflexivity. Qed.
-
-  Ltac div_mod_to_quot_rem_generalize x y :=
-    pose proof (Z.div_mod x y);    pose proof (Z.mod_pos_bound x y);
-    pose proof (Z.mod_neg_bound x y);    pose proof (div_0_r_ext x y);
-    pose proof (mod_0_r_ext x y);    let q := fresh "q" in
-    let r := fresh "r" in    set (q := x / y) in *;
-    set (r := x mod y) in *;
-    clearbody q r.  Ltac div_mod_to_quot_rem_step :=
-    match goal with    | [ |- context[?x / ?y] ] => div_mod_to_quot_rem_generalize x y
-    | [ |- context[?x mod ?y] ] => div_mod_to_quot_rem_generalize x y    | [ H : context[?x / ?y] |- _ ] => div_mod_to_quot_rem_generalize x y
-    | [ H : context[?x mod ?y] |- _ ] => div_mod_to_quot_rem_generalize x y    end.
-  Ltac div_mod_to_quot_rem := repeat div_mod_to_quot_rem_step.
-
-
-  Lemma testbit_minus1 i (H:0<=i) : Z.testbit (-1) i = true.
-  Proof. destruct i; try lia; exact eq_refl. Qed.
-  Lemma testbit_mod_pow2 a n i (H:0<=n)
-    : Z.testbit (a mod 2 ^ n) i = ((i <? n) && Z.testbit a i)%bool.
-  Proof.
-    destruct (Z.ltb_spec i n); rewrite
-      ?Z.mod_pow2_bits_low, ?Z.mod_pow2_bits_high by auto; auto.
-  Qed.
-  Lemma testbit_ones n i (H : 0 <= n) : Z.testbit (Z.ones n) i = ((0 <=? i) && (i <? n))%bool.
-  Proof.
-    destruct (Z.leb_spec 0 i), (Z.ltb_spec i n); cbn;
-      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by lia; trivial.
-  Qed.
-  Lemma testbit_ones_nonneg n i (Hn : 0 <= n) (Hi: 0 <= i) : Z.testbit (Z.ones n) i = (i <? n)%bool.
-  Proof.
-    rewrite testbit_ones by lia.
-    destruct (Z.leb_spec 0 i); cbn; solve [trivial | lia]. 
-  Qed.
-
-
-  (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)
-  Hint Rewrite
-       Z.shiftl_spec_low Z.lxor_spec Z.lor_spec Z.land_spec Z.lnot_spec Z.ldiff_spec Z.shiftl_spec Z.shiftr_spec Z.ones_spec_high Z.shiftl_spec_alt Z.ones_spec_low Z.shiftr_spec_aux Z.shiftl_spec_high Z.ones_spec_iff Z.testbit_spec 
-       Z.div_pow2_bits Z.pow2_bits_eqb Z.bits_opp Z.testbit_0_l
-       Z.testbit_mod_pow2 Z.testbit_ones_nonneg Z.testbit_minus1
-       using solve [auto with zarith] : z_bitwise.
-  Hint Rewrite <-Z.ones_equiv
-       using solve [auto with zarith] : z_bitwise.
-End Z.
-Ltac mia := Z.div_mod_to_quot_rem; nia.
-
+Require Import coqutil.Z.ZLib.
+Require Import coqutil.Z.div_mod_to_quot_rem.
 Require Import coqutil.Word.Interface. Import word.
 
 Module word.
@@ -105,7 +54,7 @@ Module word.
      { rewrite <-Z.sub_0_l; symmetry; rewrite <-Z.sub_0_l, Zdiv.Zminus_mod_idemp_r. auto. } (* COQBUG? *)
      { f_equal. eapply Z.eqb_eq. auto. } (* Z.eqb -> @eq z *)
     Qed.
-    
+
     Ltac generalize_wrap_unsigned :=
       repeat match goal with
              | x : @word.rep ?a ?b |- _ =>
@@ -144,7 +93,7 @@ Module word.
         destruct (Z.ltb_spec a b); trivial; try lia
       end.
     Qed.
-      
+
     Lemma testbit_wrap z i : Z.testbit (wrap z) i = ((i <? width) && Z.testbit z i)%bool.
     Proof. cbv [wrap]. autorewrite with z_bitwise; trivial. Qed.
   End WithWord.
@@ -163,7 +112,7 @@ Module word.
 
     Lemma swrap_inrange z (H : -2^(width-1) <= z < 2^(width-1)) : swrap z = z.
     Proof. cbv [swrap]; rewrite Z.mod_small; lia. Qed.
-    
+
     Lemma swrap_as_div_mod z : swrap z = z mod 2^(width-1) - 2^(width-1) * (z / (2^(width - 1)) mod 2).
     Proof.
       symmetry; cbv [swrap wrap].
@@ -283,7 +232,7 @@ Module word.
       repeat match goal with |- context [?a <? ?b] =>
         destruct (Z.ltb_spec a b); trivial; try lia
       end.
-    
+
     Lemma swrap_signed x : swrap (signed x) = signed x.
     Proof. rewrite signed_eq_swrap_unsigned. sbitwise. Qed.
 
