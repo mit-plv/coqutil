@@ -70,5 +70,11 @@ Module tuple.
       | O => fun _ => nil
       | S n => fun '(x, xs') => cons x (to_list xs')
       end.
+
+    Fixpoint of_list (xs : list A) : tuple A (length xs) :=
+      match xs with
+      | nil => tt
+      | cons x xs => (x, of_list xs)
+      end.
   End WithA.
 End tuple.
