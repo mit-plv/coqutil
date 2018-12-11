@@ -7,7 +7,7 @@ Module word.
   Local Set Primitive Projections.
   Local Set Universe Polymorphism.
   Class word {width : Z} := {
-    rep : Set;
+    rep : Type;
 
     (* defining relations *)
     unsigned : rep -> Z;
