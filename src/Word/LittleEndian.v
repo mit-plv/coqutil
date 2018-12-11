@@ -1,6 +1,7 @@
 Require Import Coq.ZArith.BinIntDef.
 Require Import coqutil.Word.Interface coqutil.Datatypes.HList coqutil.Datatypes.PrimitivePair.
 Require coqutil.Word.Interface.
+Local Set Universe Polymorphism.
 
 Open Scope Z_scope.
 

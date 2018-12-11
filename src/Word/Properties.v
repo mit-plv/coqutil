@@ -2,6 +2,7 @@ Require Import Coq.ZArith.BinInt.
 Require Import coqutil.Z.div_mod_to_equations.
 Require Import Lia Btauto.
 Require Coq.setoid_ring.Ring_theory.
+Local Set Universe Polymorphism.
 Local Open Scope Z_scope.
 
 (* NOTE: this stuff does not really belong here, we should pull them out to a minimal bitwise Z library. *)
