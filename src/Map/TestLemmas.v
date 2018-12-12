@@ -14,7 +14,7 @@ Section Tests.
   Context {stateMapSpecs: map.ok stateMap}.
   Notation state := (@map.rep var val).
 
-  Ltac t := map_solver var val.
+  Ltac t := map_solver stateMapSpecs.
 
   Lemma extends_refl: forall s, extends s s.
   Proof. t. Qed.

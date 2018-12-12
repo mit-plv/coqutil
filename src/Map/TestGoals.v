@@ -24,7 +24,7 @@ Section TestGoals.
       extends initialL initialH ->
       undef_on initialH fvngs1 -> get (put initialL resVar v0) resVar = Some v0.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenExpr_correct_aux_lemma2:
@@ -33,7 +33,7 @@ Section TestGoals.
       undef_on initialH fvngs1 ->
       get initialH x = Some res -> get (put initialL resVar res) resVar = get initialH x.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenExpr_correct_aux_lemma3:
@@ -47,7 +47,7 @@ Section TestGoals.
       v \in mvs0 ->
       subset mvs1 (diff fvn fvn0) -> subset mvs0 (diff fvngs1 fvn) -> undef_on initialH fvngs1.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenExpr_correct_aux_lemma4:
@@ -63,7 +63,7 @@ Section TestGoals.
       subset mvs0 (diff fvngs1 fvn) ->
       get midL v = Some w -> only_differ initialL mvs0 midL -> extends midL initialH.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenExpr_correct_aux_lemma5:
@@ -79,7 +79,7 @@ Section TestGoals.
       subset mvs0 (diff fvngs1 fvn) ->
       get midL v = Some w -> only_differ initialL mvs0 midL -> undef_on initialH fvn.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenExpr_correct_aux_lemma6:
@@ -97,7 +97,7 @@ Section TestGoals.
       only_differ initialL mvs0 midL ->
       get preFinalL v0 = Some w0 -> only_differ midL mvs1 preFinalL -> get preFinalL v = Some w.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma7:
@@ -115,7 +115,7 @@ Section TestGoals.
       get initial2L v = Some cv ->
       only_differ initialL mvcondL initial2L -> extends initial2L initialH.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma8:
@@ -134,7 +134,7 @@ Section TestGoals.
       only_differ initialL mvcondL initial2L ->
       undef_on initialH fvn.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma_rewrite_get_key:
@@ -144,7 +144,7 @@ Section TestGoals.
       undef_on initialH fvngs' ->
       extends initialL (remove initialH lhs).
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
 
@@ -162,7 +162,7 @@ Section TestGoals.
       v0 \in mvs ->
       subset mvs (diff fvngs fvngs') -> extends (put prefinalL lhs v) (put initialH lhs v).
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma2:
@@ -181,7 +181,7 @@ Section TestGoals.
       subset mvs (diff fvngs fvn) ->
       extends prefinalL initialH.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma3:
@@ -198,7 +198,7 @@ Section TestGoals.
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> undef_on initialH fvn.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma4:
@@ -217,7 +217,7 @@ Section TestGoals.
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> get finalL v = Some av.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma5:
@@ -236,7 +236,7 @@ Section TestGoals.
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> get finalL v = Some av.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma9:
@@ -255,7 +255,7 @@ Section TestGoals.
       subset fvngs' fvn ->
       extends middleL st2 -> only_differ initial2L mvsBody middleL -> extends middleL st2.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Lemma flattenStmt_correct_aux_lemma10:
@@ -277,7 +277,7 @@ Section TestGoals.
       only_differ initialH emv st2 ->
       undef_on st2 fvngs.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
   Goal False. idtac "Part 1c: Large goals (originally took >50s each)". Abort.
@@ -298,7 +298,7 @@ Section TestGoals.
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> extends finalL initialH.
   Proof.
-    Time map_solver K V.
+    Time map_solver mapspecs.
   Qed.
 
 End TestGoals.

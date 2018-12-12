@@ -6,54 +6,57 @@ Require Import coqutil.Map.Properties.
 
 Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_map_defs.
 
-Ltac one_rew_map_specs e rewriter :=
+Ltac one_rew_map_specs mapok e rewriter :=
   match e with
   | context[map.get ?m] =>
     lazymatch m with
-    | map.empty       => rewriter (map.get_empty       (ok := _))
-    | map.remove _ _  => rewriter (map.get_remove_dec  (ok := _) (key_eq_dec := _))
-    | map.put _ _ _   => rewriter (map.get_put_dec     (ok := _) (key_eq_dec := _))
-    | map.putmany _ _ => rewriter (map.get_putmany_dec (ok := _))
+    | map.empty       => rewriter (map.get_empty       (ok := mapok))
+    | map.remove _ _  => rewriter (map.get_remove_dec  (ok := mapok))
+    | map.put _ _ _   => rewriter (map.get_put_dec     (ok := mapok))
+    | map.putmany _ _ => rewriter (map.get_putmany_dec (ok := mapok))
     end
   end.
 
-Ltac rew_map_specs_in H :=
+Ltac rew_map_specs_in mapok H :=
   let rewriter lemma := rewrite lemma in H in
-  repeat (let e := type of H in one_rew_map_specs e rewriter).
+  repeat (let e := type of H in one_rew_map_specs mapok e rewriter).
 
-Ltac rew_map_specs_in_goal :=
+Ltac rew_map_specs_in_goal mapok :=
   let rewriter lemma := (rewrite lemma) in
   repeat match goal with
-         | |- ?G => one_rew_map_specs G rewriter
+         | |- ?G => one_rew_map_specs mapok G rewriter
          end.
 
-Ltac canonicalize_map_hyp H :=
-  rew_map_specs_in H;
+Ltac canonicalize_map_hyp mapok H :=
+  rew_map_specs_in mapok H;
   try exists_to_forall H;
   try specialize (H eq_refl).
 
-Ltac canonicalize_all K V :=
+Ltac canonicalize_all mapok :=
   repeat match goal with
-         | H: _ |- _ => progress canonicalize_map_hyp H
+         | H: _ |- _ => progress canonicalize_map_hyp mapok H
          end;
   repeat inversion_option;
-  rew_map_specs_in_goal.
+  rew_map_specs_in_goal mapok.
 
-Ltac map_solver_should_destruct K V d :=
-  let T := type of d in
-  first [ unify T (option K)
-        | unify T (option V)
-        | match T with
-          | {?x1 = ?x2} + {?x1 <> ?x2} =>
-            let T' := type of x1 in
-            first [ unify T' K
-                  | unify T' V
-                  | unify T' (option K)
-                  | unify T' (option V) ]
-          end ].
+Ltac map_solver_should_destruct mapok d :=
+  match type of mapok with
+    | @map.ok ?K ?V ?Inst =>
+      let T := type of d in
+      first [ unify T (option K)
+            | unify T (option V)
+            | match T with
+              | {?x1 = ?x2} + {?x1 <> ?x2} =>
+                let T' := type of x1 in
+                first [ unify T' K
+                      | unify T' V
+                      | unify T' (option K)
+                      | unify T' (option V) ]
+              end ]
+  end.
 
-Ltac destruct_one_map_match K V :=
-  destruct_one_match_hyporgoal_test ltac:(map_solver_should_destruct K V) ltac:(fun H => rew_map_specs_in H).
+Ltac destruct_one_map_match mapok :=
+  destruct_one_match_hyporgoal_test ltac:(map_solver_should_destruct mapok) ltac:(fun H => rew_map_specs_in mapok H).
 
 Require Import Coq.Program.Tactics.
 Ltac propositional :=
@@ -95,16 +98,15 @@ Ltac pick_one_existential :=
   | x: ?T |- exists (_: ?T), _ => exists x
   end.
 
-Ltac map_solver K V :=
-  hard_assert_is_sort K;
-  hard_assert_is_sort V;
+Ltac map_solver mapok := lazymatch type of mapok with
+| @map.ok ?K ?V ?Inst =>
   repeat autounfold with unf_map_defs in *;
   destruct_products;
   repeat match goal with
          | |- forall _, _ => progress intros *
          | |- _ -> _ => let H := fresh "Hyp" in intro H
          end;
-  canonicalize_all K V;
+  canonicalize_all mapok;
   repeat match goal with
   | H: forall (x: ?E), _, y: ?E |- _ =>
     first [ unify E K | unify E V ];
@@ -113,7 +115,7 @@ Ltac map_solver K V :=
     | DecidableEq E => fail 1
     | _ => let H' := fresh H y in
            pose proof (H y) as H';
-           canonicalize_map_hyp H';
+           canonicalize_map_hyp mapok H';
            ensure_new H'
     end
   | H: forall (x: _), _, y: ?E |- _ =>
@@ -122,7 +124,7 @@ Ltac map_solver K V :=
     let H' := fresh H y in
     pose proof H as H';
     specialize H' with (1 := y); (* might instantiate a few universally quantified vars *)
-    canonicalize_map_hyp H';
+    canonicalize_map_hyp mapok H';
     ensure_new H'
   | H: ?P -> _ |- _ =>
     let T := type of P in unify T Prop;
@@ -131,16 +133,18 @@ Ltac map_solver K V :=
     let H' := fresh H "_eauto" in
     pose proof (H F) as H';
     clear F;
-    canonicalize_map_hyp H';
+    canonicalize_map_hyp mapok H';
     ensure_new H'
   end;
   let solver := congruence || auto || (exfalso; eauto) ||
                 match goal with
                 | H: ~ _ |- False => solve [apply H; intuition (auto || congruence || eauto)]
                 end in
-  let fallback := (destruct_one_map_match K V || pick_one_existential);
-                  canonicalize_all K V in
+  let fallback := (destruct_one_map_match mapok || pick_one_existential);
+                  canonicalize_all mapok in
   repeat (propositional;
           propositional_ors;
           try solve [ solver ];
-          try fallback).
+          try fallback)
+| _ => fail 10000 "mapok is not of type map.ok"
+end.
