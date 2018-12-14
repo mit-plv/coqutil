@@ -23,12 +23,12 @@ Module Z.
   Lemma testbit_ones_nonneg n i (Hn : 0 <= n) (Hi: 0 <= i) : Z.testbit (Z.ones n) i = (i <? n)%bool.
   Proof.
     rewrite testbit_ones by lia.
-    destruct (Z.leb_spec 0 i); cbn; solve [trivial | lia]. 
+    destruct (Z.leb_spec 0 i); cbn; solve [trivial | lia].
   Qed.
 
   (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)
   Hint Rewrite
-       Z.shiftl_spec_low Z.lxor_spec Z.lor_spec Z.land_spec Z.lnot_spec Z.ldiff_spec Z.shiftl_spec Z.shiftr_spec Z.ones_spec_high Z.shiftl_spec_alt Z.ones_spec_low Z.shiftr_spec_aux Z.shiftl_spec_high Z.ones_spec_iff Z.testbit_spec 
+       Z.shiftl_spec_low Z.lxor_spec Z.lor_spec Z.land_spec Z.lnot_spec Z.ldiff_spec Z.shiftl_spec Z.shiftr_spec Z.ones_spec_high Z.shiftl_spec_alt Z.ones_spec_low Z.shiftr_spec_aux Z.shiftl_spec_high Z.ones_spec_iff Z.testbit_spec
        Z.div_pow2_bits Z.pow2_bits_eqb Z.bits_opp Z.testbit_0_l
        Z.testbit_mod_pow2 Z.testbit_ones_nonneg Z.testbit_minus1
        using solve [auto with zarith] : z_bitwise.
@@ -60,7 +60,8 @@ Module word.
     Lemma signed_eq_swrap_unsigned x : signed x = swrap (unsigned x).
     Proof. cbv [wrap]; rewrite <-signed_of_Z, of_Z_unsigned; trivial. Qed.
 
-    Context (width_nonneg : 0 <= width).
+    Lemma width_nonneg : 0 <= width. pose proof width_pos. lia. Qed.
+    Let width_nonneg_context : 0 <= width. apply width_nonneg. Qed.
     Let m_small : 0 < 2^width. apply Z.pow_pos_nonneg; firstorder idtac. Qed.
 
     Lemma unsigned_range x : 0 <= unsigned x < 2^width.
@@ -132,7 +133,8 @@ Module word.
   End WithWord.
 
   Section WithNontrivialWord.
-    Context {width} {word : word width} {word_ok : word.ok word} (width_nonzero : 0 < width).
+    Context {width} {word : word width} {word_ok : word.ok word}.
+    Let width_nonzero : 0 < width. apply width_pos. Qed.
     Let halfm_small : 0 < 2^(width-1). apply Z.pow_pos_nonneg; auto with zarith. Qed.
     Let twice_halfm : 2^(width-1) * 2 = 2^width.
     Proof. rewrite Z.mul_comm, <-Z.pow_succ_r by lia; f_equal; lia. Qed.
@@ -296,14 +298,14 @@ Module word.
 
     Lemma signed_srs_nowrap x y (H:unsigned y < width) : signed (srs x y) = Z.shiftr (signed x) (unsigned y).
     Proof.
-      pose proof @unsigned_range _ _ word_ok ltac:(lia) y; sbitwise.
+      pose proof @unsigned_range _ _ word_ok y; sbitwise.
       replace (unsigned y) with 0 by lia; rewrite Z.add_0_r; trivial.
     Qed.
 
     Lemma signed_mulhss_nowrap x y : signed (mulhss x y) = Z.mul (signed x) (signed y) / 2^width.
     Proof. rewrite signed_mulhss. apply swrap_inrange. pose (signed_range x); pose (signed_range y). mia. Qed.
     Lemma signed_mulhsu_nowrap x y : signed (mulhsu x y) = Z.mul (signed x) (unsigned y) / 2^width.
-    Proof. rewrite signed_mulhsu. apply swrap_inrange. pose (signed_range x); pose (@unsigned_range _ _ word_ok ltac:(lia) y). mia. Qed.
+    Proof. rewrite signed_mulhsu. apply swrap_inrange. pose (signed_range x); pose (@unsigned_range _ _ word_ok y). mia. Qed.
     Lemma signed_divs_nowrap x y (H:signed y <> 0) (H0:signed x <> -2^(width-1) \/ signed y <> -1) : signed (divs x y) = Z.quot (signed x) (signed y).
     Proof.
       rewrite signed_divs by assumption. apply swrap_inrange.

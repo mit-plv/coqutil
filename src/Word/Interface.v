@@ -55,6 +55,8 @@ Module word.
   Class ok {width} {word : word width} := {
     wrap z := z mod 2^width;
 
+    width_pos: 0 < width;
+
     unsigned_of_Z : forall z, unsigned (of_Z z) = wrap z;
     signed_of_Z : forall z, signed (of_Z z) = swrap z;
     of_Z_unsigned : forall x, of_Z (unsigned x) = x;
