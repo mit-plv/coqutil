@@ -54,7 +54,7 @@ Module word.
       rewrite of_Z_unsigned in H. congruence.
     Qed.
 
-    Lemma eq_unsigned x y (H : unsigned x = unsigned y) : x = y.
+    Lemma unsigned_inj x y (H : unsigned x = unsigned y) : x = y.
     Proof. rewrite <-(of_Z_unsigned x), <-(of_Z_unsigned y). apply f_equal, H. Qed.
 
     Lemma signed_eq_swrap_unsigned x : signed x = swrap (unsigned x).
@@ -69,7 +69,7 @@ Module word.
 
     Lemma ring_theory : Ring_theory.ring_theory (of_Z 0) (of_Z 1) add mul sub opp Logic.eq.
     Proof.
-     split; intros; apply eq_unsigned; repeat rewrite ?wrap_unsigned,
+     split; intros; apply unsigned_inj; repeat rewrite ?wrap_unsigned,
          ?unsigned_add, ?unsigned_sub, ?unsigned_opp, ?unsigned_mul, ?unsigned_of_Z,
          ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?Z.mul_mod_idemp_l, ?Z.mul_mod_idemp_r,
          ?Z.add_0_l, ?(Z.mod_small 1), ?Z.mul_1_l;
@@ -79,7 +79,7 @@ Module word.
     Lemma ring_morph :
       Ring_theory.ring_morph (of_Z 0) (of_Z 1) add mul sub opp Logic.eq 0  1 Z.add Z.mul Z.sub Z.opp Z.eqb of_Z.
     Proof.
-     split; intros; apply eq_unsigned; repeat rewrite  ?wrap_unsigned,
+     split; intros; apply unsigned_inj; repeat rewrite  ?wrap_unsigned,
          ?unsigned_add, ?unsigned_sub, ?unsigned_opp, ?unsigned_mul, ?unsigned_of_Z,
          ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?Z.mul_mod_idemp_l, ?Z.mul_mod_idemp_r,
          ?Zdiv.Zminus_mod_idemp_l, ?Zdiv.Zminus_mod_idemp_r,
@@ -324,9 +324,9 @@ Module word.
       rewrite ?X, ?Y; repeat rewrite ?Z.abs_eq, ?Z.abs_neq by lia; mia.
     Qed.
 
-    Lemma eq_signed x y (H : signed x = signed y) : x = y.
+    Lemma signed_inj x y (H : signed x = signed y) : x = y.
     Proof.
-      eapply eq_unsigned, Z.bits_inj'; intros i Hi.
+      eapply unsigned_inj, Z.bits_inj'; intros i Hi.
       eapply (f_equal (fun z => Z.testbit z i)) in H.
       rewrite 2testbit_signed in H. rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       autorewrite with word_laws z_bitwise.
@@ -338,7 +338,7 @@ Module word.
       rewrite unsigned_eqb.
       destruct (Z.eqb_spec (unsigned x) (unsigned y)) as [?e|?];
         destruct (Z.eqb_spec (  signed x) (  signed y)) as [?e|?];
-        try (apply eq_unsigned in e || apply eq_signed in e); congruence.
+        try (apply unsigned_inj in e || apply signed_inj in e); congruence.
     Qed.
   End WithNontrivialWord.
 End word.
