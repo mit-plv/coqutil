@@ -14,7 +14,7 @@ Module Import polymorphic_list.
       | cons _ l' => S (length l')
       end.
   End WithA.
-  
+
   Section WithElement.
     Context {A} (x : A).
     Fixpoint repeat (x : A) (n : nat) {struct n} : list A :=
@@ -43,7 +43,7 @@ Module hlist.
     | nil => fun P f _ => f
     | cons T argts' => fun P f '(x, args') => apply (f x) args'
     end.
-  
+
   Fixpoint binds {argts : list Type} : forall {P} (f : hlist argts -> P), arrows argts P :=
     match argts return forall {P} (f : hlist argts -> P), arrows argts P with
     | nil => fun P f => f tt
@@ -101,6 +101,34 @@ Module tuple.
       | nil => tt
       | cons x xs => pair.mk x (of_list xs)
       end.
+
+    Fixpoint option_all {sz : nat} : tuple (option A) sz -> option (tuple A sz) :=
+      match sz with
+      | O => fun _ => Some tt
+      | S sz' => fun '(pair.mk ox xs) =>
+                   match ox, option_all xs with
+                   | Some x, Some ys => Some (pair.mk x ys)
+                   | _ , _ => None
+                   end
+      end.
+
+    Section WithF.
+      Context {B: Type}.
+      Context (f: A -> B).
+      Fixpoint map{sz: nat}: tuple A sz -> tuple B sz :=
+        match sz with
+        | O => fun _ => tt
+        | S sz' => fun '(pair.mk x xs) => pair.mk (f x) (map xs)
+        end.
+    End WithF.
+
+    Section WithStep.
+      Context (step : A -> A).
+      Fixpoint unfoldn (n : nat) (start : A) : tuple A n :=
+        match n with
+        | O => tt
+        | S n => pair.mk start (unfoldn n (step start))
+        end.
+    End WithStep.
   End WithA.
 End tuple.
-Set Printing Universes.
