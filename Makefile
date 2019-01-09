@@ -2,7 +2,10 @@ default_target: all
 
 .PHONY: clean force all
 
-ALL_VS := $(shell find src -type f -name '*.v')
+# absolute paths so that emacs compile mode knows where to find error
+SRCDIR := $(shell pwd)/src
+
+ALL_VS := $(shell find $(SRCDIR) -type f -name '*.v')
 
 ALL_VOS := $(patsubst %.v,%.vo,$(ALL_VOS))
 
