@@ -130,6 +130,29 @@ Module word.
 
     Lemma testbit_wrap z i : Z.testbit (wrap z) i = ((i <? width) && Z.testbit z i)%bool.
     Proof. cbv [wrap]. autorewrite with z_bitwise; trivial. Qed.
+
+    Lemma eqb_true: forall (a b: word), word.eqb a b = true -> a = b.
+    Proof.
+      intros.
+      rewrite word.unsigned_eqb in H. rewrite Z.eqb_eq in H. apply unsigned_inj in H.
+      assumption.
+    Qed.
+
+    Lemma eqb_eq: forall (a b: word), a = b -> word.eqb a b = true.
+    Proof.
+      intros. subst. rewrite unsigned_eqb. apply Z.eqb_refl.
+    Qed.
+
+    Lemma eqb_false: forall (a b: word), word.eqb a b = false -> a <> b.
+    Proof.
+      intros. intro. rewrite eqb_eq in H; congruence.
+    Qed.
+
+    Lemma eqb_ne: forall (a b: word), a <> b -> word.eqb a b = false.
+    Proof.
+      intros. destruct (word.eqb a b) eqn: E; try congruence.
+      exfalso. apply H. apply eqb_true in E. assumption.
+    Qed.
   End WithWord.
 
   Section WithNontrivialWord.
