@@ -30,3 +30,13 @@ Hint Unfold
      subset
      disjoint
   : unf_map_defs (* FIXME: currently we rely on map solver unfolding these *).
+
+Require Import Coq.Program.Tactics.
+Require Import coqutil.Tactics.Tactics.
+
+Ltac set_solver_generic E :=
+  repeat autounfold with unf_map_defs in *;
+  destruct_products;
+  intros;
+  specialize_with E;
+  intuition (subst *; auto).
