@@ -153,6 +153,9 @@ Module word.
       intros. destruct (word.eqb a b) eqn: E; try congruence.
       exfalso. apply H. apply eqb_true in E. assumption.
     Qed.
+
+    Lemma eq_or_neq (k1 k2 : word) : k1 = k2 \/ k1 <> k2.
+    Proof. destruct (word.eqb k1 k2) eqn:H; [eapply eqb_true in H | eapply eqb_false in H]; auto. Qed.
   End WithWord.
 
   Section WithNontrivialWord.
