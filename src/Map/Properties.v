@@ -130,9 +130,12 @@ Module map.
       simpl in *.
       unfold getmany_of_tuple, HList.tuple.map, HList.tuple.option_all in H.
       destruct (get m k); [|discriminate].
-      match goal with
-      | H: match ?E with _ => _ end = Some _ |- _ => change E with (getmany_of_tuple m ks) in H
-      end.
+      change (
+          match (getmany_of_tuple m ks) with
+          | Some ys => Some {| PrimitivePair.pair._1 := v0; PrimitivePair.pair._2 := ys |}
+          | None => None
+          end = Some {| PrimitivePair.pair._1 := v; PrimitivePair.pair._2 := vs |}
+        ) in H.
       destruct (getmany_of_tuple m ks); [|discriminate].
       inversion H. auto.
     Qed.
