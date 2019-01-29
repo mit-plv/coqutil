@@ -120,5 +120,88 @@ Module map.
         destruct (get m2 k) eqn:?; [ solve[edestruct H; eauto] | | | ];
         erewrite ?get_putmany_left, ?get_putmany_right by eauto; eauto.
     Qed.
+
+    Lemma invert_getmany_of_tuple_Some: forall n ks (vs: HList.tuple value (S n)) m,
+        getmany_of_tuple m ks = Some vs ->
+        get m (PrimitivePair.pair._1 ks) = Some (PrimitivePair.pair._1 vs) /\
+        getmany_of_tuple m (PrimitivePair.pair._2 ks) = Some (PrimitivePair.pair._2 vs).
+    Proof.
+      intros. destruct ks as [k ks]. destruct vs as [v vs].
+      simpl in *.
+      unfold getmany_of_tuple, HList.tuple.map, HList.tuple.option_all in H.
+      destruct (get m k); [|discriminate].
+      match goal with
+      | H: match ?E with _ => _ end = Some _ |- _ => change E with (getmany_of_tuple m ks) in H
+      end.
+      destruct (getmany_of_tuple m ks); [|discriminate].
+      inversion H. auto.
+    Qed.
+
+    Lemma put_preserves_getmany_of_tuple_success: forall k v n m (ks: HList.tuple key n),
+        getmany_of_tuple m ks <> None ->
+        getmany_of_tuple (put m k v) ks <> None.
+    Proof.
+      induction n; intros.
+      - destruct ks. cbv. congruence.
+      - destruct (getmany_of_tuple m ks) eqn: E; [|exfalso; congruence].
+        destruct ks as [k1 ks].
+        apply invert_getmany_of_tuple_Some in E.
+        simpl in E. destruct E as [E1 E2].
+        unfold getmany_of_tuple, HList.tuple.map, HList.tuple.option_all.
+        let t := constr:(getmany_of_tuple (put m k v) ks) in
+        let t' := eval unfold getmany_of_tuple, HList.tuple.map, HList.tuple.option_all in t in
+        assert (t' = t) as F by reflexivity.
+        rewrite F; clear F.
+        assert (getmany_of_tuple m ks <> None) as G. {
+          rewrite E2. congruence.
+        }
+        specialize IHn with (1 := G). clear G.
+        destruct (getmany_of_tuple (put m k v) ks) eqn: E; [|exfalso; congruence].
+        destruct (key_eq_dec k k1).
+        + subst k1.
+          rewrite get_put_same.
+          congruence.
+        + rewrite get_put_diff by congruence.
+          rewrite E1. congruence.
+    Qed.
+
+    Lemma putmany_of_tuple_preserves_domain: forall n ks (vs: HList.tuple value n) m m',
+        getmany_of_tuple m ks <> None ->
+        putmany_of_tuple ks vs m = m' ->
+        forall k, get m k = None <-> get m' k = None.
+    Proof.
+      induction n; intros; simpl in *.
+      - subst. reflexivity.
+      - destruct (getmany_of_tuple m ks) eqn: E; [|exfalso; congruence].
+        apply invert_getmany_of_tuple_Some in E.
+        destruct ks as [k1 ks]. destruct vs as [v vs].
+        simpl in *.
+        destruct E.
+        specialize IHn with (2 := H0).
+        assert (getmany_of_tuple (put m k1 v) ks <> None) as F. {
+          destruct (getmany_of_tuple (put m k1 v) ks) eqn: E; [congruence|].
+          pose proof put_preserves_getmany_of_tuple_success as P.
+          assert (getmany_of_tuple m ks <> None) as Q. {
+            rewrite H2. congruence.
+          }
+          specialize P with (1 := Q). specialize (P k1 v).
+          rewrite E in P. exact P.
+        }
+        specialize IHn with (1 := F). clear F.
+        split; intro A.
+        + destruct (key_eq_dec k k1).
+          * subst k1. exfalso. congruence.
+          * eapply IHn. rewrite get_put_diff by congruence. assumption.
+        + specialize (IHn k).
+          destruct IHn as [_ IH].
+          specialize (IH A).
+          destruct (key_eq_dec k k1).
+          * subst k1. exfalso.
+            rewrite get_put_same in IH.
+            discriminate.
+          * rewrite get_put_diff in IH by congruence.
+            exact IH.
+    Qed.
+
   End WithMap.
 End map.

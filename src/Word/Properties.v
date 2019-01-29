@@ -154,6 +154,13 @@ Module word.
       exfalso. apply H. apply eqb_true in E. assumption.
     Qed.
 
+    Lemma eqb_spec(a b: word): BoolSpec (a = b) (a <> b) (word.eqb a b).
+    Proof.
+      destruct (eqb a b) eqn: E; constructor.
+      - eauto using eqb_true.
+      - eauto using eqb_false.
+    Qed.
+
     Lemma eq_or_neq (k1 k2 : word) : k1 = k2 \/ k1 <> k2.
     Proof. destruct (word.eqb k1 k2) eqn:H; [eapply eqb_true in H | eapply eqb_false in H]; auto. Qed.
   End WithWord.
