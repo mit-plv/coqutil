@@ -39,8 +39,8 @@ Module map.
       (get m2 k = None /\ get (putmany m1 m2) k = get m1 k).
     Proof.
       destruct (get m2 k) eqn:?HH; [left | right ].
-      { exists v. split. reflexivity. erewrite get_putmany_right; eauto. }
-      { split. reflexivity. rewrite get_putmany_left; eauto. }
+      { exists v. split; [ reflexivity | ]. erewrite get_putmany_right; eauto. }
+      { split; [ reflexivity | ]. rewrite get_putmany_left; eauto. }
     Qed.
 
     Lemma putmany_comm x y : disjoint x y -> putmany x y = putmany y x.
@@ -70,7 +70,11 @@ Module map.
     Lemma putmany_empty_r x : putmany x empty = x.
     Proof. eapply map_ext; intros; rewrite get_putmany_left; eauto using get_empty. Qed.
     Lemma putmany_empty_l x : putmany empty x = x.
-    Proof. rewrite (putmany_comm empty x). eapply putmany_empty_r. intros k. pose proof get_empty k. congruence. Qed.
+    Proof.
+      rewrite (putmany_comm empty x).
+      - eapply putmany_empty_r.
+      - intros k. pose proof get_empty k. congruence.
+    Qed.
     Lemma empty_putmany m1 m2 : putmany m1 m2 = empty <-> (m1 = empty /\ m2 = empty).
     Proof.
       split; [|intros (?&?); subst; eauto using putmany_empty_r]; intros H.

@@ -18,7 +18,7 @@ Section WithWidth.
   Context {width_nonneg : Z.lt 0 width}.
 
   Lemma wrap_value_wrap_value z : wrap_value (wrap_value z) = wrap_value z.
-    cbv [wrap_value]. rewrite Z.mod_mod. reflexivity.
+    cbv [wrap_value]. rewrite Z.mod_mod; [ reflexivity | ].
     eapply Z.pow_nonzero; [congruence | Lia.lia ].
   Qed.
 
