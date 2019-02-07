@@ -1,4 +1,5 @@
 Require Import coqutil.Decidable coqutil.Map.Interface. Import map.
+Require Import coqutil.Datatypes.Option.
 
 Module map.
   Section WithMap.
@@ -144,6 +145,28 @@ Module map.
       inversion H. auto.
     Qed.
 
+    Lemma build_getmany_of_tuple_Some
+        (n: nat) (ks : HList.tuple key (S n)) (vs : HList.tuple value (S n)) (m : map)
+        (G1: map.get m (PrimitivePair.pair._1 ks) = Some (PrimitivePair.pair._1 vs))
+        (G2: map.getmany_of_tuple m (PrimitivePair.pair._2 ks) = Some (PrimitivePair.pair._2 vs)):
+        map.getmany_of_tuple m ks = Some vs.
+    Proof.
+      unfold map.getmany_of_tuple, HList.tuple.option_all, HList.tuple.map.
+      match goal with
+      | |- match ?e with _ => _ end = _ =>
+        replace e with (Some (PrimitivePair.pair._1 vs)) by exact G1
+      end.
+      match goal with
+      | |- match ?e with _ => _ end = _ =>
+        replace e with (map.getmany_of_tuple m (PrimitivePair.pair._2 ks)) by reflexivity
+      end.
+      match goal with
+      | |- match ?e with _ => _ end = _ =>
+        replace e with (Some (PrimitivePair.pair._2 vs)) by exact G2
+      end.
+      reflexivity.
+    Qed.
+
     Lemma put_preserves_getmany_of_tuple_success: forall k v n m (ks: HList.tuple key n),
         getmany_of_tuple m ks <> None ->
         getmany_of_tuple (put m k v) ks <> None.
@@ -172,42 +195,225 @@ Module map.
           rewrite E1. congruence.
     Qed.
 
-    Lemma putmany_of_tuple_preserves_domain: forall n ks (vs: HList.tuple value n) m m',
-        getmany_of_tuple m ks <> None ->
-        putmany_of_tuple ks vs m = m' ->
-        forall k, get m k = None <-> get m' k = None.
+    Definition sub_footprint(m1 m2: map): Prop :=
+      forall (a: key) (b1: value), map.get m1 a = Some b1 -> exists b2, map.get m2 a = Some b2.
+
+    Definition same_footprint(m1 m2: map): Prop :=
+      sub_footprint m1 m2 /\ sub_footprint m2 m1.
+
+    Lemma get_in_disjoint_putmany (m1 m2: map) (k: key) (v: value)
+        (G: map.get m1 k = Some v)
+        (D: map.disjoint m1 m2):
+        map.get (map.putmany m1 m2) k = Some v.
     Proof.
-      induction n; intros; simpl in *.
-      - subst. reflexivity.
-      - destruct (getmany_of_tuple m ks) eqn: E; [|exfalso; congruence].
-        apply invert_getmany_of_tuple_Some in E.
-        destruct ks as [k1 ks]. destruct vs as [v vs].
+      pose proof (putmany_spec m1 m2 k) as P.
+      destruct P as [(v2 & G2 & G3) | (G2 & G3)].
+      - exfalso. unfold disjoint in D. eauto.
+      - rewrite G3. assumption.
+    Qed.
+
+    Lemma getmany_of_tuple_in_disjoint_putmany
+        (n: nat) (m1 m2: map) (ks: HList.tuple key n) (vs: HList.tuple value n)
+        (G: map.getmany_of_tuple m1 ks = Some vs)
+        (D: map.disjoint m1 m2):
+        map.getmany_of_tuple (map.putmany m1 m2) ks = Some vs.
+    Proof.
+      revert n ks vs G. induction n as [|n]; intros ks vs G.
+      - destruct ks. destruct vs. reflexivity.
+      - apply invert_getmany_of_tuple_Some in G. destruct G as [G1 G2].
+        destruct ks as [k ks]. destruct vs as [v vs]. simpl in *.
+        apply build_getmany_of_tuple_Some; simpl.
+        + apply get_in_disjoint_putmany; assumption.
+        + apply IHn. assumption.
+    Qed.
+
+    Lemma put_putmany_commute k v m1 m2 : put (putmany m1 m2) k v = putmany m1 (put m2 k v).
+    Proof.
+      apply map_ext. intro k'.
+      destruct (dec (k = k')).
+      - subst k'. rewrite get_put_same. erewrite get_putmany_right; [reflexivity|].
+        apply get_put_same.
+      - rewrite get_put_diff by congruence.
+        pose proof (putmany_spec m1 m2 k') as P.
+        destruct P as [(v' & G1 & G2) | (G1 & G2)]; rewrite G2.
+        + erewrite get_putmany_right; [reflexivity|].
+          rewrite get_put_diff by congruence. assumption.
+        + rewrite get_putmany_left; [reflexivity|].
+          rewrite get_put_diff by congruence. assumption.
+    Qed.
+
+    Lemma putmany_of_tuple_to_putmany_aux
+          (m: map) (n: nat) (m2: map) (ks: HList.tuple key n) (vs: HList.tuple value n):
+        putmany_of_tuple ks vs (putmany m m2) = putmany m (putmany_of_tuple ks vs m2).
+    Proof.
+      revert n ks vs m2. induction n; intros ks vs m2.
+      - destruct ks. destruct vs. simpl. reflexivity.
+      - destruct ks as [k ks]. destruct vs as [v vs]. simpl.
+        specialize (IHn ks vs m2). rewrite IHn.
+        rewrite put_putmany_commute.
+        reflexivity.
+    Qed.
+
+    Lemma putmany_of_tuple_to_putmany
+          (n: nat) (m: map) (ks: HList.tuple key n) (vs: HList.tuple value n):
+        map.putmany_of_tuple ks vs m = map.putmany m (map.putmany_of_tuple ks vs map.empty).
+    Proof.
+      pose proof (putmany_of_tuple_to_putmany_aux m n empty ks vs) as P.
+      rewrite putmany_empty_r in P. exact P.
+    Qed.
+
+    Lemma disjoint_putmany_commutes(m1 m2 m3: map)
+        (D: map.disjoint m2 m3):
+        map.putmany (map.putmany m1 m2) m3 = map.putmany (map.putmany m1 m3) m2.
+    Proof.
+      unfold disjoint in D.
+      apply map_ext. intro k.
+      destruct (get m3 k) eqn: E3; destruct (get m2 k) eqn: E2; [ solve [exfalso; eauto] | .. ].
+      all: repeat (first [erewrite get_putmany_left by eassumption |
+                          erewrite get_putmany_right by eassumption]).
+      all: reflexivity.
+    Qed.
+
+    Lemma sub_footprint_refl(m: map): sub_footprint m m.
+    Proof. unfold sub_footprint. eauto. Qed.
+
+    Lemma same_footprint_refl(m: map): same_footprint m m.
+    Proof. unfold same_footprint. eauto using sub_footprint_refl. Qed.
+
+    Lemma sub_footprint_trans(m1 m2 m3: map)
+      (S1: sub_footprint m1 m2)
+      (S2: sub_footprint m2 m3):
+      sub_footprint m1 m3.
+    Proof.
+      unfold sub_footprint in *. intros k v1 G1.
+      specialize S1 with (1 := G1). destruct S1 as [v2 S1].
+      specialize S2 with (1 := S1). exact S2.
+    Qed.
+
+    Lemma same_footprint_trans(m1 m2 m3: map)
+      (S1: same_footprint m1 m2)
+      (S2: same_footprint m2 m3):
+      same_footprint m1 m3.
+    Proof.
+      unfold same_footprint in *. intuition (eauto using sub_footprint_trans).
+    Qed.
+
+    Lemma sub_footprint_put(m1 m2: map)(k: key)(v1 v2: value)
+        (S: sub_footprint m1 m2):
+        sub_footprint (put m1 k v1) (put m2 k v2).
+    Proof.
+      unfold sub_footprint in *. intros k' v' G.
+      destruct (dec (k' = k)).
+      - subst k'. rewrite get_put_same in G. inversion_option. subst v'.
+        exists v2. apply get_put_same.
+      - rewrite get_put_diff in G by assumption.
+        specialize S with (1 := G).
+        rewrite get_put_diff by assumption.
+        exact S.
+    Qed.
+
+    Lemma sub_footprint_put_r(m1 m2: map)(k: key)(v: value)
+        (S: sub_footprint m1 m2):
+        sub_footprint m1 (put m2 k v).
+    Proof.
+      unfold sub_footprint in *. intros k' v' G.
+      destruct (dec (k' = k)).
+      - subst k'. exists v. apply get_put_same.
+      - specialize S with (1 := G).
+        rewrite get_put_diff by assumption.
+        exact S.
+    Qed.
+
+    Lemma sub_footprint_putmany_r(m1 m2 m: map)
+        (S: sub_footprint m1 m2):
+        sub_footprint m1 (putmany m2 m).
+    Proof.
+      unfold sub_footprint in *. intros k v1 G.
+      specialize S with (1 := G). destruct S as [v2 S].
+      pose proof (putmany_spec m2 m k) as P.
+      destruct P as [(v & G1 & G2) | (G1 & G2)]; rewrite G2; eauto.
+    Qed.
+
+    Lemma same_footprint_put(m1 m2: map)(k: key)(v1 v2: value)
+        (S: same_footprint m1 m2):
+        same_footprint (put m1 k v1) (put m2 k v2).
+    Proof.
+      unfold same_footprint in *. destruct S as [S1 S2]. eauto using sub_footprint_put.
+    Qed.
+
+    Lemma getmany_of_tuple_to_sub_footprint
+        (n: nat) (m: map) (ks: HList.tuple key n) (vs: HList.tuple value n)
+        (G: map.getmany_of_tuple m ks = Some vs):
+        sub_footprint (putmany_of_tuple ks vs map.empty) m.
+    Proof.
+      revert n m ks vs G. induction n; intros m ks vs G k v1 GP.
+      - destruct ks. destruct vs. simpl in *. rewrite get_empty in GP. discriminate.
+      - apply invert_getmany_of_tuple_Some in G. destruct G as [G1 G2].
+        destruct ks as [ki ks]. destruct vs as [vi vs]. simpl in *.
+        destruct (dec (ki = k)).
+        + subst ki. eexists. exact G1.
+        + rewrite get_put_diff in GP by congruence.
+          specialize IHn with (1 := G2). unfold sub_footprint in IHn.
+          eapply IHn.
+          eassumption.
+    Qed.
+
+    Lemma putmany_of_tuple_same_footprint
+        (n: nat) (m1 m2: map) (ks: HList.tuple key n) (vs1 vs2: HList.tuple value n)
+        (S: same_footprint m1 m2):
+        same_footprint (map.putmany_of_tuple ks vs1 m1)
+                       (map.putmany_of_tuple ks vs2 m2).
+    Proof.
+      revert m1 m2 ks vs1 vs2 S. induction n; intros m1 m2 ks vs1 vs2 S.
+      - destruct ks. destruct vs1. destruct vs2. simpl. assumption.
+      - destruct vs1 as [v1 vs1]. destruct vs2 as [v2 vs2]. destruct ks as [k ks].
         simpl in *.
-        destruct E.
-        specialize IHn with (2 := H0).
-        assert (getmany_of_tuple (put m k1 v) ks <> None) as F. {
-          destruct (getmany_of_tuple (put m k1 v) ks) eqn: E; [congruence|].
-          pose proof put_preserves_getmany_of_tuple_success as P.
-          assert (getmany_of_tuple m ks <> None) as Q. {
-            rewrite H2. congruence.
-          }
-          specialize P with (1 := Q). specialize (P k1 v).
-          rewrite E in P. exact P.
-        }
-        specialize IHn with (1 := F). clear F.
-        split; intro A.
-        + destruct (key_eq_dec k k1).
-          * subst k1. exfalso. congruence.
-          * eapply IHn. rewrite get_put_diff by congruence. assumption.
-        + specialize (IHn k).
-          destruct IHn as [_ IH].
-          specialize (IH A).
-          destruct (key_eq_dec k k1).
-          * subst k1. exfalso.
-            rewrite get_put_same in IH.
-            discriminate.
-          * rewrite get_put_diff in IH by congruence.
-            exact IH.
+        specialize IHn with (1 := S).
+        apply same_footprint_put.
+        apply IHn.
+    Qed.
+
+    Lemma sub_footprint_value_indep
+        (n: nat) (m: map) (ks: HList.tuple key n) (vs1 vs2: HList.tuple value n)
+        (S: sub_footprint (map.putmany_of_tuple ks vs1 map.empty) m):
+        sub_footprint (map.putmany_of_tuple ks vs2 map.empty) m.
+    Proof.
+      pose proof (putmany_of_tuple_same_footprint
+                    n empty empty ks vs1 vs2 (same_footprint_refl _)) as P.
+      destruct P as [P1 P2].
+      eauto using sub_footprint_trans.
+    Qed.
+
+    Lemma sub_footprint_disjoint(m1 m1' m2: map)
+        (D: map.disjoint m1' m2)
+        (S: sub_footprint m1 m1'):
+        map.disjoint m1 m2.
+    Proof.
+      unfold sub_footprint, disjoint in *. intros k v1 v2 G1 G2.
+      specialize (S _ _ G1). destruct S as [v1' S].
+      eauto.
+    Qed.
+
+    Lemma putmany_of_tuple_preserves_footprint
+        (n : nat)(ks : HList.tuple key n) (oldvs vs : HList.tuple value n) (m : map)
+        (G: map.getmany_of_tuple m ks = Some oldvs):
+        same_footprint m (map.putmany_of_tuple ks vs m).
+    Proof.
+      unfold same_footprint. split.
+      - rewrite putmany_of_tuple_to_putmany.
+        apply sub_footprint_putmany_r. apply sub_footprint_refl.
+      - unfold sub_footprint. intros k v GP.
+        revert ks oldvs vs k v G GP. induction n; intros ks oldvs vs k0 v0 G GP.
+        + destruct ks. destruct vs. simpl in *. eauto.
+        + apply invert_getmany_of_tuple_Some in G.
+          destruct ks as [k ks]. destruct vs as [v vs]. destruct oldvs as [oldv oldvs].
+          simpl in *. destruct G as [G1 G2].
+          destruct (dec (k0 = k)).
+          * subst k0. eexists. exact G1.
+          * rewrite get_put_diff in GP by congruence.
+            specialize IHn with (1 := G2).
+            specialize IHn with (1 := GP).
+            exact IHn.
     Qed.
 
   End WithMap.

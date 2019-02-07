@@ -62,7 +62,7 @@ Module map.
       match sz with
       | O => fun keys values init => init
       | S sz' => fun '(pair.mk k ks) '(pair.mk v vs) init =>
-                   putmany_of_tuple ks vs (put init k v)
+                   put (putmany_of_tuple ks vs init) k v
       end.
     Definition of_tuple {sz : nat} (keys: tuple key sz) (values: tuple value sz) :=
       putmany_of_tuple keys values empty.
