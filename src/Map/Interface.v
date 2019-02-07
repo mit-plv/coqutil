@@ -38,7 +38,11 @@ Module map.
     Definition only_differ(m1: map)(ks: key -> Prop)(s2: map) :=
       forall x, ks x \/ get m1 x = get s2 x.
     Definition undef_on m P := agree_on P m empty.
-    Definition disjoint (a b : map) := forall k v1 v2, get a k = Some v1 -> get b k = Some v2 -> False.
+    Definition disjoint (a b : map) :=
+      forall k v1 v2, get a k = Some v1 -> get b k = Some v2 -> False.
+    Definition sub_domain(m1 m2: map): Prop :=
+      forall k v1, map.get m1 k = Some v1 -> exists v2, map.get m2 k = Some v2.
+    Definition same_domain(m1 m2: map): Prop := sub_domain m1 m2 /\ sub_domain m2 m1.
     Definition split m m1 m2 := m = (putmany m1 m2) /\ disjoint m1 m2.
 
     Definition getmany_of_list (m : map) (keys : list key) : option (list value) :=

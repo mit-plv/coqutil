@@ -195,12 +195,6 @@ Module map.
           rewrite E1. congruence.
     Qed.
 
-    Definition sub_footprint(m1 m2: map): Prop :=
-      forall (a: key) (b1: value), map.get m1 a = Some b1 -> exists b2, map.get m2 a = Some b2.
-
-    Definition same_footprint(m1 m2: map): Prop :=
-      sub_footprint m1 m2 /\ sub_footprint m2 m1.
-
     Lemma get_in_disjoint_putmany (m1 m2: map) (k: key) (v: value)
         (G: map.get m1 k = Some v)
         (D: map.disjoint m1 m2):
@@ -274,35 +268,35 @@ Module map.
       all: reflexivity.
     Qed.
 
-    Lemma sub_footprint_refl(m: map): sub_footprint m m.
-    Proof. unfold sub_footprint. eauto. Qed.
+    Lemma sub_domain_refl(m: map): sub_domain m m.
+    Proof. unfold sub_domain. eauto. Qed.
 
-    Lemma same_footprint_refl(m: map): same_footprint m m.
-    Proof. unfold same_footprint. eauto using sub_footprint_refl. Qed.
+    Lemma same_domain_refl(m: map): same_domain m m.
+    Proof. unfold same_domain. eauto using sub_domain_refl. Qed.
 
-    Lemma sub_footprint_trans(m1 m2 m3: map)
-      (S1: sub_footprint m1 m2)
-      (S2: sub_footprint m2 m3):
-      sub_footprint m1 m3.
+    Lemma sub_domain_trans(m1 m2 m3: map)
+      (S1: sub_domain m1 m2)
+      (S2: sub_domain m2 m3):
+      sub_domain m1 m3.
     Proof.
-      unfold sub_footprint in *. intros k v1 G1.
+      unfold sub_domain in *. intros k v1 G1.
       specialize S1 with (1 := G1). destruct S1 as [v2 S1].
       specialize S2 with (1 := S1). exact S2.
     Qed.
 
-    Lemma same_footprint_trans(m1 m2 m3: map)
-      (S1: same_footprint m1 m2)
-      (S2: same_footprint m2 m3):
-      same_footprint m1 m3.
+    Lemma same_domain_trans(m1 m2 m3: map)
+      (S1: same_domain m1 m2)
+      (S2: same_domain m2 m3):
+      same_domain m1 m3.
     Proof.
-      unfold same_footprint in *. intuition (eauto using sub_footprint_trans).
+      unfold same_domain in *. intuition (eauto using sub_domain_trans).
     Qed.
 
-    Lemma sub_footprint_put(m1 m2: map)(k: key)(v1 v2: value)
-        (S: sub_footprint m1 m2):
-        sub_footprint (put m1 k v1) (put m2 k v2).
+    Lemma sub_domain_put(m1 m2: map)(k: key)(v1 v2: value)
+        (S: sub_domain m1 m2):
+        sub_domain (put m1 k v1) (put m2 k v2).
     Proof.
-      unfold sub_footprint in *. intros k' v' G.
+      unfold sub_domain in *. intros k' v' G.
       destruct (dec (k' = k)).
       - subst k'. rewrite get_put_same in G. inversion_option. subst v'.
         exists v2. apply get_put_same.
@@ -312,11 +306,11 @@ Module map.
         exact S.
     Qed.
 
-    Lemma sub_footprint_put_r(m1 m2: map)(k: key)(v: value)
-        (S: sub_footprint m1 m2):
-        sub_footprint m1 (put m2 k v).
+    Lemma sub_domain_put_r(m1 m2: map)(k: key)(v: value)
+        (S: sub_domain m1 m2):
+        sub_domain m1 (put m2 k v).
     Proof.
-      unfold sub_footprint in *. intros k' v' G.
+      unfold sub_domain in *. intros k' v' G.
       destruct (dec (k' = k)).
       - subst k'. exists v. apply get_put_same.
       - specialize S with (1 := G).
@@ -324,27 +318,27 @@ Module map.
         exact S.
     Qed.
 
-    Lemma sub_footprint_putmany_r(m1 m2 m: map)
-        (S: sub_footprint m1 m2):
-        sub_footprint m1 (putmany m2 m).
+    Lemma sub_domain_putmany_r(m1 m2 m: map)
+        (S: sub_domain m1 m2):
+        sub_domain m1 (putmany m2 m).
     Proof.
-      unfold sub_footprint in *. intros k v1 G.
+      unfold sub_domain in *. intros k v1 G.
       specialize S with (1 := G). destruct S as [v2 S].
       pose proof (putmany_spec m2 m k) as P.
       destruct P as [(v & G1 & G2) | (G1 & G2)]; rewrite G2; eauto.
     Qed.
 
-    Lemma same_footprint_put(m1 m2: map)(k: key)(v1 v2: value)
-        (S: same_footprint m1 m2):
-        same_footprint (put m1 k v1) (put m2 k v2).
+    Lemma same_domain_put(m1 m2: map)(k: key)(v1 v2: value)
+        (S: same_domain m1 m2):
+        same_domain (put m1 k v1) (put m2 k v2).
     Proof.
-      unfold same_footprint in *. destruct S as [S1 S2]. eauto using sub_footprint_put.
+      unfold same_domain in *. destruct S as [S1 S2]. eauto using sub_domain_put.
     Qed.
 
-    Lemma getmany_of_tuple_to_sub_footprint
+    Lemma getmany_of_tuple_to_sub_domain
         (n: nat) (m: map) (ks: HList.tuple key n) (vs: HList.tuple value n)
         (G: map.getmany_of_tuple m ks = Some vs):
-        sub_footprint (putmany_of_tuple ks vs map.empty) m.
+        sub_domain (putmany_of_tuple ks vs map.empty) m.
     Proof.
       revert n m ks vs G. induction n; intros m ks vs G k v1 GP.
       - destruct ks. destruct vs. simpl in *. rewrite get_empty in GP. discriminate.
@@ -353,15 +347,15 @@ Module map.
         destruct (dec (ki = k)).
         + subst ki. eexists. exact G1.
         + rewrite get_put_diff in GP by congruence.
-          specialize IHn with (1 := G2). unfold sub_footprint in IHn.
+          specialize IHn with (1 := G2). unfold sub_domain in IHn.
           eapply IHn.
           eassumption.
     Qed.
 
-    Lemma putmany_of_tuple_same_footprint
+    Lemma putmany_of_tuple_same_domain
         (n: nat) (m1 m2: map) (ks: HList.tuple key n) (vs1 vs2: HList.tuple value n)
-        (S: same_footprint m1 m2):
-        same_footprint (map.putmany_of_tuple ks vs1 m1)
+        (S: same_domain m1 m2):
+        same_domain (map.putmany_of_tuple ks vs1 m1)
                        (map.putmany_of_tuple ks vs2 m2).
     Proof.
       revert m1 m2 ks vs1 vs2 S. induction n; intros m1 m2 ks vs1 vs2 S.
@@ -369,40 +363,40 @@ Module map.
       - destruct vs1 as [v1 vs1]. destruct vs2 as [v2 vs2]. destruct ks as [k ks].
         simpl in *.
         specialize IHn with (1 := S).
-        apply same_footprint_put.
+        apply same_domain_put.
         apply IHn.
     Qed.
 
-    Lemma sub_footprint_value_indep
+    Lemma sub_domain_value_indep
         (n: nat) (m: map) (ks: HList.tuple key n) (vs1 vs2: HList.tuple value n)
-        (S: sub_footprint (map.putmany_of_tuple ks vs1 map.empty) m):
-        sub_footprint (map.putmany_of_tuple ks vs2 map.empty) m.
+        (S: sub_domain (map.putmany_of_tuple ks vs1 map.empty) m):
+        sub_domain (map.putmany_of_tuple ks vs2 map.empty) m.
     Proof.
-      pose proof (putmany_of_tuple_same_footprint
-                    n empty empty ks vs1 vs2 (same_footprint_refl _)) as P.
+      pose proof (putmany_of_tuple_same_domain
+                    n empty empty ks vs1 vs2 (same_domain_refl _)) as P.
       destruct P as [P1 P2].
-      eauto using sub_footprint_trans.
+      eauto using sub_domain_trans.
     Qed.
 
-    Lemma sub_footprint_disjoint(m1 m1' m2: map)
+    Lemma sub_domain_disjoint(m1 m1' m2: map)
         (D: map.disjoint m1' m2)
-        (S: sub_footprint m1 m1'):
+        (S: sub_domain m1 m1'):
         map.disjoint m1 m2.
     Proof.
-      unfold sub_footprint, disjoint in *. intros k v1 v2 G1 G2.
+      unfold sub_domain, disjoint in *. intros k v1 v2 G1 G2.
       specialize (S _ _ G1). destruct S as [v1' S].
       eauto.
     Qed.
 
-    Lemma putmany_of_tuple_preserves_footprint
+    Lemma putmany_of_tuple_preserves_domain
         (n : nat)(ks : HList.tuple key n) (oldvs vs : HList.tuple value n) (m : map)
         (G: map.getmany_of_tuple m ks = Some oldvs):
-        same_footprint m (map.putmany_of_tuple ks vs m).
+        same_domain m (map.putmany_of_tuple ks vs m).
     Proof.
-      unfold same_footprint. split.
+      unfold same_domain. split.
       - rewrite putmany_of_tuple_to_putmany.
-        apply sub_footprint_putmany_r. apply sub_footprint_refl.
-      - unfold sub_footprint. intros k v GP.
+        apply sub_domain_putmany_r. apply sub_domain_refl.
+      - unfold sub_domain. intros k v GP.
         revert ks oldvs vs k v G GP. induction n; intros ks oldvs vs k0 v0 G GP.
         + destruct ks. destruct vs. simpl in *. eauto.
         + apply invert_getmany_of_tuple_Some in G.
