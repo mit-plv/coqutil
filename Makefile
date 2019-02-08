@@ -12,7 +12,7 @@ ALL_VOS := $(patsubst %.v,%.vo,$(ALL_VOS))
 all: Makefile.coq.all $(ALL_VS)
 	$(MAKE) -f Makefile.coq.all
 
-COQ_MAKEFILE := $(COQBIN)coq_makefile -f _CoqProject INSTALLDEFAULTROOT = coqutil
+COQ_MAKEFILE := $(COQBIN)coq_makefile -f _CoqProject INSTALLDEFAULTROOT = coqutil $(COQMF_ARGS)
 
 Makefile.coq.all: force
 	$(COQ_MAKEFILE) $(ALL_VS) -o Makefile.coq.all
