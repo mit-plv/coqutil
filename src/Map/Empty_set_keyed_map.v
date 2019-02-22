@@ -1,16 +1,23 @@
 Require Import coqutil.Map.Interface.
-Require Import coqutil.Map.SortedList.
 
-Instance Empty_set_strictorder: SortedList.parameters.strict_order
-                                  (fun (e1 e2: Empty_set) => false).
-Proof.
-  constructor; intros; match goal with x: Empty_set |- _ => destruct x end.
-Qed.
-
-Instance Empty_set_keyed_map_params(V: Type): SortedList.parameters := {|
-  parameters.key := Empty_set;
-  parameters.value := V;
-  parameters.ltb e1 e2 := false;
+Instance map(V: Type): map.map Empty_set V := {|
+  map.rep := unit;
+  map.get m := Empty_set_rect _;
+  map.empty := tt;
+  map.put m := Empty_set_rect _;
+  map.remove m := Empty_set_rect _;
+  map.putmany m1 m2 := tt;
 |}.
-Instance Empty_set_keyed_map(V: Type): map.map Empty_set V :=
-  SortedList.map (Empty_set_keyed_map_params V) Empty_set_strictorder.
+
+Local Set Default Goal Selector "all".
+
+Instance ok(V: Type): map.ok (map V).
+Proof.
+  constructor.
+  intros.
+  repeat match goal with
+         | m: map.rep |- _ => destruct m
+         | x: Empty_set |- _ => destruct x
+         end.
+  reflexivity.
+Qed.
