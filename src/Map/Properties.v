@@ -126,6 +126,46 @@ Module map.
         erewrite ?get_putmany_left, ?get_putmany_right by eauto; eauto.
     Qed.
 
+    Lemma put_extends: forall k v m1 m2,
+        extends m2 m1 ->
+        extends (put m2 k v) (put m1 k v).
+    Proof.
+      unfold extends. intros.
+      rewrite get_put_dec.
+      destruct (dec (k = x)).
+      + subst. rewrite get_put_same in H0. exact H0.
+      + rewrite get_put_diff in H0; try congruence.
+        eapply H. assumption.
+    Qed.
+
+    Lemma putmany_of_list_extends_exists: forall ks vs m1 m1' m2,
+        putmany_of_list ks vs m1 = Some m1' ->
+        extends m2 m1 ->
+        exists m2', putmany_of_list ks vs m2 = Some m2' /\ extends m2' m1'.
+    Proof.
+      induction ks; intros.
+      - destruct vs; simpl in H; [|discriminate].
+        inversion H. subst m1'. exists m2. simpl. auto.
+      - simpl in *. destruct vs; try discriminate.
+        specialize IHks with (1 := H).
+        edestruct IHks as (m2' & IH1 & IH2); cycle 1.
+        + rewrite IH1. eexists; split; [reflexivity|assumption].
+        + auto using put_extends.
+    Qed.
+
+    Lemma putmany_of_list_extends: forall ks vs m1 m1' m2 m2',
+        putmany_of_list ks vs m1 = Some m1' ->
+        putmany_of_list ks vs m2 = Some m2' ->
+        extends m2 m1 ->
+        extends m2' m1'.
+    Proof.
+      induction ks; intros.
+      - destruct vs; simpl in *; [|discriminate].
+        inversion H. inversion H0. subst. assumption.
+      - simpl in *. destruct vs; try discriminate.
+        eauto using put_extends.
+    Qed.
+
     Lemma invert_getmany_of_tuple_Some: forall n ks (vs: HList.tuple value (S n)) m,
         getmany_of_tuple m ks = Some vs ->
         get m (PrimitivePair.pair._1 ks) = Some (PrimitivePair.pair._1 vs) /\
