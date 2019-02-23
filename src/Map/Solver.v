@@ -100,6 +100,9 @@ Ltac pick_one_existential :=
 
 Ltac map_solver mapok := lazymatch type of mapok with
 | @map.ok ?K ?V ?Inst =>
+  let Needed := constr:(DecidableEq K) in
+  first [ let dummy := constr:(_: Needed) in idtac
+        | fail 10000 "map_solver won't work without" Needed ];
   repeat autounfold with unf_map_defs in *;
   destruct_products;
   repeat match goal with
