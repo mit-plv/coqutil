@@ -79,7 +79,7 @@ Section WithWidth.
     rewrite Zdiv.Zplus_mod_idemp_l; auto.
   Qed.
 
-  Lemma ok : word.ok word.
+  Global Instance ok : word.ok word.
   Proof. split; eauto using of_Z_unsigned, signed_of_Z. Qed.
 End WithWidth.
 Arguments word : clear implicits.
