@@ -26,6 +26,19 @@ Section WithWidth.
     mk (wrap_value z) (minimize_eq_proof Z.eq_dec (wrap_value_wrap_value z)).
   Definition signed w := swrap_value (unsigned w).
 
+  Unset Universe Minimization ToSet.
+  (* without the above option, defining "word" as below and then running
+
+     Set Printing Universes.
+     Set Printing Coercions.
+     Set Printing All.
+     About word.
+
+     prints "word@{} : word.word@{Set} width" which shows that the universe param of
+     word.word has been instantiated to Set, which will lead to universe inconsistencies
+     later.
+     If the above option is turned on, it prints "word@{Top.72} : word.word@{Top.72} width",
+     and no universe inconsistencies occur, hopefully. *)
   Definition word : word.word width := {|
     word.rep := rep;
     word.unsigned := unsigned;

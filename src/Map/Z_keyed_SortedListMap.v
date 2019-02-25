@@ -3,6 +3,8 @@ Require Import Coq.micromega.Lia.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.SortedList.
 
+Local Unset Universe Minimization ToSet.
+
 Instance Zltb_strictorder: SortedList.parameters.strict_order Z.ltb.
 Proof.
   constructor; intros; rewrite ?Z.ltb_lt, ?Z.ltb_ge, ?Z.ltb_irrefl in *;
