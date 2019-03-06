@@ -166,6 +166,39 @@ Module map.
         eauto using put_extends.
     Qed.
 
+    Lemma putmany_of_list_sameLength : forall bs vs st st',
+        map.putmany_of_list bs vs st = Some st' ->
+        length bs = length vs.
+    Proof.
+      induction bs, vs; cbn; try discriminate; trivial; [].
+      intros; destruct (map.putmany_of_list bs vs st) eqn:?; eauto using f_equal.
+    Qed.
+
+    Lemma sameLength_putmany_of_list : forall bs vs st,
+        length bs = length vs ->
+        exists st', map.putmany_of_list bs vs st = Some st'.
+    Proof.
+      induction bs, vs; cbn; try discriminate; intros; eauto.
+    Qed.
+
+    Lemma only_differ_putmany : forall (bs : list key) (vs : list value) st st',
+        map.putmany_of_list bs vs st = Some st' ->
+        map.only_differ st (PropSet.of_list bs) st'.
+    Proof.
+      induction bs, vs; cbn; try discriminate.
+      - inversion 1; subst. cbv; eauto.
+      - intros ? ? H x.
+        simpl.
+        destruct (map.putmany_of_list bs vs st) eqn:Heqo.
+        + specialize IHbs with (1 := H). specialize (IHbs x).
+          destruct IHbs as [IHbs | IHbs]; unfold PropSet.elem_of in *; simpl; auto.
+          rewrite get_put_dec in IHbs.
+          destruct (dec (a = x)); auto.
+        + apply putmany_of_list_sameLength in H.
+          apply (sameLength_putmany_of_list _ _ st) in H.
+          destruct H. rewrite H in Heqo. discriminate.
+    Qed.
+
     Lemma invert_getmany_of_tuple_Some: forall n ks (vs: HList.tuple value (S n)) m,
         getmany_of_tuple m ks = Some vs ->
         get m (PrimitivePair.pair._1 ks) = Some (PrimitivePair.pair._1 vs) /\
