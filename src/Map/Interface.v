@@ -1,7 +1,7 @@
 From coqutil Require Import sanity.
 From coqutil Require Import HList.
 From coqutil Require List.
-
+From coqutil Require Import Datatypes.PropSet.
 
 Module map.
   Class map {key value} := mk {
@@ -34,9 +34,9 @@ Module map.
     Context {key value : Type} {map : map key value} {map_ok : ok map}.
 
     Definition extends (m1 m2 : map) := forall x w, get m2 x = Some w -> get m1 x = Some w.
-    Definition agree_on (P : key -> Prop) m1 m2 := forall k, P k -> get m1 k = get m2 k.
-    Definition only_differ(m1: map)(ks: key -> Prop)(s2: map) :=
-      forall x, ks x \/ get m1 x = get s2 x.
+    Definition agree_on (P : set key) m1 m2 := forall k, elem_of k P -> get m1 k = get m2 k.
+    Definition only_differ(m1: map)(ks: set key)(s2: map) :=
+      forall x, elem_of x ks \/ get m1 x = get s2 x.
     Definition undef_on m P := agree_on P m empty.
     Definition disjoint (a b : map) :=
       forall k v1 v2, get a k = Some v1 -> get b k = Some v2 -> False.

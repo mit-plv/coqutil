@@ -5,6 +5,7 @@ Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Properties.
 
 Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_map_defs.
+Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_derived_map_defs.
 
 Ltac one_rew_map_specs mapok e rewriter :=
   match e with
