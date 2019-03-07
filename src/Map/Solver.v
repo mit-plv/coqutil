@@ -192,6 +192,7 @@ with unrecogs_in_option_value K V e :=
     constr:(union_unrecogs u1 u2)
   | (fun (x: ?T) => Some (@?v x)) =>
     unrecogs_in_value K V (fun (y: T) => v y)
+  | (fun (x: ?T) => None) => constr:(empty_unrecogs K V)
   | (fun (x: ?T) => fst _) =>
     match is_bound_var_access e with
     | true => constr:(empty_unrecogs K V)
