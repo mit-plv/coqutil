@@ -575,7 +575,7 @@ Ltac log_goal :=
   | |- ?G => idtac "Goal" G "."; idtac "Proof. t. Qed."
   end.
 
-Ltac logging_hook := log_goal.
+Ltac logging_hook := idtac.
 
 Ltac map_solver mapok :=
   preprocess mapok;
