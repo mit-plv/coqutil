@@ -570,4 +570,14 @@ Ltac map_solver_core :=
   intros;
   map_solver_core_impl Ok.
 
-Ltac map_solver mapok := preprocess mapok; map_solver_core.
+Ltac log_goal :=
+  match goal with
+  | |- ?G => idtac "Goal" G "."; idtac "Proof. t. Qed."
+  end.
+
+Ltac logging_hook := log_goal.
+
+Ltac map_solver mapok :=
+  preprocess mapok;
+  logging_hook;
+  map_solver_core.
