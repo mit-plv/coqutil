@@ -547,10 +547,14 @@ Ltac map_solver_core_impl mapok := lazymatch type of mapok with
     canonicalize_map_hyp mapok H';
     ensure_new H'
   end;
-  let solver := congruence || auto || (exfalso; eauto) ||
-                match goal with
-                | H: ~ _ |- False => solve [apply H; intuition (auto || congruence || eauto)]
-                end in
+  let solver := solve [ congruence
+                      | auto
+                      | exfalso; eauto
+                      | intuition (solve [auto | congruence | eauto])
+                      | match goal with
+                        | H: ~ _ |- False =>
+                          solve [apply H; intuition (solve [auto | congruence | eauto])]
+                        end ] in
   let fallback := (destruct_one_map_match mapok || pick_one_existential);
                   canonicalize_all mapok in
   repeat (propositional;
