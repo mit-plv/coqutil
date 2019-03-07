@@ -26,6 +26,10 @@ Section PropSet.
   Definition subset(s1 s2: set E) := forall x, x \in s1 -> x \in s2.
   Definition sameset(s1 s2: set E) := subset s1 s2 /\ subset s2 s1.
   Definition disjoint(s1 s2: set E) := forall x, (~ x \in s1) \/ (~ x \in s2).
+  Definition of_option(o: option E) := match o with
+                                       | Some e => singleton_set e
+                                       | None => empty_set
+                                       end.
 
 End PropSet.
 
@@ -45,6 +49,7 @@ Hint Unfold
      subset
      sameset
      disjoint
+     of_option
   : unf_derived_set_defs.
 
 Section PropSetLemmas.
