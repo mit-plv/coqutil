@@ -3,9 +3,416 @@ Require Import coqutil.Datatypes.Option.
 Require Import coqutil.Tactics.Tactics.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Properties.
+Require Import coqutil.Datatypes.PropSet.
 
-Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_map_defs.
 Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_derived_map_defs.
+
+Hint Unfold
+     (* set definitions: *)
+     empty_set
+     singleton_set
+     union
+     intersect
+     diff
+     add
+     remove
+     subset
+     sameset
+     disjoint
+     of_list
+     elem_of
+     (* map definitions: *)
+     map.extends
+     map.only_differ
+     map.agree_on
+     map.undef_on
+  : unf_map_defs.
+
+Record unrecogs{K V: Type} := {
+  unrecog_Props: list Prop;
+  unrecog_keys: list K;
+  unrecog_keysets: list (K -> Prop);
+  unrecog_values: list V;
+  unrecog_option_values: list (option V);
+}.
+Arguments Build_unrecogs {_} {_} _ _ _ _.
+Arguments unrecogs: clear implicits.
+
+Definition empty_unrecogs(K V: Type): unrecogs K V :=
+  @Build_unrecogs K V nil nil nil nil nil.
+
+Definition union_unrecogs{K V: Type}: unrecogs K V -> unrecogs K V -> unrecogs K V :=
+  fun '(Build_unrecogs ps1 ks1 kss1 vs1 ovs1) '(Build_unrecogs ps2 ks2 kss2 vs2 ovs2) =>
+    Build_unrecogs (ps1 ++ ps2) (ks1 ++ ks2) (kss1 ++ kss2) (vs1 ++ vs2) (ovs1 ++ ovs2).
+
+Definition unrecog_Prop(K V: Type)(P: Prop): unrecogs K V :=
+  Build_unrecogs (cons P nil) nil nil nil nil.
+
+Definition unrecog_key(K V: Type)(k: K): unrecogs K V :=
+  Build_unrecogs nil (cons k nil) nil nil nil.
+
+Definition unrecog_keyset(K V: Type)(ks: K -> Prop): unrecogs K V :=
+  Build_unrecogs nil nil (cons ks nil) nil nil.
+
+Definition unrecog_value(K V: Type)(v: V): unrecogs K V :=
+  Build_unrecogs nil nil nil (cons v nil) nil.
+
+Definition unrecog_option_value(K V: Type)(ov: option V): unrecogs K V :=
+  Build_unrecogs nil nil nil nil (cons ov nil).
+
+Ltac is_bound_var_access e :=
+  let e := eval cbn [fst snd] in e in
+  lazymatch e with
+  | (fun (x: ?T) => x) => constr:(true)
+  | (fun (x: ?T) => fst (@?B x)) => is_bound_var_access (fun (y: T) => B y)
+  | (fun (x: ?T) => snd (@?B x)) => is_bound_var_access (fun (y: T) => B y)
+  | (fun (x: ?T) => _) => constr:(false)
+  end.
+
+Ltac is_var' e :=
+  match constr:(Set) with
+  | _ => let __ := match constr:(Set) with _ => is_var e end in constr:(true)
+  | _ => constr:(false)
+  end.
+
+Ltac unrecogs_in_prop K V e :=
+  let e := eval cbn [fst snd] in e in
+  lazymatch e with
+  | fun (x: ?T) => _ =>
+    lazymatch e with
+    | (fun (x: ?T) => forall (k: K), @?B x k) =>
+      unrecogs_in_prop K V (fun (y: T * K) => B (fst y) (snd y))
+    | (fun (x: ?T) => forall (v: V), @?B x v) =>
+      unrecogs_in_prop K V (fun (y: T * V) => B (fst y) (snd y))
+    | (fun (x: ?T) => @?P x -> @?Q x) =>
+      let u1 := unrecogs_in_prop K V (fun (y: T) => P y) in
+      let u2 := unrecogs_in_prop K V (fun (y: T) => Q y) in
+      constr:(union_unrecogs u1 u2)
+    | (fun (x: ?T) => @?P x \/ @?Q x) =>
+      let u1 := unrecogs_in_prop K V (fun (y: T) => P y) in
+      let u2 := unrecogs_in_prop K V (fun (y: T) => Q y) in
+      constr:(union_unrecogs u1 u2)
+    | (fun (x: ?T) => @?P x /\ @?Q x) =>
+      let u1 := unrecogs_in_prop K V (fun (y: T) => P y) in
+      let u2 := unrecogs_in_prop K V (fun (y: T) => Q y) in
+      constr:(union_unrecogs u1 u2)
+    | (fun (x: ?T) => ~ @?P x) =>
+      unrecogs_in_prop K V (fun (y: T) => P y)
+    | (fun (x: ?T) => @eq K (@?e1 x) (@?e2 x)) =>
+      let u1 := unrecogs_in_key K V (fun (y: T) => e1 y) in
+      let u2 := unrecogs_in_key K V (fun (y: T) => e2 y) in
+      constr:(union_unrecogs u1 u2)
+    | (fun (x: ?T) => @eq V (@?e1 x) (@?e2 x)) =>
+      let u1 := unrecogs_in_value K V (fun (y: T) => e1 y) in
+      let u2 := unrecogs_in_value K V (fun (y: T) => e2 y) in
+      constr:(union_unrecogs u1 u2)
+    | (fun (x: ?T) => @eq (option V) (@?e1 x) (@?e2 x)) =>
+      let u1 := unrecogs_in_option_value K V (fun (y: T) => e1 y) in
+      let u2 := unrecogs_in_option_value K V (fun (y: T) => e2 y) in
+      constr:(union_unrecogs u1 u2)
+    | (fun (x: ?T) => elem_of (@?e1 x) (@?e2 x)) =>
+      let u1 := unrecogs_in_key K V (fun (y: T) => e1 y) in
+      let u2 := unrecogs_in_keyset K V (fun (y: T) => e2 y) in
+      constr:(union_unrecogs u1 u2)
+    | (fun (x: ?T) => True) => constr:(empty_unrecogs K V)
+    | (fun (x: ?T) => False) => constr:(empty_unrecogs K V)
+    | (fun (x: ?T) => ?B) =>
+      match is_var' B with
+      | true => constr:(empty_unrecogs K V)
+      | false => constr:(unrecog_Prop K V B)
+      end
+    end
+  | _ => unrecogs_in_prop K V (fun (_: unit) => e)
+  end
+with unrecogs_in_key K V e :=
+  let e := eval cbn [fst snd] in e in
+  lazymatch e with
+  | (fun (x: ?T) => fst _) =>
+    match is_bound_var_access e with
+    | true => constr:(empty_unrecogs K V)
+    end
+  | (fun (x: ?T) => snd _) =>
+    match is_bound_var_access e with
+    | true => constr:(empty_unrecogs K V)
+    end
+  | (fun (x: ?T) => ?B) =>
+    match is_var' B with
+    | true => constr:(empty_unrecogs K V)
+    | false => constr:(unrecog_key K V B)
+    end
+  end
+with unrecogs_in_keyset K V e :=
+  let e := eval cbn [fst snd] in e in
+  lazymatch e with
+  | (fun (x: ?T) => empty_set) =>
+    constr:(empty_unrecogs K V)
+  | (fun (x: ?T) => singleton_set (@?k x)) =>
+    unrecogs_in_key K V (fun (y: T) => k y)
+  | (fun (x: ?T) => union (@?ks1 x) (@?ks2 x)) =>
+    let u1 := unrecogs_in_keyset K V (fun (y: T) => ks1 y) in
+    let u2 := unrecogs_in_keyset K V (fun (y: T) => ks2 y) in
+    constr:(union_unrecogs u1 u2)
+  | (fun (x: ?T) => intersect (@?ks1 x) (@?ks2 x)) =>
+    let u1 := unrecogs_in_keyset K V (fun (y: T) => ks1 y) in
+    let u2 := unrecogs_in_keyset K V (fun (y: T) => ks2 y) in
+    constr:(union_unrecogs u1 u2)
+  | (fun (x: ?T) => diff (@?ks1 x) (@?ks2 x)) =>
+    let u1 := unrecogs_in_keyset K V (fun (y: T) => ks1 y) in
+    let u2 := unrecogs_in_keyset K V (fun (y: T) => ks2 y) in
+    constr:(union_unrecogs u1 u2)
+  | (fun (x: ?T) => ?B) =>
+    match is_var' B with
+    | true => constr:(empty_unrecogs K V)
+    | false => constr:(unrecog_keyset K V B)
+    end
+  end
+with unrecogs_in_value K V e :=
+  let e := eval cbn [fst snd] in e in
+  lazymatch e with
+  | (fun (x: ?T) => fst _) =>
+    match is_bound_var_access e with
+    | true => constr:(empty_unrecogs K V)
+    end
+  | (fun (x: ?T) => snd _) =>
+    match is_bound_var_access e with
+    | true => constr:(empty_unrecogs K V)
+    end
+  | (fun (x: ?T) => ?B) =>
+    match is_var' B with
+    | true => constr:(empty_unrecogs K V)
+    | false => constr:(unrecog_value K V B)
+    end
+  end
+with unrecogs_in_option_value K V e :=
+  let e := eval cbn [fst snd] in e in
+  lazymatch e with
+  | (fun (x: ?T) => map.get (@?m x) (@?k x)) =>
+    let u1 := unrecogs_in_map K V (fun (y: T) => m y) in
+    let u2 := unrecogs_in_key K V (fun (y: T) => k y) in
+    constr:(union_unrecogs u1 u2)
+  | (fun (x: ?T) => Some (@?v x)) =>
+    unrecogs_in_value K V (fun (y: T) => v y)
+  | (fun (x: ?T) => fst _) =>
+    match is_bound_var_access e with
+    | true => constr:(empty_unrecogs K V)
+    end
+  | (fun (x: ?T) => snd _) =>
+    match is_bound_var_access e with
+    | true => constr:(empty_unrecogs K V)
+    end
+  | (fun (x: ?T) => ?B) =>
+    match is_var' B with
+    | true => constr:(empty_unrecogs K V)
+    | false => constr:(unrecog_option_value K V B)
+    end
+  end
+with unrecogs_in_map K V e :=
+  let e := eval cbn [fst snd] in e in
+  lazymatch e with
+  | (fun (x: ?T) => map.empty) => constr:(empty_unrecogs K V)
+  | (fun (x: ?T) => map.put (@?m x) (@?k x) (@?v x)) =>
+    let u1 := unrecogs_in_map K V (fun (y: T) => m y) in
+    let u2 := unrecogs_in_key K V (fun (y: T) => k y) in
+    let u3 := unrecogs_in_value K V (fun (y: T) => v y) in
+    constr:(union_unrecogs u1 (union_unrecogs u2 u3))
+  | (fun (x: ?T) => map.remove (@?m x) (@?k x)) =>
+    let u1 := unrecogs_in_map K V (fun (y: T) => m y) in
+    let u2 := unrecogs_in_key K V (fun (y: T) => k y) in
+    constr:(union_unrecogs u1 u2)
+  | (fun (x: ?T) => map.putmany (@?m1 x) (@?m2 x)) =>
+    let u1 := unrecogs_in_map K V (fun (y: T) => m1 y) in
+    let u2 := unrecogs_in_map K V (fun (y: T) => m2 y) in
+    constr:(union_unrecogs u1 u2)
+  | (fun (x: ?T) => ?B) =>
+    match is_var' B with
+    | true => constr:(empty_unrecogs K V)
+    | false => fail 10000 "uninterpreted maps such as" B "are not supported yet"
+    end
+  end.
+
+Ltac simpl_unrecogs u :=
+  eval cbv [
+           unrecog_Props
+           unrecog_keys
+           unrecog_keysets
+           unrecog_values
+           unrecog_option_values
+           empty_unrecogs
+           union_unrecogs
+           unrecog_Prop
+           unrecog_key
+           unrecog_keyset
+           unrecog_value
+           unrecog_option_value
+           List.app
+       ] in u.
+
+Inductive Abstracted{T}: T -> T -> Type :=
+  mk_Abstracted: forall (t1 t2: T), t1 = t2 -> Abstracted t1 t2.
+
+Ltac remember_unrecogs u :=
+  let a := fresh "A" in
+  lazymatch u with
+  | @Build_unrecogs ?K ?V (?P :: ?Ps) ?ks ?kss ?vs ?ovs =>
+    let name := fresh "P" in remember P as name eqn: a;
+    apply mk_Abstracted in a;
+    remember_unrecogs (@Build_unrecogs K V Ps ks kss vs ovs)
+  | @Build_unrecogs ?K ?V nil (?k :: ?ks) ?kss ?vs ?ovs =>
+    let name := fresh "k" in remember k as name eqn: a;
+    apply mk_Abstracted in a;
+    remember_unrecogs (@Build_unrecogs K V nil ks kss vs ovs)
+  | @Build_unrecogs ?K ?V nil nil (?ks :: ?kss) ?vs ?ovs =>
+    let name := fresh "ks" in remember ks as name eqn: a;
+    apply mk_Abstracted in a;
+    remember_unrecogs (@Build_unrecogs K V nil nil kss vs ovs)
+  | @Build_unrecogs ?K ?V nil nil nil (?v :: ?vs) ?ovs =>
+    let name := fresh "v" in remember v as name eqn: a;
+    apply mk_Abstracted in a;
+    remember_unrecogs (@Build_unrecogs K V nil nil nil vs ovs)
+  | @Build_unrecogs ?K ?V nil nil nil nil (?ov :: ?ovs) =>
+    let name := fresh "ov" in remember ov as name eqn: a;
+    apply mk_Abstracted in a;
+    remember_unrecogs (@Build_unrecogs K V nil nil nil nil ovs)
+  | @Build_unrecogs ?K ?V nil nil nil nil nil =>
+    idtac
+  end.
+
+Ltac abstract_unrecogs mapok :=
+  lazymatch type of mapok with
+  | @map.ok ?K ?V ?Inst =>
+    match goal with
+    | |- ?G =>
+      let u := unrecogs_in_prop K V G in
+      let u' := simpl_unrecogs u in
+      remember_unrecogs u'
+    end;
+    repeat match goal with
+           | H: ?P |- _ =>
+             lazymatch type of H with
+             | map.ok _ => fail
+             | _ => idtac
+             end;
+             match type of P with
+             | Prop => let u := unrecogs_in_prop K V P in
+                       let u' := simpl_unrecogs u in
+                       remember_unrecogs u';
+                       revert H
+             end
+           end
+  end.
+
+Ltac clear_unused_Props :=
+  repeat match goal with
+         | P: Prop, p: ?P' |- _ =>
+           constr_eq P P';
+           (* will only clear useless Props which don't appear anywhere *)
+           clear p P
+         end.
+
+Ltac clear_abstract_Props :=
+  repeat match goal with
+         (* "dependent" also clears (p: P), or (P1 -> P2) or (~ P1) leftovers,
+            which might be a bit too agressive, but I haven't seen any example
+            where we actually need abstract Props *)
+         | P: Prop |- _ => clear dependent P
+         end.
+
+Ltac revert_all_Props :=
+  repeat match goal with
+         | x: ?T |- _ =>
+             lazymatch type of x with
+             | map.ok _ => fail
+             | _ => idtac
+             end;
+             match type of T with
+             | Prop => revert x
+             | _ => fail 1
+             end
+         end.
+
+Ltac revert_all_keys mapok :=
+  lazymatch type of mapok with
+  | @map.ok ?K ?V ?Inst =>
+    repeat match goal with
+           | x: K |- _ => revert x
+           end
+  end.
+
+Ltac revert_all_values mapok :=
+  lazymatch type of mapok with
+  | @map.ok ?K ?V ?Inst =>
+    repeat match goal with
+           | x: V |- _ => revert x
+           end
+  end.
+
+Ltac revert_all_option_values mapok :=
+  lazymatch type of mapok with
+  | @map.ok ?K ?V ?Inst =>
+    repeat match goal with
+           | x: option V |- _ => revert x
+           end
+  end.
+
+Ltac revert_all_keysets mapok :=
+  lazymatch type of mapok with
+  | @map.ok ?K ?V ?Inst =>
+    repeat match goal with
+           | x: K -> Prop |- _ => revert x
+           end
+  end.
+
+Ltac revert_all_maps mapok :=
+  lazymatch type of mapok with
+  | @map.ok ?K ?V ?Inst =>
+    repeat match goal with
+           | x: @map.rep K V Inst |- _ => revert x
+           end
+  end.
+
+Ltac preprocess_impl mapok stopearly :=
+  intros;
+  repeat autounfold with unf_derived_set_defs unf_derived_map_defs in *;
+  lazymatch type of mapok with
+  | @map.ok ?K ?V ?Inst =>
+    let okname := fresh "Ok" in set (okname := mapok : map.ok Inst);
+    let keqname := fresh "keq" in set (keqname := _ : DecidableEq K);
+    abstract_unrecogs mapok;
+    lazymatch stopearly with
+    | true => idtac
+    | false =>
+      clear -okname keqname;
+      intros;
+      match goal with
+      (* if goal was abstracted into a fully abstract Prop, it's time to give up *)
+      | |- ?G => is_var G; fail 1 "not a map goal"
+      | |- ~ ?G => is_var G; fail 1 "not a map goal"
+      | |- _ => idtac
+      end;
+      clear_abstract_Props;
+      revert_all_Props;
+      unfold set in *; simpl in *;
+      revert_all_option_values okname;
+      revert_all_values okname;
+      revert_all_keys okname;
+      revert_all_keysets okname;
+      revert_all_maps okname;
+      let mname := fresh "M" in
+      generalize keqname;
+      generalize okname;
+      generalize Inst as mname;
+      generalize V;
+      generalize K;
+      clear;
+      match goal with
+      | H: ?T |- _ => fail 10000 "still depending on" H ":" T
+      | _ => idtac
+      end
+    end
+  end.
+
+Ltac debug_preprocess mapok := preprocess_impl mapok true.
+Ltac preprocess mapok := preprocess_impl mapok false.
 
 Ltac one_rew_map_specs mapok e rewriter :=
   match e with
@@ -99,7 +506,7 @@ Ltac pick_one_existential :=
   | x: ?T |- exists (_: ?T), _ => exists x
   end.
 
-Ltac map_solver mapok := lazymatch type of mapok with
+Ltac map_solver_core_impl mapok := lazymatch type of mapok with
 | @map.ok ?K ?V ?Inst =>
   let Needed := constr:(DecidableEq K) in
   first [ let dummy := constr:(_: Needed) in idtac
@@ -152,3 +559,15 @@ Ltac map_solver mapok := lazymatch type of mapok with
           try fallback)
 | _ => fail 10000 "mapok is not of type map.ok"
 end.
+
+Ltac map_solver_core :=
+  let K := fresh "K" in let V := fresh "V" in let M := fresh "M" in
+  let Ok := fresh "Ok" in let keq := fresh "keq" in
+  intros K V M Ok keq;
+  let MT := type of M in unify MT (map.map K V);
+  let OkT := type of Ok in unify OkT (map.ok M);
+  let keqT := type of keq in unify keqT (DecidableEq K);
+  intros;
+  map_solver_core_impl Ok.
+
+Ltac map_solver mapok := preprocess mapok; map_solver_core.

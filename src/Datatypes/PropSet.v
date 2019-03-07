@@ -30,6 +30,16 @@ Section PropSet.
 End PropSet.
 
 Hint Unfold
+     elem_of
+     empty_set
+     singleton_set
+     union
+     intersect
+     diff
+     of_list
+  : unf_basic_set_defs.
+
+Hint Unfold
      add
      remove
      subset
@@ -37,35 +47,19 @@ Hint Unfold
      disjoint
   : unf_derived_set_defs.
 
-Hint Unfold
-     empty_set
-     singleton_set
-     union
-     intersect
-     diff
-     add
-     remove
-     subset
-     sameset
-     disjoint
-     of_list
-     elem_of
-  : unf_map_defs (* FIXME: currently we rely on map solver unfolding these *).
-
-
 Section PropSetLemmas.
   Context {E: Type}.
 
   Lemma of_list_cons: forall (e: E) (l: list E),
       sameset (of_list (e :: l)) (add (of_list l) e).
   Proof.
-    intros. repeat autounfold with unf_map_defs. simpl. auto.
+    intros. repeat autounfold with unf_derived_set_defs. simpl. auto.
   Qed.
 
   Lemma of_list_app: forall (l1 l2: list E),
       sameset (of_list (l1 ++ l2)) (union (of_list l1) (of_list l2)).
   Proof.
-    induction l1; repeat autounfold with unf_map_defs in *; unfold elem_of in *;
+    induction l1; repeat autounfold with unf_basic_set_defs unf_derived_set_defs in *;
       intros; simpl; [intuition idtac|].
     setoid_rewrite in_app_iff in IHl1.
     setoid_rewrite in_app_iff.
@@ -81,7 +75,7 @@ Ltac set_solver_generic E :=
   | context [of_list (?l1 ++ ?l2)] => unique pose proof (of_list_app l1 l2)
   | context [of_list (?h :: ?t)] => unique pose proof (of_list_cons h t)
   end);
-  repeat autounfold with unf_map_defs in *;
+  repeat autounfold with unf_basic_set_defs unf_derived_set_defs in *;
   unfold elem_of in *;
   destruct_products;
   intros;

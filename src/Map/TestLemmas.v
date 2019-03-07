@@ -1,7 +1,7 @@
 Require Import coqutil.Decidable.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
-
+Require Import coqutil.Datatypes.PropSet.
 
 Section Tests.
   Import map.
@@ -27,16 +27,16 @@ Section Tests.
 
   Lemma only_differ_union_l: forall s1 s2 r1 r2,
     only_differ s1 r1 s2 ->
-    only_differ s1 (fun x => r1 x \/ r2 x) s2.
+    only_differ s1 (union r1 r2) s2.
   Proof. t. Qed.
 
   Lemma only_differ_union_r: forall s1 s2 r1 r2,
     only_differ s1 r2 s2 ->
-    only_differ s1 (fun x => r1 x \/ r2 x) s2.
+    only_differ s1 (union r1 r2) s2.
   Proof. t. Qed.
 
   Lemma only_differ_one: forall s x v,
-    only_differ s (fun y => x = y) (put s x v).
+    only_differ s (singleton_set x) (put s x v).
   Proof. t. Qed.
 
   Lemma only_differ_refl: forall s1 r,
@@ -56,12 +56,12 @@ Section Tests.
 
   Lemma undef_on_shrink: forall st (vs1 vs2: var -> Prop),
     undef_on st vs1 ->
-    (forall v, vs2 v -> vs1 v) ->
+    subset vs2 vs1 ->
     undef_on st vs2.
   Proof. t. Qed.
 
   Lemma only_differ_subset: forall s1 s2 (r1 r2: var -> Prop),
-    (forall x, r1 x -> r2 x) ->
+    subset r1 r2 ->
     only_differ s1 r1 s2 ->
     only_differ s1 r2 s2.
   Proof. t. Qed.
@@ -87,12 +87,12 @@ Section Tests.
   Lemma only_differ_get_unchanged: forall s1 s2 x v d,
     get s1 x = v ->
     only_differ s1 d s2 ->
-    ~  d x ->
+    ~ elem_of x d ->
     get s2 x = v.
   Proof. t. Qed.
 
-  Lemma only_differ_put: forall s (d: var -> Prop) x v,
-    d x ->
+  Lemma only_differ_put: forall s (d: set var) x v,
+    elem_of x d ->
     only_differ s d (put s x v).
   Proof. t. Qed.
 
