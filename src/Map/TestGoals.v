@@ -3,9 +3,6 @@ Require Import coqutil.Datatypes.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 
-Require Import coqutil.Datatypes.PropSet. (* FIXME: this is so that the map solver picks up hints from PropSet *)
-
-
 Section TestGoals.
   Context {K V: Type}.
   Context {locals: map.map K V}.
@@ -14,6 +11,16 @@ Section TestGoals.
   Context {V_eq_dec: DecidableEq V}.
 
   Import Map.Interface.map.
+
+  (** *** Part 0: Lemmas which broke at some point (regression tests) *)
+
+  Lemma only_differ_trans_union: forall initialS st2 finalS mv2 mv1,
+      only_differ st2 mv2 finalS ->
+      only_differ initialS mv1 st2 ->
+      only_differ initialS (union mv1 mv2) finalS.
+  Proof.
+    Time map_solver mapspecs.
+  Qed.
 
   (** *** Part 1: Lemmas which hold *)
 

@@ -468,37 +468,78 @@ Ltac destruct_one_map_match mapok :=
   destruct_one_match_hyporgoal_test ltac:(map_solver_should_destruct mapok) ltac:(fun H => rew_map_specs_in mapok H).
 
 Require Import Coq.Program.Tactics.
-Ltac propositional :=
-  repeat match goal with
-         | |- forall _, _ => progress intros *
-         | |- _ -> _ => let H := fresh "Hyp" in intro H
-         | [ H: _ /\ _ |- _ ] =>
-           let H1 := fresh H "_l" in
-           let H2 := fresh H "_r" in
-           destruct H as [H1 H2]
-         | [ H: _ <-> _ |- _ ] =>
-           let H1 := fresh H "_fwd" in
-           let H2 := fresh H "_bwd" in
-           destruct H as [H1 H2]
-         | [ H: False |- _ ] => solve [ destruct H ]
-         | [ H: True |- _ ] => clear H
-         | [ H: exists (varname : _), _ |- _ ] =>
-           let newvar := fresh varname in
-           destruct H as [newvar H]
-         | [ H: ?P |- ?P ] => exact H
-         | |- _ /\ _ => split
-         | [ H: ?P -> _, H': ?P |- _ ] =>
-           match type of P with
-           | Prop => specialize (H H')
-           end
-         | |- _ => progress subst *
-         end.
 
-Ltac propositional_ors :=
-  repeat match goal with
-         | [ H: _ \/ _ |- _ ] => destruct H as [H | H]
-         | [ |- _ \/ _ ] => (left + right); congruence
-         end.
+(* does not increase the number of goals *)
+Ltac propositional_cheap_step :=
+  match goal with
+  | |- forall _, _ => progress intros *
+  | |- _ -> _ => let H := fresh "Hyp" in intro H
+  | H: _ /\ _ |- _ =>
+    let H1 := fresh H "_l" in
+    let H2 := fresh H "_r" in
+    destruct H as [H1 H2]
+  | H: _ <-> _ |- _ =>
+    let H1 := fresh H "_fwd" in
+    let H2 := fresh H "_bwd" in
+    destruct H as [H1 H2]
+  | H: False |- _ => solve [ destruct H ]
+  | H: True |- _ => clear H
+  | H: exists (varname : _), _ |- _ =>
+    let newvar := fresh varname in
+    destruct H as [newvar H]
+  | H: ?P |- ?P => exact H
+  | |- ~ _ => intro
+  | H: ?P -> _, H': ?P |- _ =>
+    match type of P with
+    | Prop => specialize (H H')
+    end
+  | |- _ => progress subst *
+  end.
+
+(* increases number of subgoals *)
+Ltac propositional_split_step :=
+  match goal with
+  | |- _ /\ _ => split
+  | H: _ \/ _ |- _ => destruct H as [H | H]
+  end.
+
+(* makes choices which might require backtracking (backtracking only happens if "next" fails) *)
+Ltac propositional_choice_step next :=
+  match goal with
+  | |- _ \/ _ => left; next
+  | |- _ \/ _ => right; next
+  | x: ?T |- exists (_: ?T), _ => exists x; next
+  end.
+
+Ltac propositional leaf_tac :=
+  repeat (repeat propositional_cheap_step;
+          try solve [leaf_tac];
+          repeat propositional_split_step);
+  try (propositional_choice_step ltac:(solve [propositional leaf_tac])).
+
+(* increases number of subgoals *)
+Ltac maps_split_step mapok :=
+  match goal with
+  | |- _ => destruct_one_map_match mapok
+  | |- _ /\ _ => split
+  | H: _ \/ _ |- _ => destruct H as [H | H]
+  end.
+
+(* makes choices which might require backtracking (backtracking only happens if "next" fails) *)
+Ltac maps_choice_step next :=
+  match goal with
+  | |- _ \/ _ => left; next
+  | |- _ \/ _ => right; next
+  | x: ?T |- exists (_: ?T), _ => exists x; next
+  end.
+
+Ltac maps_leaf_tac := solve [ congruence | auto | exfalso; auto ].
+
+Ltac maps_propositional mapok :=
+  repeat (repeat propositional_cheap_step;
+          try maps_leaf_tac;
+          repeat maps_split_step mapok);
+  try (maps_choice_step ltac:(solve [maps_propositional mapok])).
 
 Ltac ensure_no_body H := assert_fails (clearbody H).
 
@@ -507,19 +548,9 @@ Ltac pick_one_existential :=
   | x: ?T |- exists (_: ?T), _ => exists x
   end.
 
-Ltac map_solver_core_impl mapok := lazymatch type of mapok with
+Ltac map_specialize_step mapok := lazymatch type of mapok with
 | @map.ok ?K ?V ?Inst =>
-  let Needed := constr:(DecidableEq K) in
-  first [ let dummy := constr:(_: Needed) in idtac
-        | fail 10000 "map_solver won't work without" Needed ];
-  repeat autounfold with unf_map_defs in *;
-  destruct_products;
-  repeat match goal with
-         | |- forall _, _ => progress intros *
-         | |- _ -> _ => let H := fresh "Hyp" in intro H
-         end;
-  canonicalize_all mapok;
-  repeat match goal with
+  match goal with
   | H: forall (x: ?E), _, y: ?E |- _ =>
     first [ unify E K | unify E V ];
     ensure_no_body H;
@@ -547,21 +578,21 @@ Ltac map_solver_core_impl mapok := lazymatch type of mapok with
     clear F;
     canonicalize_map_hyp mapok H';
     ensure_new H'
-  end;
-  let solver := solve [ congruence
-                      | auto
-                      | exfalso; eauto
-                      | intuition (solve [auto | congruence | eauto])
-                      | match goal with
-                        | H: ~ _ |- False =>
-                          solve [apply H; intuition (solve [auto | congruence | eauto])]
-                        end ] in
-  let fallback := (destruct_one_map_match mapok || pick_one_existential);
-                  canonicalize_all mapok in
-  repeat (propositional;
-          propositional_ors;
-          try solve [ solver ];
-          try fallback)
+  end
+end.
+
+Ltac map_specialize mapok := repeat map_specialize_step mapok.
+
+Ltac map_solver_core_impl mapok := lazymatch type of mapok with
+| @map.ok ?K ?V ?Inst =>
+  let Needed := constr:(DecidableEq K) in
+  first [ let dummy := constr:(_: Needed) in idtac
+        | fail 10000 "map_solver won't work without" Needed ];
+  repeat autounfold with unf_map_defs in *;
+  repeat propositional_cheap_step;
+  canonicalize_all mapok;
+  map_specialize mapok;
+  maps_propositional mapok
 | _ => fail 10000 "mapok is not of type map.ok"
 end.
 
