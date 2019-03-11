@@ -519,7 +519,7 @@ Ltac propositional leaf_tac :=
 
 (* increases number of subgoals *)
 Ltac maps_split_step mapok :=
-  match goal with
+  match reverse goal with
   | |- _ => destruct_one_map_match mapok
   | |- _ /\ _ => split
   | H: _ \/ _ |- _ => destruct H as [H | H]
@@ -538,7 +538,7 @@ Ltac maps_leaf_tac := solve [ congruence | auto | exfalso; auto ].
 Ltac maps_propositional mapok :=
   repeat (repeat propositional_cheap_step;
           try maps_leaf_tac;
-          repeat maps_split_step mapok);
+          maps_split_step mapok);
   try (maps_choice_step ltac:(solve [maps_propositional mapok])).
 
 Ltac ensure_no_body H := assert_fails (clearbody H).
