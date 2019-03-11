@@ -3,6 +3,8 @@ Require Import coqutil.Datatypes.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 
+Local Set Ltac Profiling.
+
 Section TestGoals.
   Context {K V: Type}.
   Context {locals: map.map K V}.
@@ -309,3 +311,5 @@ Section TestGoals.
   Qed.
 
 End TestGoals.
+
+Goal True. idtac "End of TestGoals.v". Abort.

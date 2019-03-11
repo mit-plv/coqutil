@@ -3,7 +3,7 @@ Require Import coqutil.Datatypes.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 
-Set Ltac Profiling.
+Local Set Ltac Profiling.
 
 Goal
   forall (T T0 : Type) (M : map.map T T0),
@@ -33,4 +33,4 @@ Proof.
   Time map_solver_core.
 Time Qed.
 
-Show Ltac Profile.
+Goal True. idtac "End of SlowGoals.v". Abort.

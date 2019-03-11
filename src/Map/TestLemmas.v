@@ -3,6 +3,8 @@ Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 Require Import coqutil.Datatypes.PropSet.
 
+Local Set Ltac Profiling.
+
 Section Tests.
   Import map.
   Context {var: Type}. (* variable name (key) *)
@@ -97,3 +99,5 @@ Section Tests.
   Proof. t. Qed.
 
 End Tests.
+
+Goal True. idtac "End of TestLemmas.v". Abort.
