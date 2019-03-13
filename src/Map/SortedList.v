@@ -62,8 +62,36 @@ Section SortedList.
     { pose proof ltb_trans _ _ _ H1 H2; pose proof ltb_antirefl k1; congruence. }
     { destruct H; discriminate. }
   Qed.
-  Lemma sorted_put m k v : sorted m = true -> sorted (put m k v) = true. Admitted.
-  Lemma sorted_remove m k : sorted m = true -> sorted (remove m k) = true. Admitted.
+  Lemma sorted_put m k v : sorted m = true -> sorted (put m k v) = true.
+  Proof.
+    revert v; revert k; induction m as [|[k0 v0] m]; trivial; []; intros k v H.
+    cbn [put]; destruct (ltb k k0) eqn:?.
+    { eapply Bool.andb_true_iff; split; assumption. }
+    destruct (ltb k0 k) eqn:?; cycle 1.
+    { rewrite (ltb_total k k0); assumption. }
+    cbn [sorted]; destruct m as [|[k1 v1] mm] eqn:?Hmm.
+    { cbn. rewrite Bool.andb_true_r; trivial. }
+    rewrite (IHm k v) by (eapply Bool.andb_true_iff in H; destruct H; eassumption).
+    cbn [put]; destruct (ltb k k1) eqn:?; rewrite ?Bool.andb_true_r; trivial; [].
+    destruct (ltb k1 k) eqn:?; rewrite ?Bool.andb_true_r; trivial; [].
+    eapply Bool.andb_true_iff in H; destruct H; eassumption.
+  Qed.
+  Lemma sorted_remove m k : sorted m = true -> sorted (remove m k) = true.
+  Proof.
+    revert k; induction m as [|[k0 v0] m]; [trivial|]; []; intros k H.
+    cbn [remove].
+    destruct (ltb k k0) eqn:?; trivial; [].
+    destruct (ltb k0 k) eqn:?; trivial; cycle 1.
+    { destruct m as [|[] ?]; [trivial|]; eapply Bool.andb_true_iff in H; destruct H; eassumption. }
+    cbn [sorted]; destruct m as [|[k1 v1] mm] eqn:?Hmm; trivial.
+    rewrite IHm by (eapply Bool.andb_true_iff in H; destruct H; eassumption).
+    cbn [remove]; destruct (ltb k k1) eqn:?; rewrite ?Bool.andb_true_r; eauto 2 using ltb_trans; [].
+    destruct (ltb k1 k) eqn:?; rewrite ?Bool.andb_true_r.
+    { eapply Bool.andb_true_iff in H; destruct H; eassumption. }
+    destruct mm as [|[kk vv] ?]; rewrite ?Bool.andb_true_r; trivial.
+    repeat (eapply Bool.andb_true_iff in H; destruct H as [?GG H]); eauto 2 using ltb_trans.
+  Qed.
+
   Definition map : map.map key parameters.value :=
     let wrapped_put m k v := Build_rep (put (value m) k v) (minimize_eq_proof Bool.bool_dec (sorted_put _ _ _ (_value_ok m))) in
     let wrapped_remove m k := Build_rep (remove (value m) k) (minimize_eq_proof Bool.bool_dec (sorted_remove _ _ (_value_ok m))) in
@@ -79,7 +107,19 @@ Section SortedList.
     map.putmany m1 m2 := List.fold_right (fun '(k, v) m => wrapped_put m k v) m1 (value m2)
   |}.
 
-  Global Instance map_ok : map.ok map. Admitted.
+  Require Import AdmitAxiom.
+  Global Instance map_ok : map.ok map.
+  Proof.
+    split.
+    { admit. }
+    { intros; exact eq_refl. }
+    { admit. }
+    { admit. }
+    { admit. }
+    { admit. }
+    { admit. }
+    { admit. }
+  Qed.
   Lemma eq_value {x y : rep} : value x = value y -> x = y.
   Proof.
     cbv [value]; destruct x as [x px], y as [y py].
