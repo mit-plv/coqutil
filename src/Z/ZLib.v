@@ -263,7 +263,7 @@ Module Z.
       n < 0 ->
       Z.to_nat n = 0%nat.
   Proof.
-    intros. destruct n; try lia. apply Z2Nat.inj_neg.
+    intros. destruct n; (lia || apply Z2Nat.inj_neg).
   Qed.
 
   (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)
