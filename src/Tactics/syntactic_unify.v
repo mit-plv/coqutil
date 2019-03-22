@@ -39,3 +39,17 @@ Ltac _syntactic_unify_deltavar X Y :=
          end
   end.
 Tactic Notation "syntactic_unify_deltavar" open_constr(x) open_constr(y) :=  _syntactic_unify_deltavar x y.
+
+Ltac _syntactic_exact e :=
+  let t := type of e in
+  let g := lazymatch goal with |- ?g => g end in
+  tryif syntactic_unify t g then exact_no_check e else fail "syntactic_unify" t g.
+Tactic Notation "syntactic_exact" open_constr(e) :=
+  _syntactic_exact e.
+
+Ltac _syntactic_exact_deltavar e :=
+  let t := type of e in
+  let g := lazymatch goal with |- ?g => g end in
+  tryif syntactic_unify_deltavar t g then exact_no_check e else fail "syntactic_unify" t g.
+Tactic Notation "syntactic_exact_deltavar" open_constr(e) :=
+  _syntactic_exact_deltavar e.
