@@ -2,42 +2,13 @@ Require Import Coq.ZArith.BinInt.
 Require Import coqutil.Z.div_mod_to_equations.
 Require Import Lia Btauto.
 Require Coq.setoid_ring.Ring_theory.
+Require Import coqutil.Z.bitblast.
+Require Import coqutil.Word.Interface. Import word.
+
 Local Set Universe Polymorphism.
 Local Open Scope Z_scope.
 
-(* NOTE: this stuff does not really belong here, we should pull them out to a minimal bitwise Z library. *)
-Module Z.
-  Lemma testbit_minus1 i (H:0<=i) : Z.testbit (-1) i = true.
-  Proof. destruct i; try lia; exact eq_refl. Qed.
-  Lemma testbit_mod_pow2 a n i (H:0<=n)
-    : Z.testbit (a mod 2 ^ n) i = ((i <? n) && Z.testbit a i)%bool.
-  Proof.
-    destruct (Z.ltb_spec i n); rewrite
-      ?Z.mod_pow2_bits_low, ?Z.mod_pow2_bits_high by auto; auto.
-  Qed.
-  Lemma testbit_ones n i (H : 0 <= n) : Z.testbit (Z.ones n) i = ((0 <=? i) && (i <? n))%bool.
-  Proof.
-    destruct (Z.leb_spec 0 i), (Z.ltb_spec i n); cbn;
-      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by lia; trivial.
-  Qed.
-  Lemma testbit_ones_nonneg n i (Hn : 0 <= n) (Hi: 0 <= i) : Z.testbit (Z.ones n) i = (i <? n)%bool.
-  Proof.
-    rewrite testbit_ones by lia.
-    destruct (Z.leb_spec 0 i); cbn; solve [trivial | lia].
-  Qed.
-
-  (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)
-  Hint Rewrite
-       Z.shiftl_spec_low Z.lxor_spec Z.lor_spec Z.land_spec Z.lnot_spec Z.ldiff_spec Z.shiftl_spec Z.shiftr_spec Z.ones_spec_high Z.shiftl_spec_alt Z.ones_spec_low Z.shiftr_spec_aux Z.shiftl_spec_high Z.ones_spec_iff Z.testbit_spec
-       Z.div_pow2_bits Z.pow2_bits_eqb Z.bits_opp Z.testbit_0_l
-       Z.testbit_mod_pow2 Z.testbit_ones_nonneg Z.testbit_minus1
-       using solve [auto with zarith] : z_bitwise.
-  Hint Rewrite <-Z.ones_equiv
-       using solve [auto with zarith] : z_bitwise.
-End Z.
 Local Ltac mia := Z.div_mod_to_equations; nia.
-
-Require Import coqutil.Word.Interface. Import word.
 
 Module word.
   (* Create HintDb word_laws discriminated. *) (* DON'T do this, COQBUG(5381) *)
@@ -107,7 +78,7 @@ Module word.
     Ltac bitwise :=
       autorewrite with word_laws;
       generalize_wrap_unsigned;
-      eapply Z.bits_inj'; intros ?i ?Hi; autorewrite with z_bitwise; btauto.
+      Z.bitblast.
 
     Lemma unsigned_or_nowrap x y : unsigned (or x y) = Z.lor (unsigned x) (unsigned y).
     Proof. bitwise. Qed.
@@ -122,14 +93,11 @@ Module word.
       pose proof unsigned_range y.
       rewrite unsigned_sru by lia.
       rewrite <-(wrap_unsigned x).
-      eapply Z.bits_inj'; intros ?i ?Hi; autorewrite with z_bitwise.
-      repeat match goal with |- context [?a <? ?b] =>
-        destruct (Z.ltb_spec a b); trivial; try lia
-      end.
+      Z.bitblast.
     Qed.
 
     Lemma testbit_wrap z i : Z.testbit (wrap z) i = ((i <? width) && Z.testbit z i)%bool.
-    Proof. cbv [wrap]. autorewrite with z_bitwise; trivial. Qed.
+    Proof. cbv [wrap]. Z.rewrite_bitwise; trivial. Qed.
 
     Lemma eqb_true: forall (a b: word), word.eqb a b = true -> a = b.
     Proof.
@@ -274,11 +242,11 @@ Module word.
       { destruct (Z.testbit z (width - 1)) eqn:Hw1; cbn [Z.b2z];
           rewrite ?Z.mul_1_r, ?Z.mul_0_r, ?Z.opp_0, ?Z.add_0_r, ?Z.land_0_r;
           [|solve[trivial]].
-        eapply Z.bits_inj'; intros j ?Hj; autorewrite with z_bitwise; btauto. }
-      autorewrite with z_bitwise;
+        Z.bitblast. }
+      autorewrite with z_bitwise_no_hyps z_bitwise_with_hyps;
       destruct (Z.testbit z (width - 1)) eqn:Hw1; cbn [Z.b2z];
         rewrite ?Z.mul_1_r, ?Z.mul_0_r, ?Z.opp_0, ?Z.add_0_r, ?Z.land_0_r;
-        autorewrite with z_bitwise; cbn [Z.pred];
+        autorewrite with z_bitwise_no_hyps z_bitwise_with_hyps; cbn [Z.pred];
         destruct (Z.ltb_spec i (width-1)), (Z.ltb_spec i width); cbn; lia || btauto || trivial.
       { assert (i = width-1) by lia; congruence. }
       { destruct (Z.ltb_spec (width-1) width); lia || btauto. }
@@ -295,11 +263,11 @@ Module word.
     Qed.
 
     Hint Rewrite testbit_signed testbit_wrap testbit_swrap
-         using solve [auto with zarith] : z_bitwise.
+         using solve [auto with zarith] : z_bitwise_signed.
 
     Ltac sbitwise :=
       eapply Z.bits_inj'; intros ?i ?Hi;
-      autorewrite with word_laws z_bitwise;
+      autorewrite with word_laws z_bitwise_signed z_bitwise_no_hyps z_bitwise_with_hyps;
       repeat match goal with |- context [?a <? ?b] =>
         destruct (Z.ltb_spec a b); trivial; try lia
       end.
@@ -362,7 +330,7 @@ Module word.
       eapply unsigned_inj, Z.bits_inj'; intros i Hi.
       eapply (f_equal (fun z => Z.testbit z i)) in H.
       rewrite 2testbit_signed in H. rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
-      autorewrite with word_laws z_bitwise.
+      autorewrite with word_laws z_bitwise_signed z_bitwise_no_hyps z_bitwise_with_hyps.
       destruct (Z.ltb_spec i width); auto.
     Qed.
 
