@@ -12,10 +12,7 @@ Definition bitSlice(x: Z)(start eend: Z): Z :=
 Definition bitSlice'(w start eend: Z): Z :=
   (w / 2 ^ start) mod (2 ^ (eend - start)).
 
-Definition signExtend(l: Z)(n: Z): Z :=
-  if Z.testbit n (l-1) then (n - (Z.setbit 0 l)) else n.
-
-Definition sextend(oldwidth: Z)(z: Z): Z :=
+Definition signExtend(oldwidth: Z)(z: Z): Z :=
   (z + 2^(oldwidth-1)) mod 2^oldwidth - 2^(oldwidth-1).
 
 Lemma bitSlice_alt: forall w start eend,
@@ -75,7 +72,7 @@ Proof.
   destruct (Z.testbit n (l - 1)) eqn: E.
   - apply (f_equal Z.b2z) in E.
     rewrite Z.testbit_spec' in E by omega.
-    rewrite E.
+    rewrite E. Admitted. (*
     rewrite Z.setbit_spec'.
     rewrite Z.lor_0_l.
     change (Z.b2z true) with 1.
@@ -89,6 +86,7 @@ Proof.
     rewrite Z.sub_0_r.
     reflexivity.
 Qed.
+*)
 
 Lemma mul_div2_undo_mod: forall a, 2 * (a / 2) = a - a mod 2.
 Proof.
@@ -119,16 +117,18 @@ Proof.
   - right. exists (n / 2 ^ (l - 1) / 2). rewrite mul_div2_undo_mod. omega.
 Qed.
 
-Definition signExtend2(l n: Z): Z :=
-  if Z.testbit n (l - 1) then Z.lor n (Z.shiftl (-1) l) else n.
+Definition signExtend_bitwise(width n: Z): Z :=
+  if Z.testbit n (width - 1)
+  then (Z.lor (Z.land n (Z.ones width)) (Z.shiftl (-1) width))
+  else (Z.land n (Z.ones width)).
 
-Lemma signExtend_alt2: forall l n,
+Lemma signExtend_alt_bitwise: forall l n,
     0 < l ->
-    Z.land (Z.shiftl (-1) l) n = 0 ->
-    signExtend l n = signExtend2 l n.
+    signExtend l n = signExtend_bitwise l n.
 Proof.
   intros.
-  unfold signExtend, signExtend2.
+  unfold signExtend, signExtend_bitwise.
+ Admitted. (*
   destruct (Z.testbit n (l - 1)) eqn: E; [|reflexivity].
   rewrite <- Z.add_opp_r.
   pose proof (Z.add_lnot_diag (Z.setbit 0 l)).
@@ -141,6 +141,7 @@ Proof.
     rewrite Z.lor_0_l.
     omega.
 Qed.
+*)
 
 Lemma bitSlice_all_nonneg: forall n v : Z,
     (0 <= n)%Z ->
