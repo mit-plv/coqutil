@@ -35,6 +35,13 @@ Module map.
       match get m2 k with Some v => Some v | None => get m1 k end.
     Proof. prover. Qed.
 
+    Lemma put_put_same: forall k v1 v2 m, put (put m k v1) k v2 = put m k v2.
+    Proof.
+      intros. apply map_ext. intros. rewrite get_put_dec. destruct (dec (k = k0)).
+      - subst k0. rewrite get_put_same. reflexivity.
+      - rewrite !get_put_diff; congruence.
+    Qed.
+
     Lemma putmany_spec m1 m2 k :
       (exists v, get m2 k = Some v /\ get (putmany m1 m2) k = Some v) \/
       (get m2 k = None /\ get (putmany m1 m2) k = get m1 k).
