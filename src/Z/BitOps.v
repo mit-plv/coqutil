@@ -187,3 +187,19 @@ Proof.
   remember (2 ^ (i - 1)) as B.
   lia.
 Qed.
+
+Lemma signExtend_nop: forall l w v,
+    - 2 ^ l <= v < 2 ^ l ->
+    0 <= l < w ->
+    signExtend w v = v.
+Proof.
+  intros.
+  unfold signExtend.
+  assert (2 ^ (w - 1) * 2 = 2 ^ w). {
+    replace w with (w - 1 + 1) at 2 by lia.
+    rewrite Z.pow_add_r by lia.
+    reflexivity.
+  }
+  pose proof (Z.pow_le_mono_r 2 l (w-1)).
+  rewrite Z.mod_small; lia.
+Qed.
