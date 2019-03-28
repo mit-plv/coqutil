@@ -343,3 +343,11 @@ Module word.
     Qed.
   End WithNontrivialWord.
 End word.
+
+Require Import coqutil.Decidable.
+
+Instance word_eq_dec{width: Z}(word: word.word width){word_ok: word.ok word}: DecidableEq word.
+intros. destruct (word.eqb x y) eqn: E.
+- left. apply word.eqb_true. assumption.
+- right. apply word.eqb_false. assumption.
+Defined.
