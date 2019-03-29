@@ -133,6 +133,30 @@ Module map.
         erewrite ?get_putmany_left, ?get_putmany_right by eauto; eauto.
     Qed.
 
+    Lemma split_undef_put: forall m k v,
+        get m k = None ->
+        split (put m k v) (put empty k v) m.
+    Proof.
+      intros.
+      repeat split.
+      - apply map_ext. intros.
+        rewrite get_put_dec.
+        destruct (dec (k = k0)).
+        + subst. rewrite get_putmany_left by assumption.
+          rewrite get_put_same. reflexivity.
+        + rewrite get_putmany_dec.
+          destruct (get m k0); [reflexivity|].
+          rewrite get_put_diff by congruence.
+          rewrite get_empty.
+          reflexivity.
+      - unfold disjoint.
+        intros.
+        rewrite get_put_dec in H0.
+        destruct (dec (k = k0)).
+        + subst. congruence.
+        + rewrite get_empty in H0. congruence.
+    Qed.
+
     Lemma put_extends: forall k v m1 m2,
         extends m2 m1 ->
         extends (put m2 k v) (put m1 k v).
