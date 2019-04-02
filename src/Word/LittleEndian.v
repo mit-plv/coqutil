@@ -1,9 +1,10 @@
-Require Import Coq.ZArith.BinIntDef.
+Require Import Coq.ZArith.ZArith.
+Require Import Coq.micromega.Lia.
 Require Import coqutil.Word.Interface coqutil.Datatypes.HList coqutil.Datatypes.PrimitivePair.
-Require coqutil.Word.Interface.
+Require Import coqutil.Z.bitblast.
 Local Set Universe Polymorphism.
 
-Open Scope Z_scope.
+Local Open Scope Z_scope.
 
 Section LittleEndian.
   Context {byte: word 8}.
@@ -21,4 +22,19 @@ Section LittleEndian.
     | S n => pair.mk (word.of_Z w) (split n (Z.shiftr w 8))
     end.
 
+  Lemma combine_split{ok: word.ok byte}(n: nat)(z: Z):
+    combine n (split n z) = z mod 2 ^ (Z.of_nat n * 8).
+  Proof.
+    revert z; induction n.
+    - cbn. intros. rewrite Z.mod_1_r. trivial.
+    - cbn [split combine PrimitivePair.pair._1 PrimitivePair.pair._2]; intros.
+      erewrite IHn; clear IHn.
+      rewrite word.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by lia.
+      rewrite <-! Z.land_ones by lia.
+      Z.bitblast.
+  Qed.
+
 End LittleEndian.
+
+Arguments combine: simpl never.
+Arguments split: simpl never.
