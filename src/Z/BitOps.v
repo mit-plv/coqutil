@@ -1,6 +1,6 @@
 Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Z.bitblast.
-Require Import Coq.micromega.Lia.
+Require Import coqutil.Z.Lia.
 Require Import coqutil.Z.div_mod_to_equations.
 
 
@@ -29,15 +29,15 @@ Lemma bitSlice_alt: forall w start eend,
     bitSlice w start eend = bitSlice' w start eend.
 Proof.
   intros. unfold bitSlice, bitSlice'.
-  rewrite <- Z.land_ones by omega.
-  rewrite <- Z.shiftr_div_pow2 by omega.
+  rewrite <- Z.land_ones by blia.
+  rewrite <- Z.shiftr_div_pow2 by blia.
   f_equal.
-  rewrite Z.shiftl_mul_pow2 by omega.
+  rewrite Z.shiftl_mul_pow2 by blia.
   rewrite Z.mul_comm.
   rewrite <- Z.opp_eq_mul_m1.
   replace (Z.lnot (- 2 ^ (eend - start))) with (2 ^ (eend - start) - 1).
   - rewrite Z.ones_equiv. reflexivity.
-  - pose proof (Z.add_lnot_diag (- 2 ^ (eend - start))). omega.
+  - pose proof (Z.add_lnot_diag (- 2 ^ (eend - start))). blia.
 Qed.
 
 Lemma bitSlice_range: forall sz z,
@@ -45,13 +45,13 @@ Lemma bitSlice_range: forall sz z,
     0 <= bitSlice z 0 sz < 2 ^ sz.
 Proof.
   intros.
-  rewrite bitSlice_alt by omega.
+  rewrite bitSlice_alt by blia.
   unfold bitSlice'.
   change (2 ^ 0) with 1.
   rewrite Z.div_1_r.
   rewrite Z.sub_0_r.
   apply Z.mod_pos_bound.
-  apply Z.pow_pos_nonneg; omega.
+  apply Z.pow_pos_nonneg; blia.
 Qed.
 
 Lemma bitSlice_split: forall sz1 sz2 v,
@@ -59,16 +59,16 @@ Lemma bitSlice_split: forall sz1 sz2 v,
     0 <= sz2 ->
     bitSlice v sz1 (sz1 + sz2) * 2 ^ sz1 + bitSlice v 0 sz1 = bitSlice v 0 (sz1 + sz2).
 Proof.
-  intros. rewrite? bitSlice_alt by omega. unfold bitSlice'.
+  intros. rewrite? bitSlice_alt by blia. unfold bitSlice'.
   change (2 ^ 0)%Z with 1%Z.
   rewrite Z.div_1_r.
   rewrite! Z.sub_0_r.
-  replace (sz1 + sz2 - sz1)%Z with sz2 by omega.
+  replace (sz1 + sz2 - sz1)%Z with sz2 by blia.
   rewrite Z.pow_add_r by assumption.
-  assert (0 < 2 ^ sz1)%Z by (apply Z.pow_pos_nonneg; omega).
-  assert (0 < 2 ^ sz2)%Z by (apply Z.pow_pos_nonneg; omega).
-  rewrite Z.rem_mul_r by omega.
-  nia.
+  assert (0 < 2 ^ sz1)%Z by (apply Z.pow_pos_nonneg; blia).
+  assert (0 < 2 ^ sz2)%Z by (apply Z.pow_pos_nonneg; blia).
+  rewrite Z.rem_mul_r by blia.
+  Lia.nia.
 Qed.
 
 Lemma bitSlice_all_nonneg: forall n v : Z,
@@ -77,7 +77,7 @@ Lemma bitSlice_all_nonneg: forall n v : Z,
     bitSlice v 0 n = v.
 Proof.
   clear. intros.
-  rewrite bitSlice_alt by omega.
+  rewrite bitSlice_alt by blia.
   unfold bitSlice'.
   change (2 ^ 0) with 1.
   rewrite Z.div_1_r.
@@ -92,21 +92,21 @@ Lemma bitSlice_all_neg: forall n v : Z,
     bitSlice v 0 n = 2 ^ n + v.
 Proof.
   clear. intros.
-  rewrite bitSlice_alt by omega.
+  rewrite bitSlice_alt by blia.
   unfold bitSlice'.
   change (2 ^ 0)%Z with 1%Z.
   rewrite Z.div_1_r.
   rewrite Z.sub_0_r.
   assert (0 < 2 ^ n)%Z. {
-    apply Z.pow_pos_nonneg; omega.
+    apply Z.pow_pos_nonneg; blia.
   }
   Z.div_mod_to_equations.
-  rewrite H2 in * by lia.
+  rewrite H2 in * by blia.
   clear H2 v.
   rewrite Z.add_assoc.
-  assert (q = -1)%Z by nia.
+  assert (q = -1)%Z by Lia.nia.
   subst q.
-  nia.
+  Lia.nia.
 Qed.
 
 
@@ -126,48 +126,48 @@ Lemma signExtend_alt_bitwise: forall l n,
 Proof.
   intros.
   unfold signExtend, signExtend_bitwise.
-  assert (0 < 2 ^ l) as A by (apply Z.pow_pos_nonneg; lia).
-  assert (0 < 2 ^ (l - 1)) as A' by (apply Z.pow_pos_nonneg; lia).
+  assert (0 < 2 ^ l) as A by (apply Z.pow_pos_nonneg; blia).
+  assert (0 < 2 ^ (l - 1)) as A' by (apply Z.pow_pos_nonneg; blia).
   destruct (Z.testbit n (l - 1)) eqn: E.
   - rewrite or_to_plus by Z.bitblast.
-    rewrite Z.shiftl_mul_pow2 by lia.
-    rewrite Z.land_ones by lia.
-    apply Z.testbit_true in E; [|lia].
-    do 2 rewrite Z.mod_eq by lia.
-    replace (2 ^ l) with (2 ^ ((l - 1) + 1)) by (f_equal; lia).
-    rewrite Z.pow_add_r in * by lia.
+    rewrite Z.shiftl_mul_pow2 by blia.
+    rewrite Z.land_ones by blia.
+    apply Z.testbit_true in E; [|blia].
+    do 2 rewrite Z.mod_eq by blia.
+    replace (2 ^ l) with (2 ^ ((l - 1) + 1)) by (f_equal; blia).
+    rewrite Z.pow_add_r in * by blia.
     change (2 ^ 1) with 2 in *.
-    replace (n + 2 ^ (l - 1)) with (n + 1 * 2 ^ (l - 1)) at 2 by lia.
-    rewrite <-! Z.div_div by lia.
-    rewrite Z_div_plus_full by lia.
-    rewrite Z.mod_eq in E by lia.
+    replace (n + 2 ^ (l - 1)) with (n + 1 * 2 ^ (l - 1)) at 2 by blia.
+    rewrite <-! Z.div_div by blia.
+    rewrite Z_div_plus_full by blia.
+    rewrite Z.mod_eq in E by blia.
     rewrite <-! Z.mul_assoc.
-    replace (n / 2 ^ (l - 1)) with (2 * (n / 2 ^ (l - 1) / 2) + 1) at 1 by lia.
+    replace (n / 2 ^ (l - 1)) with (2 * (n / 2 ^ (l - 1) / 2) + 1) at 1 by blia.
     rewrite <- Z.add_assoc.
     change (1 + 1) with (1 * 2).
-    rewrite Z_div_plus_full by lia.
+    rewrite Z_div_plus_full by blia.
     remember (n / 2 ^ (l - 1) / 2) as X.
     rewrite Z.mul_add_distr_l.
     rewrite (Z.mul_comm 2 X).
-    rewrite Z.div_mul by lia.
-    lia.
-  - rewrite Z.land_ones by lia.
-    apply Z.testbit_false in E; [|lia].
-    do 2 rewrite Z.mod_eq by lia.
-    replace (2 ^ l) with (2 ^ ((l - 1) + 1)) by (f_equal; lia).
-    rewrite Z.pow_add_r in * by lia.
+    rewrite Z.div_mul by blia.
+    blia.
+  - rewrite Z.land_ones by blia.
+    apply Z.testbit_false in E; [|blia].
+    do 2 rewrite Z.mod_eq by blia.
+    replace (2 ^ l) with (2 ^ ((l - 1) + 1)) by (f_equal; blia).
+    rewrite Z.pow_add_r in * by blia.
     change (2 ^ 1) with 2 in *.
-    replace (n + 2 ^ (l - 1)) with (n + 1 * 2 ^ (l - 1)) at 2 by lia.
-    rewrite <-! Z.div_div by lia.
-    rewrite Z_div_plus_full by lia.
-    rewrite Z.mod_eq in E by lia.
+    replace (n + 2 ^ (l - 1)) with (n + 1 * 2 ^ (l - 1)) at 2 by blia.
+    rewrite <-! Z.div_div by blia.
+    rewrite Z_div_plus_full by blia.
+    rewrite Z.mod_eq in E by blia.
     rewrite <-! Z.mul_assoc.
-    replace (n / 2 ^ (l - 1)) with (2 * (n / 2 ^ (l - 1) / 2)) at 1 by lia.
+    replace (n / 2 ^ (l - 1)) with (2 * (n / 2 ^ (l - 1) / 2)) at 1 by blia.
     remember (n / 2 ^ (l - 1) / 2) as X.
-    replace (2 * X + 1) with (1 + X * 2) by lia.
-    rewrite Z_div_plus_full by lia.
+    replace (2 * X + 1) with (1 + X * 2) by blia.
+    rewrite Z_div_plus_full by blia.
     change (1 / 2 + X) with X.
-    lia.
+    blia.
 Qed.
 
 Lemma signExtend_range: forall i z,
@@ -178,14 +178,14 @@ Proof.
   unfold signExtend.
   pose proof (Z.mod_pos_bound (z + (2 ^ (i - 1))) (2 ^ i)) as P.
   assert (0 < 2 ^ i) as A. {
-    apply Z.pow_pos_nonneg; lia.
+    apply Z.pow_pos_nonneg; blia.
   }
   specialize (P A).
-  replace (2 ^ i) with (2 ^ ((i - 1) + 1)) in * by (f_equal; lia).
-  rewrite Z.pow_add_r in * by lia.
+  replace (2 ^ i) with (2 ^ ((i - 1) + 1)) in * by (f_equal; blia).
+  rewrite Z.pow_add_r in * by blia.
   change (2 ^ 1) with 2 in *.
   remember (2 ^ (i - 1)) as B.
-  lia.
+  blia.
 Qed.
 
 Lemma signExtend_nop: forall l w v,
@@ -196,10 +196,10 @@ Proof.
   intros.
   unfold signExtend.
   assert (2 ^ (w - 1) * 2 = 2 ^ w). {
-    replace w with (w - 1 + 1) at 2 by lia.
-    rewrite Z.pow_add_r by lia.
+    replace w with (w - 1 + 1) at 2 by blia.
+    rewrite Z.pow_add_r by blia.
     reflexivity.
   }
   pose proof (Z.pow_le_mono_r 2 l (w-1)).
-  rewrite Z.mod_small; lia.
+  rewrite Z.mod_small; blia.
 Qed.

@@ -1,4 +1,4 @@
-Require Import Coq.ZArith.BinInt Coq.micromega.Lia.
+Require Import Coq.ZArith.BinInt coqutil.Z.Lia.
 Require Import coqutil.Word.Interface coqutil.Map.Interface.
 Require coqutil.Map.SortedList.
 
@@ -11,9 +11,9 @@ Section __.
       repeat match goal with
              | H: context[Z.ltb ?a ?b] |- _ => destruct (Z.ltb_spec a b)
              | |- context[Z.ltb ?a ?b] => destruct (Z.ltb_spec a b)
-             end; try congruence; try Lia.lia; [].
+             end; try congruence; try blia; [].
     rewrite <-word.of_Z_unsigned; rewrite <-word.of_Z_unsigned at 1; f_equal.
-    Lia.lia.
+    blia.
   Qed.
 
   Context (value : Type).

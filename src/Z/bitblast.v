@@ -1,5 +1,5 @@
 Require Import Coq.ZArith.ZArith.
-Require Import Coq.micromega.Lia.
+Require Import coqutil.Z.Lia.
 Require Import Coq.btauto.Btauto.
 
 Local Open Scope Z_scope.
@@ -10,7 +10,7 @@ Module Z.
   Lemma testbit_minus1 i (H:0<=i) :
     Z.testbit (-1) i = true.
   Proof.
-    destruct i; try lia; exact eq_refl.
+    destruct i; try blia; exact eq_refl.
   Qed.
 
   Lemma testbit_mod_pow2 a n i (H:0<=n) :
@@ -24,14 +24,14 @@ Module Z.
     Z.testbit (Z.ones n) i = (0 <=? i) && (i <? n).
   Proof.
     destruct (Z.leb_spec 0 i), (Z.ltb_spec i n); cbn;
-      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by lia; trivial.
+      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by blia; trivial.
   Qed.
 
   Lemma testbit_ones_nonneg n i (Hn : 0 <= n) (Hi: 0 <= i) :
     Z.testbit (Z.ones n) i = (i <? n).
   Proof.
-    rewrite testbit_ones by lia.
-    destruct (Z.leb_spec 0 i); cbn; solve [trivial | lia].
+    rewrite testbit_ones by blia.
+    destruct (Z.leb_spec 0 i); cbn; solve [trivial | blia].
   Qed.
 
   Lemma shiftl_spec': forall a n m : Z,
@@ -170,14 +170,14 @@ Module Z.
              let l := fresh "l" in remember i as l
            end;
     repeat match goal with
-           | i: Z, j: Z |- _ => replace i with j in * by lia; clear i
+           | i: Z, j: Z |- _ => replace i with j in * by blia; clear i
            end.
 
   Ltac bitblast_core :=
     rewrite_bitwise;
     discover_equal_testbit_indices;
     destruct_ltbs;
-    try (exfalso; lia);
+    try (exfalso; blia);
     try btauto.
 
   (* Note: The Coq Standard library already provides a tactic called "Z.bitwise", but

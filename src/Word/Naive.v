@@ -1,4 +1,4 @@
-Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt Lia.
+Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt coqutil.Z.Lia.
 Require Import coqutil.sanity coqutil.Word.Interface. Import word.
 Local Open Scope Z_scope.
 
@@ -19,7 +19,7 @@ Section WithWidth.
 
   Lemma wrap_value_wrap_value z : wrap_value (wrap_value z) = wrap_value z.
     cbv [wrap_value]. rewrite Z.mod_mod; [ reflexivity | ].
-    eapply Z.pow_nonzero; [congruence | Lia.lia ].
+    eapply Z.pow_nonzero; [congruence | blia ].
   Qed.
 
   Definition wrap (z:Z) : rep :=

@@ -1,5 +1,5 @@
 Require Import Coq.ZArith.BinInt.
-Require Import Coq.micromega.Lia.
+Require Import coqutil.Z.Lia.
 Require Import Coq.ZArith.ZArith.
 
 Local Open Scope Z_scope.
@@ -8,7 +8,7 @@ Module Z.
 
   Lemma mod2_cases: forall (n: Z), n mod 2 = 0 \/ n mod 2 = 1.
   Proof.
-    intros. pose proof (Z.mod_pos_bound n 2). omega.
+    intros. pose proof (Z.mod_pos_bound n 2). blia.
   Qed.
 
   Lemma div_mul_undo: forall a b,
@@ -18,7 +18,7 @@ Module Z.
   Proof.
     intros.
     pose proof Z.div_mul_cancel_l as A. specialize (A a 1 b).
-    replace (b * 1) with b in A by omega.
+    replace (b * 1) with b in A by blia.
     rewrite Z.div_1_r in A.
     rewrite Z.mul_comm.
     rewrite <- Z.divide_div_mul_exact; try assumption.
@@ -64,8 +64,8 @@ Module Z.
       b <> 0 ->
       (a + b) mod b = a mod b.
   Proof.
-    intros. rewrite <- Z.add_mod_idemp_r by omega.
-    rewrite Z.mod_same by omega.
+    intros. rewrite <- Z.add_mod_idemp_r by blia.
+    rewrite Z.mod_same by blia.
     rewrite Z.add_0_r.
     reflexivity.
   Qed.
@@ -75,11 +75,11 @@ Module Z.
       2 ^ n = 0 /\ a = 0 \/ 0 <= a < 2 ^ n.
   Proof.
     intros.
-    assert (n < 0 \/ 0 <= n) as C by omega. destruct C as [C | C].
+    assert (n < 0 \/ 0 <= n) as C by blia. destruct C as [C | C].
     - left. rewrite (Z.pow_neg_r 2 n C) in *. rewrite mod_0_r in H. auto.
     - right.
       rewrite <- H. apply Z.mod_pos_bound.
-      apply Z.pow_pos_nonneg; omega.
+      apply Z.pow_pos_nonneg; blia.
   Qed.
 
   Lemma mod_pow2_same_bounds: forall a n,
@@ -88,20 +88,20 @@ Module Z.
       0 <= a < 2 ^ n.
   Proof.
     intros. rewrite <- H. apply Z.mod_pos_bound.
-    apply Z.pow_pos_nonneg; omega.
+    apply Z.pow_pos_nonneg; blia.
   Qed.
 
   Lemma pow2_nonneg: forall n,
       0 <= 2 ^ n.
   Proof.
-    intros. apply Z.pow_nonneg. omega.
+    intros. apply Z.pow_nonneg. blia.
   Qed.
 
   Lemma pow2_pos: forall n,
       0 <= n ->
       0 < 2 ^ n.
   Proof.
-    intros. apply Z.pow_pos_nonneg; omega.
+    intros. apply Z.pow_pos_nonneg; blia.
   Qed.
 
   Lemma pow2_times2: forall i,
@@ -109,9 +109,9 @@ Module Z.
       2 ^ i = 2 * 2 ^ (i - 1).
   Proof.
     intros.
-    rewrite <- Z.pow_succ_r by omega.
+    rewrite <- Z.pow_succ_r by blia.
     f_equal.
-    omega.
+    blia.
   Qed.
 
   Lemma pow2_div2: forall i,
@@ -119,9 +119,9 @@ Module Z.
       2 ^ (i - 1) = 2 ^ i / 2.
   Proof.
     intros.
-    assert (i = 0 \/ 0 < i) as C by omega. destruct C as [C | C].
+    assert (i = 0 \/ 0 < i) as C by blia. destruct C as [C | C].
     - subst. reflexivity.
-    - rewrite Z.pow_sub_r by omega.
+    - rewrite Z.pow_sub_r by blia.
       reflexivity.
   Qed.
 
@@ -133,7 +133,7 @@ Module Z.
     intros.
     pose proof (Zmod_eq_full a b) as P.
     pose proof (Z.mod_bound_pos a b) as Q.
-    omega.
+    blia.
   Qed.
 
   Lemma testbit_true_nonneg: forall a i,
@@ -145,11 +145,11 @@ Module Z.
     intros.
     apply Z.testbit_true in H1; [|assumption].
     pose proof (pow2_pos i H0).
-    eapply Z.le_trans; [| apply (div_mul_undo_le a (2 ^ i)); omega].
-    replace (2 ^ i) with (1 * 2 ^ i) at 1 by omega.
-    apply Z.mul_le_mono_nonneg_r; [omega|].
+    eapply Z.le_trans; [| apply (div_mul_undo_le a (2 ^ i)); blia].
+    replace (2 ^ i) with (1 * 2 ^ i) at 1 by blia.
+    apply Z.mul_le_mono_nonneg_r; [blia|].
     pose proof (Z.div_pos a (2 ^ i)).
-    assert (a / 2 ^ i <> 0); [|omega].
+    assert (a / 2 ^ i <> 0); [|blia].
     intro E. rewrite E in H1. cbv in H1. discriminate H1.
   Qed.
 
@@ -173,14 +173,14 @@ Module Z.
     destruct H0 as [A B].
     pose proof (pow2_pos i H) as Q.
     apply (Z.div_le_mono _ _ _ Q) in A.
-    rewrite Z_div_same in A by omega.
+    rewrite Z_div_same in A by blia.
     pose proof (Z.div_lt_upper_bound a (2 ^ i) 2 Q) as P.
     rewrite Z.mul_comm in P.
-    replace i with (i + 1 - 1) in P by omega.
-    rewrite <- pow2_times2 in P by omega.
+    replace i with (i + 1 - 1) in P by blia.
+    rewrite <- pow2_times2 in P by blia.
     specialize (P B).
-    replace (i + 1 - 1) with i in P by omega.
-    replace (a / 2 ^ i) with 1 by omega.
+    replace (i + 1 - 1) with i in P by blia.
+    replace (a / 2 ^ i) with 1 by blia.
     reflexivity.
   Qed.
 
@@ -191,15 +191,15 @@ Module Z.
       a < 2 ^ (i - 1).
   Proof.
     intros.
-    assert (2 ^ (i - 1) <= a < 2 ^ i \/ a < 2 ^ (i - 1)) as C by omega.
+    assert (2 ^ (i - 1) <= a < 2 ^ i \/ a < 2 ^ (i - 1)) as C by blia.
     destruct C as [C | C]; [exfalso|assumption].
     assert (Z.testbit a (i - 1) = true); [|congruence].
-    replace i with (i - 1 + 1) in C at 2 by omega.
-    apply testbit_true_nonneg'; omega.
+    replace i with (i - 1 + 1) in C at 2 by blia.
+    apply testbit_true_nonneg'; blia.
   Qed.
 
   Lemma testbit_minus1 i (H:0<=i) : Z.testbit (-1) i = true.
-  Proof. destruct i; try lia; exact eq_refl. Qed.
+  Proof. destruct i; try blia; exact eq_refl. Qed.
 
   Lemma testbit_mod_pow2 a n i (H:0<=n)
     : Z.testbit (a mod 2 ^ n) i = ((i <? n) && Z.testbit a i)%bool.
@@ -211,13 +211,13 @@ Module Z.
   Lemma testbit_ones n i (H : 0 <= n) : Z.testbit (Z.ones n) i = ((0 <=? i) && (i <? n))%bool.
   Proof.
     destruct (Z.leb_spec 0 i), (Z.ltb_spec i n); cbn;
-      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by lia; trivial.
+      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by blia; trivial.
   Qed.
 
   Lemma testbit_ones_nonneg n i (Hn : 0 <= n) (Hi: 0 <= i) : Z.testbit (Z.ones n) i = (i <? n)%bool.
   Proof.
-    rewrite testbit_ones by lia.
-    destruct (Z.leb_spec 0 i); cbn; solve [trivial | lia].
+    rewrite testbit_ones by blia.
+    destruct (Z.leb_spec 0 i); cbn; solve [trivial | blia].
   Qed.
 
   Lemma signed_bounds_to_sz_pos: forall sz n,
@@ -225,10 +225,10 @@ Module Z.
       0 < sz.
   Proof.
     intros.
-    assert (0 < sz \/ sz - 1 < 0) as C by omega.
+    assert (0 < sz \/ sz - 1 < 0) as C by blia.
     destruct C as [C | C]; [assumption|exfalso].
     rewrite Z.pow_neg_r in H by assumption.
-    omega.
+    blia.
   Qed.
 
   Lemma two_digits_encoding_inj_lo: forall base a b c d: Z,
@@ -241,12 +241,12 @@ Module Z.
     pose proof Z.mod_unique as P.
     specialize P with (b := base) (q := c) (r := d).
     specialize P with (2 := H1).
-    rewrite P by omega.
-    rewrite <- Z.add_mod_idemp_l by omega.
+    rewrite P by blia.
+    rewrite <- Z.add_mod_idemp_l by blia.
     rewrite Z.mul_comm.
-    rewrite Z.mod_mul by omega.
+    rewrite Z.mod_mul by blia.
     rewrite Z.add_0_l.
-    rewrite Z.mod_small by omega.
+    rewrite Z.mod_small by blia.
     reflexivity.
   Qed.
 
@@ -256,14 +256,14 @@ Module Z.
       base * a + b = base * c + d ->
       a = c.
   Proof.
-    intros. nia.
+    intros. Lia.nia.
   Qed.
 
   Lemma Z_to_nat_neg: forall (n: Z),
       n < 0 ->
       Z.to_nat n = 0%nat.
   Proof.
-    intros. destruct n; (lia || apply Z2Nat.inj_neg).
+    intros. destruct n; (blia || apply Z2Nat.inj_neg).
   Qed.
 
   (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)

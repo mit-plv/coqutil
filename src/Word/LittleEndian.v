@@ -1,5 +1,5 @@
 Require Import Coq.ZArith.ZArith.
-Require Import Coq.micromega.Lia.
+Require Import coqutil.Z.Lia.
 Require Import coqutil.Word.Interface coqutil.Datatypes.HList coqutil.Datatypes.PrimitivePair.
 Require Import coqutil.Z.bitblast.
 Local Set Universe Polymorphism.
@@ -29,8 +29,8 @@ Section LittleEndian.
     - cbn. intros. rewrite Z.mod_1_r. trivial.
     - cbn [split combine PrimitivePair.pair._1 PrimitivePair.pair._2]; intros.
       erewrite IHn; clear IHn.
-      rewrite word.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by lia.
-      rewrite <-! Z.land_ones by lia.
+      rewrite word.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by blia.
+      rewrite <-! Z.land_ones by blia.
       Z.bitblast.
   Qed.
 

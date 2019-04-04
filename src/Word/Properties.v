@@ -1,6 +1,6 @@
 Require Import Coq.ZArith.BinInt.
 Require Import coqutil.Z.div_mod_to_equations.
-Require Import Lia Btauto.
+Require Import coqutil.Z.Lia Btauto.
 Require Coq.setoid_ring.Ring_theory.
 Require Import coqutil.Z.bitblast.
 Require Import coqutil.Word.Interface. Import word.
@@ -8,7 +8,7 @@ Require Import coqutil.Word.Interface. Import word.
 Local Set Universe Polymorphism.
 Local Open Scope Z_scope.
 
-Local Ltac mia := Z.div_mod_to_equations; nia.
+Local Ltac mia := Z.div_mod_to_equations; Lia.nia.
 
 Module word.
   (* Create HintDb word_laws discriminated. *) (* DON'T do this, COQBUG(5381) *)
@@ -31,7 +31,7 @@ Module word.
     Lemma signed_eq_swrap_unsigned x : signed x = swrap (unsigned x).
     Proof. cbv [wrap]; rewrite <-signed_of_Z, of_Z_unsigned; trivial. Qed.
 
-    Lemma width_nonneg : 0 <= width. pose proof width_pos. lia. Qed.
+    Lemma width_nonneg : 0 <= width. pose proof width_pos. blia. Qed.
     Let width_nonneg_context : 0 <= width. apply width_nonneg. Qed.
     Let m_small : 0 < 2^width. apply Z.pow_pos_nonneg; firstorder idtac. Qed.
 
@@ -91,7 +91,7 @@ Module word.
     Lemma unsigned_sru_nowrap x y (H:unsigned y < width) : unsigned (sru x y) = Z.shiftr (unsigned x) (unsigned y).
     Proof.
       pose proof unsigned_range y.
-      rewrite unsigned_sru by lia.
+      rewrite unsigned_sru by blia.
       rewrite <-(wrap_unsigned x).
       Z.bitblast.
     Qed.
@@ -138,7 +138,7 @@ Module word.
     Let width_nonzero : 0 < width. apply width_pos. Qed.
     Let halfm_small : 0 < 2^(width-1). apply Z.pow_pos_nonneg; auto with zarith. Qed.
     Let twice_halfm : 2^(width-1) * 2 = 2^width.
-    Proof. rewrite Z.mul_comm, <-Z.pow_succ_r by lia; f_equal; lia. Qed.
+    Proof. rewrite Z.mul_comm, <-Z.pow_succ_r by blia; f_equal; blia. Qed.
 
     Lemma signed_range x : -2^(width-1) <= signed x < 2^(width-1).
     Proof.
@@ -147,16 +147,16 @@ Module word.
     Qed.
 
     Lemma swrap_inrange z (H : -2^(width-1) <= z < 2^(width-1)) : swrap z = z.
-    Proof. cbv [swrap]; rewrite Z.mod_small; lia. Qed.
+    Proof. cbv [swrap]; rewrite Z.mod_small; blia. Qed.
 
     Lemma swrap_as_div_mod z : swrap z = z mod 2^(width-1) - 2^(width-1) * (z / (2^(width - 1)) mod 2).
     Proof.
       symmetry; cbv [swrap wrap].
       replace (2^width) with ((2 ^ (width - 1) * 2))
-        by (rewrite Z.mul_comm, <-Z.pow_succ_r by lia; f_equal; lia).
-      replace (z + 2^(width-1)) with (z + 1*2^(width-1)) by lia.
-      rewrite Z.rem_mul_r, ?Z.div_add, ?Z.mod_add, (Z.add_mod _ 1 2), Zdiv.Zmod_odd by lia.
-      destruct (Z.odd _); cbn; lia.
+        by (rewrite Z.mul_comm, <-Z.pow_succ_r by blia; f_equal; blia).
+      replace (z + 2^(width-1)) with (z + 1*2^(width-1)) by blia.
+      rewrite Z.rem_mul_r, ?Z.div_add, ?Z.mod_add, (Z.add_mod _ 1 2), Zdiv.Zmod_odd by blia.
+      destruct (Z.odd _); cbn; blia.
     Qed.
 
     Lemma signed_add x y : signed (add x y) = swrap (Z.add (signed x) (signed y)).
@@ -164,67 +164,67 @@ Module word.
       rewrite !signed_eq_swrap_unsigned; autorewrite with word_laws.
       cbv [wrap swrap]. rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
-        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; lia).
+        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
       set (M := 2 ^ (width - 1)) in*; clearbody M.
-      assert (0<2*M) by nia.
+      assert (0<2*M) by Lia.nia.
       rewrite <-!Z.add_opp_r.
-      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by lia.
+      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
       rewrite 4(Z.add_comm (_ mod _)).
-      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by lia.
-      f_equal; f_equal; lia.
+      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
+      f_equal; f_equal; blia.
     Qed.
 
     Lemma signed_sub x y : signed (sub x y) = swrap (Z.sub (signed x) (signed y)).
     Proof.
-      (* Z.push_modulo; Z.pull_modulo; f_equal; lia. *)
+      (* Z.push_modulo; Z.pull_modulo; f_equal; blia. *)
       rewrite !signed_eq_swrap_unsigned; autorewrite with word_laws.
       cbv [wrap swrap]; rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
-        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; lia).
+        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
       set (M := 2 ^ (width - 1)) in*; clearbody M.
-      assert (0<2*M) by nia.
+      assert (0<2*M) by Lia.nia.
       rewrite <-!Z.add_opp_r.
-      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by lia.
+      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
       rewrite !(Z.add_comm (_ mod _)).
-      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by lia.
-      replace (-(unsigned y mod (2 * M))+M+unsigned x) with (M+unsigned x-(unsigned y mod(2*M))) by lia.
-      replace (-M+-(-M+(unsigned y+M) mod (2*M))+M+unsigned x+M) with (-M+M+unsigned x+M+M-(unsigned y+M)mod(2*M)) by lia.
-      rewrite 2Zdiv.Zminus_mod_idemp_r; f_equal; f_equal; lia.
+      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
+      replace (-(unsigned y mod (2 * M))+M+unsigned x) with (M+unsigned x-(unsigned y mod(2*M))) by blia.
+      replace (-M+-(-M+(unsigned y+M) mod (2*M))+M+unsigned x+M) with (-M+M+unsigned x+M+M-(unsigned y+M)mod(2*M)) by blia.
+      rewrite 2Zdiv.Zminus_mod_idemp_r; f_equal; f_equal; blia.
     Qed.
 
     Lemma signed_opp x : signed (opp x) = swrap (Z.opp (signed x)).
     Proof.
-      (* Z.push_modulo; Z.pull_modulo; f_equal; lia. *)
+      (* Z.push_modulo; Z.pull_modulo; f_equal; blia. *)
       rewrite !signed_eq_swrap_unsigned; autorewrite with word_laws.
       cbv [wrap swrap]; rewrite <-(wrap_unsigned x).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
-        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; lia).
+        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
       set (M := 2 ^ (width - 1)) in*; clearbody M.
       rewrite <-!Z.add_opp_r.
-      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by lia.
-      replace (- (unsigned x mod (2 * M)) + M) with (M - unsigned x mod (2 * M)) by lia.
-      replace (- ((unsigned x + M) mod (2 * M) + - M) + M) with (M+M-(unsigned x+M) mod (2*M)) by lia.
-      rewrite ?Zdiv.Zminus_mod_idemp_r; f_equal; f_equal; lia.
+      repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
+      replace (- (unsigned x mod (2 * M)) + M) with (M - unsigned x mod (2 * M)) by blia.
+      replace (- ((unsigned x + M) mod (2 * M) + - M) + M) with (M+M-(unsigned x+M) mod (2*M)) by blia.
+      rewrite ?Zdiv.Zminus_mod_idemp_r; f_equal; f_equal; blia.
     Qed.
 
     Lemma signed_mul x y : signed (mul x y) = swrap (Z.mul (signed x) (signed y)).
     Proof.
-      (* Z.push_modulo; Z.pull_modulo; f_equal; lia. *)
+      (* Z.push_modulo; Z.pull_modulo; f_equal; blia. *)
       rewrite !signed_eq_swrap_unsigned; autorewrite with word_laws.
       cbv [wrap swrap]. rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
-        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; lia).
+        (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
       set (M := 2 ^ (width - 1)) in*; clearbody M.
-      assert (0<2*M) by nia.
+      assert (0<2*M) by Lia.nia.
       f_equal.
       symmetry.
-      rewrite <-Z.add_mod_idemp_l by lia.
-      rewrite Z.mul_mod by lia.
+      rewrite <-Z.add_mod_idemp_l by blia.
+      rewrite Z.mul_mod by blia.
       rewrite <-!Z.add_opp_r.
-      rewrite ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r by lia.
+      rewrite ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r by blia.
       rewrite !Z.add_opp_r.
       rewrite !Z.add_simpl_r.
-      rewrite !Z.mod_mod by lia.
+      rewrite !Z.mod_mod by blia.
       trivial.
     Qed.
 
@@ -234,9 +234,9 @@ Module word.
                                 else Z.testbit (wrap z) (width -1).
     Proof.
       destruct (ZArith_dec.Z_lt_le_dec i 0).
-      { destruct (Z.ltb_spec i width); rewrite ?Z.testbit_neg_r by lia; trivial. }
+      { destruct (Z.ltb_spec i width); rewrite ?Z.testbit_neg_r by blia; trivial. }
       rewrite swrap_as_div_mod. cbv [wrap].
-      rewrite <-Z.testbit_spec' by lia.
+      rewrite <-Z.testbit_spec' by blia.
       rewrite <-Z.add_opp_r.
       rewrite Z.add_nocarry_lxor; cycle 1.
       { destruct (Z.testbit z (width - 1)) eqn:Hw1; cbn [Z.b2z];
@@ -247,10 +247,10 @@ Module word.
       destruct (Z.testbit z (width - 1)) eqn:Hw1; cbn [Z.b2z];
         rewrite ?Z.mul_1_r, ?Z.mul_0_r, ?Z.opp_0, ?Z.add_0_r, ?Z.land_0_r;
         autorewrite with z_bitwise_no_hyps z_bitwise_with_hyps; cbn [Z.pred];
-        destruct (Z.ltb_spec i (width-1)), (Z.ltb_spec i width); cbn; lia || btauto || trivial.
-      { assert (i = width-1) by lia; congruence. }
-      { destruct (Z.ltb_spec (width-1) width); lia || btauto. }
-      { assert (i = width-1) by lia; congruence. }
+        destruct (Z.ltb_spec i (width-1)), (Z.ltb_spec i width); cbn; blia || btauto || trivial.
+      { assert (i = width-1) by blia; congruence. }
+      { destruct (Z.ltb_spec (width-1) width); blia || btauto. }
+      { assert (i = width-1) by blia; congruence. }
     Qed.
 
     Lemma testbit_signed x i : Z.testbit (signed x) i
@@ -269,7 +269,7 @@ Module word.
       eapply Z.bits_inj'; intros ?i ?Hi;
       autorewrite with word_laws z_bitwise_signed z_bitwise_no_hyps z_bitwise_with_hyps;
       repeat match goal with |- context [?a <? ?b] =>
-        destruct (Z.ltb_spec a b); trivial; try lia
+        destruct (Z.ltb_spec a b); trivial; try blia
       end.
 
     Lemma swrap_signed x : swrap (signed x) = signed x.
@@ -300,7 +300,7 @@ Module word.
     Lemma signed_srs_nowrap x y (H:unsigned y < width) : signed (srs x y) = Z.shiftr (signed x) (unsigned y).
     Proof.
       pose proof @unsigned_range _ _ word_ok y; sbitwise.
-      replace (unsigned y) with 0 by lia; rewrite Z.add_0_r; trivial.
+      replace (unsigned y) with 0 by blia; rewrite Z.add_0_r; trivial.
     Qed.
 
     Lemma signed_mulhss_nowrap x y : signed (mulhss x y) = Z.mul (signed x) (signed y) / 2^width.
@@ -313,7 +313,7 @@ Module word.
       rewrite Z.quot_div by assumption. pose proof (signed_range x).
       destruct (Z.sgn_spec (signed x)) as [[? X]|[[? X]|[? X]]];
       destruct (Z.sgn_spec (signed y)) as [[? Y]|[[? Y]|[? Y]]];
-      rewrite ?X, ?Y; rewrite ?Z.abs_eq, ?Z.abs_neq by lia; mia.
+      rewrite ?X, ?Y; rewrite ?Z.abs_eq, ?Z.abs_neq by blia; mia.
     Qed.
     Lemma signed_mods_nowrap x y (H:signed y <> 0) : signed (mods x y) = Z.rem (signed x) (signed y).
     Proof.
@@ -322,7 +322,7 @@ Module word.
       pose (signed_range x); pose (signed_range y).
       destruct (Z.sgn_spec (signed x)) as [[? X]|[[? X]|[? X]]];
       destruct (Z.sgn_spec (signed y)) as [[? Y]|[[? Y]|[? Y]]];
-      rewrite ?X, ?Y; repeat rewrite ?Z.abs_eq, ?Z.abs_neq by lia; mia.
+      rewrite ?X, ?Y; repeat rewrite ?Z.abs_eq, ?Z.abs_neq by blia; mia.
     Qed.
 
     Lemma signed_inj x y (H : signed x = signed y) : x = y.
