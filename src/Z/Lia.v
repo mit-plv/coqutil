@@ -8,6 +8,8 @@ Require Import Coq.omega.Omega.
    so failure/success of this tactic does not depend on the speed of
    the processor (but whether it outputs "BAD_LIA" does) *)
 Ltac compare_tacs omegatac liatac :=
+  idtac; (* <-- needed to prevent invocations such as [intuition blia] from
+                applying blia right away instead of passing it to [intuition] *)
   lazymatch goal with
   | |- ?G =>
     let Ho := fresh in let Hl := fresh in
