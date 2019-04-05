@@ -57,9 +57,9 @@ Ltac compare_omega_lia :=
 Ltac default_lia := omega || lia.
 
 (* bench-lia to be used by all code, unless lia doesn't work *)
-Ltac blia := lia.
+Ltac blia := compare_omega_lia_timed.
 
 (* bench-omega: to be used if we fear that using lia would be slow or fail.
    But we still use the bomega alias instead of plain omega, so that we can experiment
    with swapping it by lia. *)
-Ltac bomega := omega.
+Ltac bomega := compare_omega_lia_timed.
