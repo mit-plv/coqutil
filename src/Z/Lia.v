@@ -57,4 +57,4 @@ Ltac compare_omega_lia :=
 Ltac default_lia := omega || lia.
 
 (* bench-lia to be used by all code, can be aliased to default_lia or compare_omega_lia *)
-Ltac blia := compare_omega_lia_timed.
+Ltac blia := compare_omega_lia.
