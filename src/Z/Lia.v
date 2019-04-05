@@ -58,3 +58,8 @@ Ltac default_lia := omega || lia.
 
 (* bench-lia to be used by all code, can be aliased to default_lia or compare_omega_lia *)
 Ltac blia := compare_omega_lia.
+
+(* bench-omega: to be used if we fear that using lia would be slow or fail.
+   But we still use the bomega alias instead of plain omega, so that we can experiment
+   with swapping it by lia. *)
+Ltac bomega := omega.
