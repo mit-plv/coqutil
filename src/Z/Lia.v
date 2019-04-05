@@ -2,19 +2,15 @@ Require Import Coq.micromega.Lia.
 Require Import Coq.omega.Omega.
 
 (* We have encountered cases where lia is insanely slower than omega,
-   (https://github.com/coq/coq/issues/9848), but not the other way,
-   so we dare to start by running omega without timeout.
-   Note that the only timeout in this tactic is after omega succeeded,
-   so failure/success of this tactic does not depend on the speed of
-   the processor (but whether it outputs "BAD_LIA" does) *)
+   (https://github.com/coq/coq/issues/9848), but not the other way. *)
 Ltac compare_tacs omegatac liatac :=
   idtac; (* <-- needed to prevent invocations such as [intuition blia] from
                 applying blia right away instead of passing it to [intuition] *)
   lazymatch goal with
   | |- ?G =>
     let Ho := fresh in let Hl := fresh in
-    tryif (assert G as Ho by (time "omega" omegatac)) then (
-      tryif (timeout 1 (assert G as Hl by (time "lia" liatac))) then (
+    tryif (assert G as Ho by omegatac) then (
+      tryif (assert G as Hl by liatac) then (
         (* both succeed *)
         exact Ho
       ) else (
@@ -23,8 +19,7 @@ Ltac compare_tacs omegatac liatac :=
         exact Ho
       )
     ) else (
-      (* omega failed, so all our hope is on lia, so run it without timeout *)
-      tryif (assert G as Hl by (time "lia" liatac)) then (
+      tryif (assert G as Hl by liatac) then (
         (* omega failed on a goal lia solved *)
         idtac "BAD_OMEGA";
         exact Hl
@@ -53,9 +48,13 @@ Goal True. compare_tacs ltac:(wait 10%Z; exact I) ltac:(loop_forever). Abort.
 
 *)
 
-Ltac compare_omega_lia := compare_tacs ltac:(omega) ltac:(lia).
+Ltac compare_omega_lia_timed :=
+  compare_tacs ltac:(time "omega" omega) ltac:(time "lia" lia).
+
+Ltac compare_omega_lia :=
+  compare_tacs ltac:(omega) ltac:(lia).
 
 Ltac default_lia := omega || lia.
 
 (* bench-lia to be used by all code, can be aliased to default_lia or compare_omega_lia *)
-Ltac blia := compare_omega_lia.
+Ltac blia := compare_omega_lia_timed.
