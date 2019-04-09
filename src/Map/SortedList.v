@@ -1,4 +1,3 @@
-Local Set Primitive Projections.
 Require Import coqutil.Macros.subst coqutil.Macros.unique coqutil.Map.Interface.
 Require Coq.Lists.List.
 Require Coq.Logic.Eqdep_dec.
@@ -11,7 +10,6 @@ Definition minimize_eq_proof{A: Type}(eq_dec: forall (x y: A), {x = y} + {x <> y
   end.
 
 Module Import parameters.
-  Local Set Primitive Projections.
   Class parameters := {
     key : Type;
     value : Type;

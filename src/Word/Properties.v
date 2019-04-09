@@ -11,18 +11,19 @@ Local Open Scope Z_scope.
 Local Ltac mia := Z.div_mod_to_equations; Lia.nia.
 
 Module word.
-  (* Create HintDb word_laws discriminated. *) (* DON'T do this, COQBUG(5381) *)
-  Hint Rewrite
-       @unsigned_of_Z @signed_of_Z @of_Z_unsigned @unsigned_add @unsigned_sub @unsigned_opp @unsigned_or @unsigned_and @unsigned_xor @unsigned_not @unsigned_ndn @unsigned_mul @signed_mulhss @signed_mulhsu @unsigned_mulhuu @unsigned_divu @signed_divs @unsigned_modu @signed_mods @unsigned_slu @unsigned_sru @signed_srs @unsigned_eqb @unsigned_ltu @signed_lts
-       using trivial
-  : word_laws.
   Section WithWord.
     Context {width} {word : word width} {word_ok : word.ok word}.
+
+    (* Create HintDb word_laws discriminated. *) (* DON'T do this, COQBUG(5381) *)
+    Hint Rewrite
+       unsigned_of_Z signed_of_Z of_Z_unsigned unsigned_add unsigned_sub unsigned_opp unsigned_or unsigned_and unsigned_xor unsigned_not unsigned_ndn unsigned_mul signed_mulhss signed_mulhsu unsigned_mulhuu unsigned_divu signed_divs unsigned_modu signed_mods unsigned_slu unsigned_sru signed_srs unsigned_eqb unsigned_ltu signed_lts
+       using trivial
+  : word_laws.
 
     Lemma wrap_unsigned x : (unsigned x) mod (2^width) = unsigned x.
     Proof.
       pose proof unsigned_of_Z (unsigned x) as H.
-      rewrite of_Z_unsigned in H. congruence.
+      rewrite of_Z_unsigned in H. unfold wrap in *. congruence.
     Qed.
 
     Lemma unsigned_inj x y (H : unsigned x = unsigned y) : x = y.
@@ -40,21 +41,21 @@ Module word.
 
     Lemma ring_theory : Ring_theory.ring_theory (of_Z 0) (of_Z 1) add mul sub opp Logic.eq.
     Proof.
-     split; intros; apply unsigned_inj; repeat rewrite ?wrap_unsigned,
+     split; intros; apply unsigned_inj; repeat (rewrite ?wrap_unsigned,
          ?unsigned_add, ?unsigned_sub, ?unsigned_opp, ?unsigned_mul, ?unsigned_of_Z,
          ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?Z.mul_mod_idemp_l, ?Z.mul_mod_idemp_r,
-         ?Z.add_0_l, ?(Z.mod_small 1), ?Z.mul_1_l;
+         ?Z.add_0_l, ?(Z.mod_small 1), ?Z.mul_1_l || unfold wrap);
        f_equal; auto with zarith.
     Qed.
 
     Lemma ring_morph :
       Ring_theory.ring_morph (of_Z 0) (of_Z 1) add mul sub opp Logic.eq 0  1 Z.add Z.mul Z.sub Z.opp Z.eqb of_Z.
     Proof.
-     split; intros; apply unsigned_inj; repeat rewrite  ?wrap_unsigned,
+     split; intros; apply unsigned_inj; repeat ((rewrite ?wrap_unsigned,
          ?unsigned_add, ?unsigned_sub, ?unsigned_opp, ?unsigned_mul, ?unsigned_of_Z,
          ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?Z.mul_mod_idemp_l, ?Z.mul_mod_idemp_r,
          ?Zdiv.Zminus_mod_idemp_l, ?Zdiv.Zminus_mod_idemp_r,
-         ?Z.sub_0_l, ?Z.add_0_l, ?(Z.mod_small 1), ?Z.mul_1_l by auto with zarith;
+         ?Z.sub_0_l, ?Z.add_0_l, ?(Z.mod_small 1), ?Z.mul_1_l by auto with zarith) || unfold wrap);
        try solve [f_equal; auto with zarith].
      { rewrite <-Z.sub_0_l; symmetry; rewrite <-Z.sub_0_l, Zdiv.Zminus_mod_idemp_r. auto. } (* COQBUG? *)
      { f_equal. eapply Z.eqb_eq. auto. } (* Z.eqb -> @eq z *)
@@ -69,14 +70,15 @@ Module word.
              end.
 
     Lemma unsigned_mulhuu_nowrap x y : unsigned (mulhuu x y) = Z.mul (unsigned x) (unsigned y) / 2^width.
-    Proof. autorewrite with word_laws; generalize_wrap_unsigned; rewrite Z.mod_small; mia. Qed.
+    Proof. autorewrite with word_laws; unfold wrap; generalize_wrap_unsigned; rewrite Z.mod_small; mia. Qed.
     Lemma unsigned_divu_nowrap x y (H:unsigned y <> 0) : unsigned (divu x y) = Z.div (unsigned x) (unsigned y).
-    Proof. autorewrite with word_laws; generalize_wrap_unsigned; rewrite Z.mod_small; mia. Qed.
+    Proof. autorewrite with word_laws; unfold wrap; generalize_wrap_unsigned; rewrite Z.mod_small; mia. Qed.
     Lemma unsigned_modu_nowrap x y (H:unsigned y <> 0) : unsigned (modu x y) = Z.modulo (unsigned x) (unsigned y).
-    Proof. autorewrite with word_laws; generalize_wrap_unsigned; rewrite Z.mod_small; mia. Qed.
+    Proof. autorewrite with word_laws; unfold wrap; generalize_wrap_unsigned; rewrite Z.mod_small; mia. Qed.
 
     Ltac bitwise :=
       autorewrite with word_laws;
+      unfold wrap;
       generalize_wrap_unsigned;
       Z.bitblast.
 
@@ -92,6 +94,7 @@ Module word.
     Proof.
       pose proof unsigned_range y.
       rewrite unsigned_sru by blia.
+      unfold wrap.
       rewrite <-(wrap_unsigned x).
       Z.bitblast.
     Qed.
@@ -131,10 +134,7 @@ Module word.
 
     Lemma eq_or_neq (k1 k2 : word) : k1 = k2 \/ k1 <> k2.
     Proof. destruct (word.eqb k1 k2) eqn:H; [eapply eqb_true in H | eapply eqb_false in H]; auto. Qed.
-  End WithWord.
 
-  Section WithNontrivialWord.
-    Context {width} {word : word width} {word_ok : word.ok word}.
     Let width_nonzero : 0 < width. apply width_pos. Qed.
     Let halfm_small : 0 < 2^(width-1). apply Z.pow_pos_nonneg; auto with zarith. Qed.
     Let twice_halfm : 2^(width-1) * 2 = 2^width.
@@ -299,14 +299,14 @@ Module word.
 
     Lemma signed_srs_nowrap x y (H:unsigned y < width) : signed (srs x y) = Z.shiftr (signed x) (unsigned y).
     Proof.
-      pose proof @unsigned_range _ _ word_ok y; sbitwise.
+      pose proof unsigned_range y; sbitwise.
       replace (unsigned y) with 0 by blia; rewrite Z.add_0_r; trivial.
     Qed.
 
     Lemma signed_mulhss_nowrap x y : signed (mulhss x y) = Z.mul (signed x) (signed y) / 2^width.
     Proof. rewrite signed_mulhss. apply swrap_inrange. pose (signed_range x); pose (signed_range y). mia. Qed.
     Lemma signed_mulhsu_nowrap x y : signed (mulhsu x y) = Z.mul (signed x) (unsigned y) / 2^width.
-    Proof. rewrite signed_mulhsu. apply swrap_inrange. pose (signed_range x); pose (@unsigned_range _ _ word_ok y). mia. Qed.
+    Proof. rewrite signed_mulhsu. apply swrap_inrange. pose (signed_range x); pose proof (unsigned_range y). mia. Qed.
     Lemma signed_divs_nowrap x y (H:signed y <> 0) (H0:signed x <> -2^(width-1) \/ signed y <> -1) : signed (divs x y) = Z.quot (signed x) (signed y).
     Proof.
       rewrite signed_divs by assumption. apply swrap_inrange.
@@ -341,7 +341,7 @@ Module word.
         destruct (Z.eqb_spec (  signed x) (  signed y)) as [?e|?];
         try (apply unsigned_inj in e || apply signed_inj in e); congruence.
     Qed.
-  End WithNontrivialWord.
+  End WithWord.
 End word.
 
 Require Import coqutil.Decidable.

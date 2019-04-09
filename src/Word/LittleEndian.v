@@ -30,6 +30,7 @@ Section LittleEndian.
     - cbn [split combine PrimitivePair.pair._1 PrimitivePair.pair._2]; intros.
       erewrite IHn; clear IHn.
       rewrite word.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by blia.
+      unfold word.wrap.
       rewrite <-! Z.land_ones by blia.
       Z.bitblast.
   Qed.

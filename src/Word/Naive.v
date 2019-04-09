@@ -93,7 +93,15 @@ Section WithWidth.
   Qed.
 
   Global Instance ok : word.ok word.
-  Proof. split; eauto using of_Z_unsigned, signed_of_Z. Qed.
+  Proof.
+    split; intros;
+      repeat match goal with
+             | a: @word.rep _ _ |- _ => destruct a
+             end;
+      cbn;
+      eauto using of_Z_unsigned, signed_of_Z.
+    apply eq_unsigned; assumption.
+  Qed.
 End WithWidth.
 Arguments word : clear implicits.
 Arguments ok : clear implicits.
