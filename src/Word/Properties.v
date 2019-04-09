@@ -26,6 +26,13 @@ Module word.
       rewrite of_Z_unsigned in H. unfold wrap in *. congruence.
     Qed.
 
+    Lemma unsigned_of_Z_0 : word.unsigned (word.of_Z 0) = 0.
+    Proof.
+      rewrite word.unsigned_of_Z; cbv [wrap]; rewrite Z.mod_small; trivial; [].
+      split; try blia.
+      epose proof proj1 (Z.pow_gt_1 2 width ltac:(blia)) word.width_pos; blia.
+    Qed.
+
     Lemma unsigned_inj x y (H : unsigned x = unsigned y) : x = y.
     Proof. rewrite <-(of_Z_unsigned x), <-(of_Z_unsigned y). apply f_equal, H. Qed.
 
@@ -139,6 +146,11 @@ Module word.
     Let halfm_small : 0 < 2^(width-1). apply Z.pow_pos_nonneg; auto with zarith. Qed.
     Let twice_halfm : 2^(width-1) * 2 = 2^width.
     Proof. rewrite Z.mul_comm, <-Z.pow_succ_r by blia; f_equal; blia. Qed.
+
+    Lemma unsigned_of_Z_1 : word.unsigned (word.of_Z 1) = 1.
+    Proof.
+      rewrite word.unsigned_of_Z; cbv [wrap]; rewrite Z.mod_small; trivial; []; blia.
+    Qed.
 
     Lemma signed_range x : -2^(width-1) <= signed x < 2^(width-1).
     Proof.
@@ -342,6 +354,27 @@ Module word.
         try (apply unsigned_inj in e || apply signed_inj in e); congruence.
     Qed.
   End WithWord.
+
+  Section WordConvenienceKitchenSink.
+    Context {width} {word : word width} {word_ok : word.ok word}.
+    Lemma word_sub_add_l_same_l x y : word.sub (word.add x y) x = y.
+    Proof.
+      eapply word.unsigned_inj.
+      rewrite <- (wrap_unsigned y), unsigned_sub, unsigned_add;
+        cbv [wrap]; rewrite Zdiv.Zminus_mod_idemp_l. f_equal; blia.
+    Qed.
+    Lemma word_sub_add_l_same_r x y : word.sub (word.add y x) x = y.
+    Proof.
+      eapply word.unsigned_inj.
+      rewrite <- (wrap_unsigned y), unsigned_sub, unsigned_add;
+        cbv [wrap]; rewrite Zdiv.Zminus_mod_idemp_l; f_equal; blia.
+    Qed.
+    
+    Lemma if_zero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) = 0) : t = false.
+    Proof. destruct t; trivial; []. rewrite unsigned_of_Z_1 in H; inversion H. Qed.
+    Lemma if_nonzero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) <> 0) : t = true.
+    Proof. destruct t; trivial; []. rewrite unsigned_of_Z_0 in H. case (H eq_refl). Qed.
+  End WordConvenienceKitchenSink.
 End word.
 
 Require Import coqutil.Decidable.
