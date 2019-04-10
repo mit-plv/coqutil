@@ -55,17 +55,32 @@ Module word.
        f_equal; auto with zarith.
     Qed.
 
-    Lemma ring_morph :
-      Ring_theory.ring_morph (of_Z 0) (of_Z 1) add mul sub opp Logic.eq 0  1 Z.add Z.mul Z.sub Z.opp Z.eqb of_Z.
-    Proof.
-     split; intros; apply unsigned_inj; repeat ((rewrite ?wrap_unsigned,
+    Ltac prove_ring_morph :=
+      intros; apply unsigned_inj; repeat ((rewrite ?wrap_unsigned,
          ?unsigned_add, ?unsigned_sub, ?unsigned_opp, ?unsigned_mul, ?unsigned_of_Z,
          ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?Z.mul_mod_idemp_l, ?Z.mul_mod_idemp_r,
          ?Zdiv.Zminus_mod_idemp_l, ?Zdiv.Zminus_mod_idemp_r,
          ?Z.sub_0_l, ?Z.add_0_l, ?(Z.mod_small 1), ?Z.mul_1_l by auto with zarith) || unfold wrap);
        try solve [f_equal; auto with zarith].
-     { rewrite <-Z.sub_0_l; symmetry; rewrite <-Z.sub_0_l, Zdiv.Zminus_mod_idemp_r. auto. } (* COQBUG? *)
-     { f_equal. eapply Z.eqb_eq. auto. } (* Z.eqb -> @eq z *)
+    Lemma ring_morph_add : forall x y : Z, of_Z (x + y) = add (of_Z x) (of_Z y).
+    Proof. prove_ring_morph. Qed.
+    Lemma ring_morph_sub : forall x y : Z, of_Z (x - y) = sub (of_Z x) (of_Z y).
+    Proof. prove_ring_morph. Qed.
+    Lemma ring_morph_mul : forall x y : Z, of_Z (x * y) = mul (of_Z x) (of_Z y).
+    Proof. prove_ring_morph. Qed.
+    Lemma ring_morph_opp : forall x : Z, of_Z (- x) = opp (of_Z x).
+    Proof.
+      prove_ring_morph.
+      rewrite <-Z.sub_0_l; symmetry; rewrite <-Z.sub_0_l, Zdiv.Zminus_mod_idemp_r. auto.
+    Qed.
+    Lemma ring_morph_eqb : forall x y : Z, (x =? y) = true -> of_Z x = of_Z y.
+    Proof. intros. f_equal. eapply Z.eqb_eq. assumption. Qed.
+    Lemma ring_morph :
+      Ring_theory.ring_morph (of_Z 0) (of_Z 1) add   mul   sub   opp   Logic.eq
+                             0        1        Z.add Z.mul Z.sub Z.opp Z.eqb     of_Z.
+    Proof.
+      split; auto using ring_morph_add, ring_morph_sub, ring_morph_mul,
+                        ring_morph_opp, ring_morph_eqb.
     Qed.
 
     Ltac generalize_wrap_unsigned :=
@@ -369,7 +384,7 @@ Module word.
       rewrite <- (wrap_unsigned y), unsigned_sub, unsigned_add;
         cbv [wrap]; rewrite Zdiv.Zminus_mod_idemp_l; f_equal; blia.
     Qed.
-    
+
     Lemma if_zero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) = 0) : t = false.
     Proof. destruct t; trivial; []. rewrite unsigned_of_Z_1 in H; inversion H. Qed.
     Lemma if_nonzero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) <> 0) : t = true.
@@ -384,3 +399,62 @@ intros. destruct (word.eqb x y) eqn: E.
 - left. apply word.eqb_true. assumption.
 - right. apply word.eqb_false. assumption.
 Defined.
+
+
+(* Ring Helpers: *)
+
+Ltac word_cst w :=
+  match w with
+  | word.of_Z ?x => let b := isZcst x in
+                    match b with
+                    | true => x
+                    | _ => constr:(NotConstant)
+                    end
+  | _ => constr:(NotConstant)
+  end.
+
+Hint Rewrite
+  @word.ring_morph_add
+  @word.ring_morph_sub
+  @word.ring_morph_mul
+  @word.ring_morph_opp
+  using typeclasses eauto
+  : rew_word_morphism.
+
+(* In order two use the "ring" tactic for a word type which is a section variable, two
+   steps are needed:
+   1) Unset Universe Polymorphism before opening the Section
+   2) Put the "Add Ring" command (below) inside the Section *)
+
+Local Unset Universe Polymorphism.
+
+Section RingDemoAndTest.
+
+  Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
+
+  Add Ring wring : (word.ring_theory (word := word))
+      (preprocess [autorewrite with rew_word_morphism],
+       morphism (word.ring_morph (word := word)),
+       constants [word_cst]).
+
+  (* These test cases show that the above extra options for "Add Ring" are indeed needed:
+     Remove any of them and something below will break. *)
+  Goal False.
+    assert (forall (w1 w2: word), word.add w1 w2 = word.add w2 w1) as A.
+    { intros. ring. } clear A.
+
+    assert (forall (z: Z) (w: word),
+               word.add w (word.mul (word.of_Z 4)
+                                    (word.sub (word.of_Z (1 + z + 1)) (word.of_Z z))) =
+               word.add (word.add w (word.of_Z 4)) (word.of_Z 4)) as A.
+    { intros. ring. } clear A.
+
+    assert (forall (L : Z) (w : word),
+               word.add w (word.of_Z ((L + 2) * 4)) =
+               word.add (word.add (word.add w (word.of_Z 4))
+                                  (word.mul (word.of_Z 4) (word.of_Z L)))
+                        (word.of_Z 4)) as A.
+    { intros. ring. } clear A.
+  Abort.
+
+End RingDemoAndTest.
