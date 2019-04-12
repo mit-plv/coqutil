@@ -14,7 +14,12 @@ Ltac _syntactic_unify x y :=
                                _syntactic_unify v w;
                                let __ := constr:(fun (a:Ta) (b:Tb) => ltac:(_syntactic_unify f g; exact Set)) in idtac end
          (* TODO: fail fast in more cases *)
-         | _ => unify x y; constr_eq x y
+         (* Beware of https://github.com/coq/coq/issues/9507:
+            Sometimes if x and y are the same identifier applied to different universes,
+            constr_eq x y succeeds very fast, but unify x y is very slow,
+            so don't call unify in this case *)
+         | _ => first [ constr_eq x y
+                      | first [has_evar x | has_evar y]; unify x y; constr_eq x y ]
          end
   end.
 Tactic Notation "syntactic_unify" open_constr(x) open_constr(y) :=  _syntactic_unify x y.
@@ -35,7 +40,12 @@ Ltac _syntactic_unify_deltavar X Y :=
                                _syntactic_unify_deltavar v w;
                                let __ := constr:(fun (a:Ta) (b:Tb) => ltac:(_syntactic_unify_deltavar f g; exact Set)) in idtac end
          (* TODO: fail fast in more cases *)
-         | _ => unify X Y; constr_eq x y
+         (* Beware of https://github.com/coq/coq/issues/9507:
+            Sometimes if x and y are the same identifier applied to different universes,
+            constr_eq x y succeeds very fast, but unify x y is very slow,
+            so don't call unify in this case *)
+         | _ => first [ constr_eq x y
+                      | first [has_evar x | has_evar y]; unify x y; constr_eq x y ]
          end
   end.
 Tactic Notation "syntactic_unify_deltavar" open_constr(x) open_constr(y) :=  _syntactic_unify_deltavar x y.
