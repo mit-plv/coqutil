@@ -197,6 +197,23 @@ Module map.
         eauto using put_extends.
     Qed.
 
+    Lemma getmany_of_list_extends: forall ks vs m1 m2,
+        extends m2 m1 ->
+        getmany_of_list m1 ks = Some vs ->
+        getmany_of_list m2 ks = Some vs.
+    Proof.
+      induction ks; intros.
+      - inversion H0. subst. reflexivity.
+      - cbn in *.
+        destruct (get m1 a) eqn: E1; try discriminate.
+        destruct (List.option_all (List.map (get m1) ks)) eqn: E2; try discriminate.
+        destruct vs as [|v0 vs]; try discriminate.
+        inversion H0. subst l v0.
+        unfold getmany_of_list in *.
+        erewrite IHks by eassumption.
+        unfold extends in H. erewrite H by eassumption. reflexivity.
+    Qed.
+
     Lemma putmany_of_list_sameLength : forall bs vs st st',
         map.putmany_of_list bs vs st = Some st' ->
         length bs = length vs.
