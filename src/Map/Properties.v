@@ -214,6 +214,21 @@ Module map.
         unfold extends in H. erewrite H by eassumption. reflexivity.
     Qed.
 
+    Lemma getmany_of_list_length: forall ks vs m,
+        map.getmany_of_list m ks = Some vs ->
+        length ks = length vs.
+    Proof.
+      induction ks; intros vs m E.
+      - inversion E. reflexivity.
+      - cbn in E. destruct (map.get m a) eqn: F; try discriminate.
+        destruct (List.option_all (List.map (get m) ks)) eqn: G; try discriminate.
+        inversion E.
+        simpl.
+        f_equal.
+        eapply IHks.
+        eassumption.
+    Qed.
+
     Lemma putmany_of_list_sameLength : forall bs vs st st',
         map.putmany_of_list bs vs st = Some st' ->
         length bs = length vs.
