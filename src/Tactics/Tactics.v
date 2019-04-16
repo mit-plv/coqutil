@@ -151,6 +151,27 @@ Ltac destruct_one_match_hyporgoal_test check cleanup :=
   | H: context[match ?d with _ => _ end] |- _ => check d; destructE d; cleanup H
   end.
 
+Ltac ret_type P :=
+  lazymatch P with
+  | forall x, @?Q x => let Q' := open_constr:(Q _) in
+                       let Q'' := eval cbv beta in Q' in
+                           ret_type Q''
+  | _ -> ?Q => ret_type Q
+  | ?Q => open_constr:(Q)
+  end.
+
+Ltac especialize_as P H :=
+  let T := type of P in
+  let R := ret_type T in
+  assert R as H; [eapply P|].
+
+Ltac especialize H :=
+  let T := type of H in
+  let R := ret_type T in
+  let N := fresh in
+  rename H into N;
+  assert R as H; [eapply N|]; clear N.
+
 Require Import Coq.Program.Tactics.
 Ltac destruct_one_dec_eq :=
   match goal with
