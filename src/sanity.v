@@ -1,5 +1,6 @@
 Global Unset Refine Instance Mode.
 Global Set Universe Polymorphism.
+Global Unset Universe Minimization ToSet.
 Global Set Default Goal Selector "!".
 
 (** Work around some counter-intuitive defaults. *)
