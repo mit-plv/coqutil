@@ -1,6 +1,7 @@
 Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Word.Interface coqutil.Datatypes.HList coqutil.Datatypes.PrimitivePair.
+Require Import coqutil.Word.Properties.
 Require Import coqutil.Z.bitblast.
 Local Set Universe Polymorphism.
 
@@ -22,7 +23,7 @@ Section LittleEndian.
     | S n => pair.mk (word.of_Z w) (split n (Z.shiftr w 8))
     end.
 
-  Lemma combine_split{ok: word.ok byte}(n: nat)(z: Z):
+  Lemma combine_split {ok : word.ok byte} (n : nat) (z : Z) :
     combine n (split n z) = z mod 2 ^ (Z.of_nat n * 8).
   Proof.
     revert z; induction n.
@@ -33,6 +34,29 @@ Section LittleEndian.
       unfold word.wrap.
       rewrite <-! Z.land_ones by blia.
       Z.bitblast.
+  Qed.
+
+  Lemma split_combine {ok : word.ok byte} (n: nat) bs :
+    split n (combine n bs) = bs.
+  Proof.
+    revert bs; induction n.
+    - destruct bs. reflexivity.
+    - destruct bs; cbn [split combine PrimitivePair.pair._1 PrimitivePair.pair._2]; intros.
+      specialize (IHn _2).
+      f_equal.
+      { eapply Properties.word.unsigned_inj.
+        rewrite word.unsigned_of_Z, <-Properties.word.wrap_unsigned; cbv [word.wrap].
+        Z.bitblast; cbn; subst.
+        rewrite (Z.testbit_neg_r _ (i-8)) by bomega.
+        Z.bitblast_core. }
+      { rewrite <-IHn.
+        rewrite combine_split.
+        f_equal.
+        rewrite <-word.wrap_unsigned.
+        Z.bitblast; subst; cbn.
+        rewrite <-IHn.
+        rewrite combine_split.
+        Z.bitblast_core. }
   Qed.
 
 End LittleEndian.
