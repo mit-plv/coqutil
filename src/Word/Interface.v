@@ -4,7 +4,6 @@ Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt.
 Local Open Scope Z_scope.
 
 Module word.
-  Local Set Universe Polymorphism.
   Class word {width : Z} := {
     rep : Type;
 

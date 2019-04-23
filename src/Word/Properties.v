@@ -5,7 +5,6 @@ Require Coq.setoid_ring.Ring_theory.
 Require Import coqutil.Z.bitblast.
 Require Import coqutil.Word.Interface. Import word.
 
-Local Set Universe Polymorphism.
 Local Open Scope Z_scope.
 
 Local Ltac mia := Z.div_mod_to_equations; Lia.nia.
@@ -428,12 +427,6 @@ Hint Rewrite
   using typeclasses eauto
   : rew_word_morphism.
 
-(* In order two use the "ring" tactic for a word type which is a section variable, two
-   steps are needed:
-   1) Unset Universe Polymorphism before opening the Section
-   2) Put the "Add Ring" command (below) inside the Section *)
-
-Local Unset Universe Polymorphism.
 
 Section RingDemoAndTest.
 
