@@ -389,6 +389,13 @@ Module word.
     Proof. destruct t; trivial; []. rewrite unsigned_of_Z_1 in H; inversion H. Qed.
     Lemma if_nonzero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) <> 0) : t = true.
     Proof. destruct t; trivial; []. rewrite unsigned_of_Z_0 in H. case (H eq_refl). Qed.
+
+    Add Ring wring: (@word.ring_theory width word word_ok).
+
+    Lemma add_assoc: forall (x y z: word), word.add x (word.add y z) = word.add (word.add x y) z.
+    Proof. intros. ring. Qed.
+    Lemma mul_assoc: forall (x y z: word), word.mul x (word.mul y z) = word.mul (word.mul x y) z.
+    Proof. intros. ring. Qed.
   End WordConvenienceKitchenSink.
 End word.
 
