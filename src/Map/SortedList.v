@@ -105,18 +105,18 @@ Section SortedList.
     map.putmany m1 m2 := List.fold_right (fun '(k, v) m => wrapped_put m k v) m1 (value m2)
   |}.
 
-  Require Import AdmitAxiom.
+  Axiom TODO: False.
   Global Instance map_ok : map.ok map.
   Proof.
     split.
-    { admit. }
+    { case TODO. }
     { intros; exact eq_refl. }
-    { admit. }
-    { admit. }
-    { admit. }
-    { admit. }
-    { admit. }
-    { admit. }
+    { case TODO. }
+    { case TODO. }
+    { case TODO. }
+    { case TODO. }
+    { case TODO. }
+    { case TODO. }
   Qed.
   Lemma eq_value {x y : rep} : value x = value y -> x = y.
   Proof.
