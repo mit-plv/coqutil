@@ -50,7 +50,7 @@ Module word.
   }.
   Arguments word : clear implicits.
 
-  Class ok {width} {word : word width} := {
+  Class ok {width} {word : word width}: Prop := {
     wrap z := z mod 2^width;
 
     width_pos: 0 < width;

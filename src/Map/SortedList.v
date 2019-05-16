@@ -16,7 +16,7 @@ Module Import parameters.
     ltb : key -> key -> bool
   }.
 
-  Class strict_order {T} {ltb : T -> T -> bool} := {
+  Class strict_order {T} {ltb : T -> T -> bool}: Prop := {
     ltb_antirefl : forall k, ltb k k = false;
     ltb_trans : forall k1 k2 k3, ltb k1 k2 = true -> ltb k2 k3 = true -> ltb k1 k3 = true;
     ltb_total : forall k1 k2, ltb k1 k2 = false -> ltb k2 k1 = false -> k1 = k2;

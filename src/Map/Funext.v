@@ -8,7 +8,7 @@ Module Import parameters.
     eqb : key -> key -> bool
   }.
 
-  Class ok (p : parameters) := {
+  Class ok (p : parameters): Prop := {
     eqb_ok : forall k1 k2, BoolSpec (k1 = k2) (k1 <> k2) (eqb k1 k2)
   }.
 End parameters. Notation parameters := parameters.parameters.

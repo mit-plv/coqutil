@@ -18,7 +18,7 @@ Module map.
   Arguments map : clear implicits.
   Global Coercion rep : map >-> Sortclass.
 
-  Class ok {key value : Type} {map : map key value} := {
+  Class ok {key value : Type} {map : map key value}: Prop := {
     map_ext : forall m1 m2, (forall k, get m1 k = get m2 k) -> m1 = m2;
     get_empty : forall k, get empty k = None;
     get_put_same : forall m k v, get (put m k v) k = Some v;
