@@ -1,10 +1,10 @@
-Require Import coqutil.Decidable coqutil.Map.Interface. Import map.
+Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidable coqutil.Map.Interface. Import map.
 Require Import coqutil.Datatypes.Option.
 
 Module map.
   Section WithMap.
     Context {key value} {map : map key value} {ok : map.ok map}.
-    Context {key_eq_dec: DecidableEq key}.
+    Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
     Hint Resolve
          get_empty
          get_remove_same
@@ -18,18 +18,14 @@ Module map.
     Ltac prover :=
       intros;
       repeat match goal with
-             | |- context[match ?d with _ => _ end] =>
-               match type of d with
-               | {_} + {_} => destruct d
-               | _ => let E := fresh "E" in destruct d eqn: E
-               end
+             | |- context[match ?d with _ => _ end] => destr d
              end;
       subst;
       eauto with map_spec_hints_separate.
 
-    Lemma get_remove_dec m x y : get (remove m x) y = if dec (x = y) then None else get m y.
+    Lemma get_remove_dec m x y : get (remove m x) y = if key_eqb x y then None else get m y.
     Proof. prover. Qed.
-    Lemma get_put_dec m x y v : get (put m x v) y = if dec (x = y) then Some v else get m y.
+    Lemma get_put_dec m x y v : get (put m x v) y = if key_eqb x y then Some v else get m y.
     Proof. prover. Qed.
     Lemma get_putmany_dec m1 m2 k : get (putmany m1 m2) k =
       match get m2 k with Some v => Some v | None => get m1 k end.
@@ -37,7 +33,7 @@ Module map.
 
     Lemma put_put_same: forall k v1 v2 m, put (put m k v1) k v2 = put m k v2.
     Proof.
-      intros. apply map_ext. intros. rewrite get_put_dec. destruct (dec (k = k0)).
+      intros. apply map_ext. intros. rewrite get_put_dec. destr (key_eqb k k0).
       - subst k0. rewrite get_put_same. reflexivity.
       - rewrite !get_put_diff; congruence.
     Qed.
@@ -141,7 +137,7 @@ Module map.
       repeat split.
       - apply map_ext. intros.
         rewrite get_put_dec.
-        destruct (dec (k = k0)).
+        destr (key_eqb k k0).
         + subst. rewrite get_putmany_left by assumption.
           rewrite get_put_same. reflexivity.
         + rewrite get_putmany_dec.
@@ -152,7 +148,7 @@ Module map.
       - unfold disjoint.
         intros.
         rewrite get_put_dec in H0.
-        destruct (dec (k = k0)).
+        destr (key_eqb k k0).
         + subst. congruence.
         + rewrite get_empty in H0. congruence.
     Qed.
@@ -163,7 +159,7 @@ Module map.
     Proof.
       unfold extends. intros.
       rewrite get_put_dec.
-      destruct (dec (k = x)).
+      destr (key_eqb k x).
       + subst. rewrite get_put_same in H0. exact H0.
       + rewrite get_put_diff in H0; try congruence.
         eapply H. assumption.
@@ -256,7 +252,7 @@ Module map.
         + specialize IHbs with (1 := H). specialize (IHbs x).
           destruct IHbs as [IHbs | IHbs]; unfold PropSet.elem_of in *; simpl; auto.
           rewrite get_put_dec in IHbs.
-          destruct (dec (a = x)); auto.
+          destr (key_eqb a x); auto.
         + apply putmany_of_list_sameLength in H.
           apply (sameLength_putmany_of_list _ _ st) in H.
           destruct H. rewrite H in Heqo. discriminate.
@@ -360,7 +356,7 @@ Module map.
     Lemma put_putmany_commute k v m1 m2 : put (putmany m1 m2) k v = putmany m1 (put m2 k v).
     Proof.
       apply map_ext. intro k'.
-      destruct (dec (k = k')).
+      destr (key_eqb k k').
       - subst k'. rewrite get_put_same. erewrite get_putmany_right; [reflexivity|].
         apply get_put_same.
       - rewrite get_put_diff by congruence.
@@ -433,7 +429,7 @@ Module map.
         sub_domain (put m1 k v1) (put m2 k v2).
     Proof.
       unfold sub_domain in *. intros k' v' G.
-      destruct (dec (k' = k)).
+      destr (key_eqb k' k).
       - subst k'. rewrite get_put_same in G. inversion_option. subst v'.
         exists v2. apply get_put_same.
       - rewrite get_put_diff in G by assumption.
@@ -447,7 +443,7 @@ Module map.
         sub_domain m1 (put m2 k v).
     Proof.
       unfold sub_domain in *. intros k' v' G.
-      destruct (dec (k' = k)).
+      destr (key_eqb k' k).
       - subst k'. exists v. apply get_put_same.
       - specialize S with (1 := G).
         rewrite get_put_diff by assumption.
@@ -480,7 +476,7 @@ Module map.
       - destruct ks. destruct vs. simpl in *. rewrite get_empty in GP. discriminate.
       - apply invert_getmany_of_tuple_Some in G. destruct G as [G1 G2].
         destruct ks as [ki ks]. destruct vs as [vi vs]. simpl in *.
-        destruct (dec (ki = k)).
+        destr (key_eqb ki k).
         + subst ki. eexists. exact G1.
         + rewrite get_put_diff in GP by congruence.
           specialize IHn with (1 := G2). unfold sub_domain in IHn.
@@ -538,7 +534,7 @@ Module map.
         + apply invert_getmany_of_tuple_Some in G.
           destruct ks as [k ks]. destruct vs as [v vs]. destruct oldvs as [oldv oldvs].
           simpl in *. destruct G as [G1 G2].
-          destruct (dec (k0 = k)).
+          destr (key_eqb k0 k).
           * subst k0. eexists. exact G1.
           * rewrite get_put_diff in GP by congruence.
             specialize IHn with (1 := G2).

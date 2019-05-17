@@ -9,8 +9,8 @@ Section TestGoals.
   Context {K V: Type}.
   Context {locals: map.map K V}.
   Context {mapspecs: map.ok locals}.
-  Context {K_eq_dec: DecidableEq K}.
-  Context {V_eq_dec: DecidableEq V}.
+  Context {keq: K -> K -> bool}.
+  Context {K_eq_dec: EqDecider keq}.
 
   Import Map.Interface.map.
 

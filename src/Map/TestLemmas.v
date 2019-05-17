@@ -8,9 +8,9 @@ Require Import coqutil.Datatypes.PropSet.
 Section Tests.
   Import map.
   Context {var: Type}. (* variable name (key) *)
-  Context {dec_eq_var: DecidableEq var}.
+  Context {var_eqb: var -> var -> bool}.
+  Context {var_eqb_spec: EqDecider var_eqb}.
   Context {val: Type}. (* value *)
-  Context {dec_eq_val: DecidableEq val}.
 
   Context {stateMap: map.map var val}.
   Context {stateMapSpecs: map.ok stateMap}.

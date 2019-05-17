@@ -8,7 +8,7 @@ Require Import coqutil.Map.Solver.
 Goal
   forall (T T0 : Type) (M : map.map T T0),
   map.ok M ->
-  DecidableEq T ->
+  forall (keq: T -> T -> bool), EqDecider keq ->
   forall (initialH initialL l' l'0 : M) (ks2 ks ks1 ks4 ks5 ks0 ks3 : T -> Prop)
     (v v0 x : T) (r r0 r1 : T0) (ov0 ov : option T0),
   (forall (x0 : T) (w : T0), map.get initialH x0 = Some w -> map.get initialL x0 = Some w) ->

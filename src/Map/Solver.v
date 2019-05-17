@@ -323,6 +323,7 @@ Ltac revert_all_Props :=
          | x: ?T |- _ =>
              lazymatch type of x with
              | map.ok _ => fail
+             | forall x y, BoolSpec _ _ _ => fail
              | _ => idtac
              end;
              match type of T with
@@ -377,12 +378,13 @@ Ltac preprocess_impl mapok stopearly :=
   lazymatch type of mapok with
   | @map.ok ?K ?V ?Inst =>
     let okname := fresh "Ok" in set (okname := mapok : map.ok Inst);
-    let keqname := fresh "keq" in set (keqname := _ : DecidableEq K);
+    let keq_spec_name := fresh "keq_spec" in
+      set (keq_spec_name := _ : forall (x y: K), BoolSpec (x = y) (x <> y) _);
     abstract_unrecogs mapok;
     lazymatch stopearly with
     | true => idtac
     | false =>
-      clear -okname keqname;
+      clear -okname keq_spec_name;
       intros;
       match goal with
       (* if goal was abstracted into a fully abstract Prop, it's time to give up *)
@@ -399,7 +401,9 @@ Ltac preprocess_impl mapok stopearly :=
       revert_all_keysets okname;
       revert_all_maps okname;
       let mname := fresh "M" in
-      generalize keqname;
+      match type of keq_spec_name with
+      | EqDecider ?f => generalize keq_spec_name; generalize f
+      end;
       generalize okname;
       generalize Inst as mname;
       generalize V;
@@ -454,13 +458,11 @@ Ltac map_solver_should_destruct mapok d :=
       let T := type of d in
       first [ unify T (option K)
             | unify T (option V)
-            | match T with
-              | {?x1 = ?x2} + {?x1 <> ?x2} =>
-                let T' := type of x1 in
-                first [ unify T' K
-                      | unify T' V
-                      | unify T' (option K)
-                      | unify T' (option V) ]
+            | match d with
+              | ?keq _ _ =>
+                match goal with
+                | _: EqDecider keq |- _ => idtac
+                end
               end ]
   end.
 
@@ -554,8 +556,12 @@ Ltac map_specialize_step mapok := lazymatch type of mapok with
   | H: forall (x: ?E), _, y: ?E |- _ =>
     first [ unify E K | unify E V ];
     ensure_no_body H;
-    match type of H with
-    | DecidableEq E => fail 1
+    let T := type of H in lazymatch type of T with
+    | Prop => idtac
+    | _ => fail
+    end;
+    lazymatch type of H with
+    | forall x y, BoolSpec _ _ _ => fail
     | _ => let H' := fresh H y in
            pose proof (H y) as H';
            canonicalize_map_hyp mapok H';
@@ -585,7 +591,7 @@ Ltac map_specialize mapok := repeat map_specialize_step mapok.
 
 Ltac map_solver_core_impl mapok := lazymatch type of mapok with
 | @map.ok ?K ?V ?Inst =>
-  let Needed := constr:(DecidableEq K) in
+  let Needed := open_constr:(forall (x y: K), BoolSpec (x = y) (x <> y) _) in
   first [ let dummy := constr:(_: Needed) in idtac
         | fail 10000 "map_solver won't work without" Needed ];
   repeat autounfold with unf_map_defs in *;
@@ -598,11 +604,12 @@ end.
 
 Ltac map_solver_core :=
   let K := fresh "K" in let V := fresh "V" in let M := fresh "M" in
-  let Ok := fresh "Ok" in let keq := fresh "keq" in
-  intros K V M Ok keq;
+  let Ok := fresh "Ok" in let keq := fresh "keq" in let keq_spec := fresh "keq_spec" in
+  intros K V M Ok keq keq_spec;
   let MT := type of M in unify MT (map.map K V);
   let OkT := type of Ok in unify OkT (map.ok M);
-  let keqT := type of keq in unify keqT (DecidableEq K);
+  let keq_specT := type of keq_spec in
+  unify keq_specT (EqDecider keq);
   intros;
   map_solver_core_impl Ok.
 
