@@ -1,32 +1,18 @@
 Require Import Coq.ZArith.ZArith.
 Require coqutil.Decidable.
+Require Export coqutil.Tactics.destr.
 
 Tactic Notation "forget" constr(X) "as" ident(y) := set (y:=X) in *; clearbody y.
 
 Ltac destruct_one_match :=
   match goal with
-  | [ |- context[match ?e with _ => _ end] ] =>
-      is_var e; destruct e
-  | [ |- context[match ?e with _ => _ end] ] =>
-      let E := fresh "E" in destruct e eqn: E
+  | [ |- context[match ?e with _ => _ end] ] => destr e
   end.
 
 Ltac destruct_one_match_hyp_test type_test :=
   match goal with
-  | H: context[match ?e with _ => _ end] |- _ =>
-      is_var e;
-      let T := type of e in type_test T;
-      destruct e
-  | H: context[if ?e then _ else _] |- _ =>
-      is_var e;
-      let T := type of e in type_test T;
-      destruct e
-  | H: context[match ?e with _ => _ end] |- _ =>
-      let T := type of e in type_test T;
-      let E := fresh "E" in destruct e eqn: E
-  | H: context[if ?e then _ else _] |- _ =>
-      let T := type of e in type_test T;
-      let E := fresh "E" in destruct e eqn: E
+  | H: context[match ?e with _ => _ end] |- _ => let T := type of e in type_test T; destr e
+  | H: context[if ?e then _ else _]      |- _ => let T := type of e in type_test T; destr e
   end.
 
 Ltac destruct_one_match_hyp_of_type T :=
@@ -85,7 +71,7 @@ Ltac specialize_with E :=
   repeat match goal with
   | H: forall (x: E), _, y: E |- _ =>
     match type of H with
-    | Decidable.DecidableEq E => fail 1
+    | forall x y, BoolSpec _ _ _ => fail 1
     | _ => let H' := fresh H y in unique pose proof (H y) as H'
     end
   end.
@@ -107,14 +93,12 @@ Ltac deep_destruct H :=
 
 (* simplify an "if then else" where only one branch is possible *)
 Ltac simpl_if :=
-  let E := fresh "E" in
   match goal with
-  | |- context[if ?e then _ else _]      => destruct e eqn: E; [contradiction|]
-  | |- context[if ?e then _ else _]      => destruct e eqn: E; [|contradiction]
-  | _: context[if ?e then _ else _] |- _ => destruct e eqn: E; [contradiction|]
-  | _: context[if ?e then _ else _] |- _ => destruct e eqn: E; [|contradiction]
-  end;
-  clear E.
+  | |- context[if ?e then _ else _]      => destr e; [contradiction|]
+  | |- context[if ?e then _ else _]      => destr e; [|contradiction]
+  | _: context[if ?e then _ else _] |- _ => destr e; [contradiction|]
+  | _: context[if ?e then _ else _] |- _ => destr e; [|contradiction]
+  end.
 
 Ltac rewrite_match :=
   repeat match goal with
@@ -137,18 +121,10 @@ Ltac exists_to_forall H :=
     cbv beta in H
   end.
 
-Ltac destructE d :=
-  match type of d with
-  | {?x1 = ?x2} + {?x1 <> ?x2} => destruct d; [subst x2|]
-  | {_} + {_} => destruct d
-  | _ => is_var d; destruct d
-  | _ => let E := fresh "E" in destruct d eqn: E
-  end.
-
 Ltac destruct_one_match_hyporgoal_test check cleanup :=
   match goal with
-  | |- context[match ?d with _ => _ end]      => check d; destructE d
-  | H: context[match ?d with _ => _ end] |- _ => check d; destructE d; cleanup H
+  | |- context[match ?d with _ => _ end]      => check d; destr d; subst
+  | H: context[match ?d with _ => _ end] |- _ => check d; destr d; subst; cleanup H
   end.
 
 Ltac ret_type P :=
@@ -171,10 +147,3 @@ Ltac especialize H :=
   let N := fresh in
   rename H into N;
   assert R as H; [eapply N|]; clear N.
-
-Require Import Coq.Program.Tactics.
-Ltac destruct_one_dec_eq :=
-  match goal with
-  (* we use an explicit type T because otherwise the inferred type might differ *)
-  | |- context[Decidable.dec (@eq ?T ?t1 ?t2)] => destruct (Decidable.dec (@eq T t1 t2)); [subst *|]
-  end.

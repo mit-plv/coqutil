@@ -1,3 +1,4 @@
+Require Import coqutil.Decidable.
 Require Coq.NArith.BinNatDef.
 
 Require Export Coq.Strings.String.
@@ -15,3 +16,10 @@ Fixpoint ltb (a b : string) : bool :=
       else Ascii.ltb x y
     | _, _ => false
   end.
+
+Instance eqb_spec: EqDecider eqb.
+Proof.
+  intros. destruct (x =? y)%string eqn: E; constructor.
+  - apply eqb_eq. assumption.
+  - apply eqb_neq. assumption.
+Qed.
