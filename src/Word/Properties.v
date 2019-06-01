@@ -40,7 +40,8 @@ Module word.
 
     Lemma width_nonneg : 0 <= width. pose proof width_pos. blia. Qed.
     Let width_nonneg_context : 0 <= width. apply width_nonneg. Qed.
-    Let m_small : 0 < 2^width. apply Z.pow_pos_nonneg; firstorder idtac. Qed.
+    Lemma modulus_pos : 0 < 2^width. apply Z.pow_pos_nonneg; firstorder idtac. Qed.
+    Let modulus_pos_section_context := modulus_pos.
 
     Lemma unsigned_range x : 0 <= unsigned x < 2^width.
     Proof. rewrite <-wrap_unsigned. mia. Qed.
@@ -157,13 +158,23 @@ Module word.
     Proof. destruct (word.eqb k1 k2) eqn:H; [eapply eqb_true in H | eapply eqb_false in H]; auto. Qed.
 
     Let width_nonzero : 0 < width. apply width_pos. Qed.
-    Let halfm_small : 0 < 2^(width-1). apply Z.pow_pos_nonneg; auto with zarith. Qed.
+    Lemma half_modulus_pos : 0 < 2^(width-1). apply Z.pow_pos_nonneg; auto with zarith. Qed.
+    Let half_modulus_pos_section_context := half_modulus_pos.
     Let twice_halfm : 2^(width-1) * 2 = 2^width.
     Proof. rewrite Z.mul_comm, <-Z.pow_succ_r by blia; f_equal; blia. Qed.
 
     Lemma unsigned_of_Z_1 : word.unsigned (word.of_Z 1) = 1.
     Proof.
       rewrite word.unsigned_of_Z; cbv [wrap]; rewrite Z.mod_small; trivial; []; blia.
+    Qed.
+    
+    Lemma unsigned_of_Z_minus1 : word.unsigned (word.of_Z (-1)) = Z.ones width.
+    Proof.
+      rewrite word.unsigned_of_Z; cbv [wrap].
+      change (-1) with (Z.opp 1).
+      rewrite Z.mod_opp_l_nz; rewrite ?Z.mod_small; try Lia.lia; [].
+      rewrite Z.ones_equiv.
+      eapply Z.sub_1_r.
     Qed.
 
     Lemma signed_range x : -2^(width-1) <= signed x < 2^(width-1).
@@ -191,7 +202,7 @@ Module word.
       cbv [wrap swrap]. rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
         (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
-      set (M := 2 ^ (width - 1)) in*; clearbody M.
+      set (M := 2 ^ (width - 1)) in*. (* clearbody M. *)
       assert (0<2*M) by Lia.nia.
       rewrite <-!Z.add_opp_r.
       repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
@@ -207,7 +218,7 @@ Module word.
       cbv [wrap swrap]; rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
         (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
-      set (M := 2 ^ (width - 1)) in*; clearbody M.
+      set (M := 2 ^ (width - 1)) in*. (* clearbody M. *)
       assert (0<2*M) by Lia.nia.
       rewrite <-!Z.add_opp_r.
       repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
@@ -225,7 +236,7 @@ Module word.
       cbv [wrap swrap]; rewrite <-(wrap_unsigned x).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
         (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
-      set (M := 2 ^ (width - 1)) in*; clearbody M.
+      set (M := 2 ^ (width - 1)) in*. (* clearbody M. *)
       rewrite <-!Z.add_opp_r.
       repeat rewrite ?Z.add_assoc, ?Z.add_mod_idemp_l, ?Z.add_mod_idemp_r, ?(Z.add_shuffle0 _ (_ mod _)) by blia.
       replace (- (unsigned x mod (2 * M)) + M) with (M - unsigned x mod (2 * M)) by blia.
@@ -240,7 +251,7 @@ Module word.
       cbv [wrap swrap]. rewrite <-(wrap_unsigned x), <-(wrap_unsigned y).
       replace (2 ^ width) with (2*2 ^ (width - 1)) by
         (rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia).
-      set (M := 2 ^ (width - 1)) in*; clearbody M.
+      set (M := 2 ^ (width - 1)) in*. (* clearbody M. *)
       assert (0<2*M) by Lia.nia.
       f_equal.
       symmetry.
@@ -382,6 +393,15 @@ Module word.
       eapply word.unsigned_inj.
       rewrite <- (wrap_unsigned y), unsigned_sub, unsigned_add;
         cbv [wrap]; rewrite Zdiv.Zminus_mod_idemp_l; f_equal; blia.
+    Qed.
+    
+    Lemma decrement_nonzero_lt x (H : word.unsigned x <> 0) :
+      word.unsigned (word.sub x (word.of_Z 1)) < word.unsigned x.
+    Proof.
+      pose proof word.unsigned_range x; pose proof modulus_pos.
+      rewrite word.unsigned_sub, word.unsigned_of_Z_1.
+      unfold word.wrap. Z.div_mod_to_equations.
+      enough (0 <= q); Lia.nia.
     Qed.
 
     Lemma if_zero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) = 0) : t = false.
