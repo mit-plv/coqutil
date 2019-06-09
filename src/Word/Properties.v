@@ -312,9 +312,18 @@ Module word.
       rewrite signed_divs by assumption. apply swrap_inrange.
       rewrite Z.quot_div by assumption. pose proof (signed_range x).
       destruct (Z.sgn_spec (signed x)) as [[? X]|[[? X]|[? X]]];
-      destruct (Z.sgn_spec (signed y)) as [[? Y]|[[? Y]|[? Y]]];
-      rewrite ?X, ?Y; rewrite ?Z.abs_eq, ?Z.abs_neq by blia; mia.
-    Qed.
+      destruct (Z.sgn_spec (signed y)) as [[? Y]|[[? Y]|[? Y]]].
+      1: rewrite ?X, ?Y; rewrite ?Z.abs_eq, ?Z.abs_neq by blia; mia.
+      1: rewrite ?X, ?Y; rewrite ?Z.abs_eq, ?Z.abs_neq by blia; mia.
+      {
+        rewrite ?X, ?Y.
+        rewrite Z.abs_eq by blia.
+        rewrite Z.abs_eq; cycle 1. {
+          (* omega fails ~8x faster than lia *)
+          Time do 100 (try Lia.lia). (* 0.462 secs *)
+          Time do 100 (try Omega.omega). (* 0.055 secs *)
+    Admitted.
+
     Lemma signed_mods_nowrap x y (H:signed y <> 0) : signed (mods x y) = Z.rem (signed x) (signed y).
     Proof.
       rewrite signed_mods by assumption. apply swrap_inrange.
