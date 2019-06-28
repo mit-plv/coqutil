@@ -1,5 +1,6 @@
-Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt coqutil.Z.Lia.
+Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt Coq.ZArith.Zdigits coqutil.Z.Lia Coq.Vectors.VectorDef.
 Require Import coqutil.sanity coqutil.Word.Interface. Import word.
+Require Import coqutil.Word.BitVector.
 Local Open Scope Z_scope.
 
 (* TODO: move me? *)
@@ -15,9 +16,24 @@ Section WithWidth.
   Let swrap_value z := wrap_value (z + 2 ^ (width - 1)) - 2 ^ (width - 1).
   Record rep := mk { unsigned : Z ; _unsigned_in_range : wrap_value unsigned = unsigned }.
 
+  
   Definition wrap (z:Z) : rep :=
     mk (wrap_value z) (minimize_eq_proof Z.eq_dec (Zdiv.Zmod_mod z _)).
   Definition signed w := swrap_value (unsigned w).
+
+  Fixpoint pos_uor (p : positive) : bool :=
+    match p with
+    | xH => true
+    | xI p' => negb (pos_uor p')
+    | xO p' => (pos_uor p')
+    end.
+
+  Definition un_xor (z : Z) : bool :=
+    match z with
+    | Z0 => false
+    | Zpos p => pos_uor p
+    | Zneg p => pos_uor p 
+    end.
 
   Unset Universe Minimization ToSet.
   (* without the above option, defining "word" as below and then running
@@ -32,42 +48,56 @@ Section WithWidth.
      later.
      If the above option is turned on, it prints "word@{Top.72} : word.word@{Top.72} width",
      and no universe inconsistencies occur, hopefully. *)
+  Unset Printing Coercions.
+
+
   Definition word : word.word width := {|
-    word.rep := rep;
-    word.unsigned := unsigned;
-    word.signed := signed;
-    of_Z := wrap;
+                                        word.rep := rep;
+                                        word.unsigned := unsigned;
+                                        word.signed := signed;
+                                        of_Z := wrap;
+                                        of_bool b := wrap (ZArith.Zdigits.bit_value b);
+                                        max_word := wrap (-1)%Z;
+                                        min_word := wrap (0);
 
-    add x y := wrap (Z.add (unsigned x) (unsigned y));
-    sub x y := wrap (Z.sub (unsigned x) (unsigned y));
-    opp x := wrap (Z.opp (unsigned x));
+                                        add x y := wrap (Z.add (unsigned x) (unsigned y));
+                                        sub x y := wrap (Z.sub (unsigned x) (unsigned y));
+                                        opp x := wrap (Z.opp (unsigned x));
 
-    or x y := wrap (Z.lor (unsigned x) (unsigned y));
-    and x y := wrap (Z.land (unsigned x) (unsigned y));
-    xor x y := wrap (Z.lxor (unsigned x) (unsigned y));
-    not x := wrap (Z.lnot (unsigned x));
-    ndn x y := wrap (Z.ldiff (unsigned x) (unsigned y));
+                                        
 
-    mul x y := wrap (Z.mul (unsigned x) (unsigned y));
-    mulhss x y := wrap (Z.mul (signed x) (signed y) / 2^width);
-    mulhsu x y := wrap (Z.mul (signed x) (unsigned y) / 2^width);
-    mulhuu x y := wrap (Z.mul (unsigned x) (unsigned y) / 2^width);
+                                        or x y := wrap (Z.lor (unsigned x) (unsigned y));
+                                        and x y := wrap (Z.land (unsigned x) (unsigned y));
+                                        xor x y := wrap (Z.lxor (unsigned x) (unsigned y));
+                                        not x := wrap (Z.lnot (unsigned x));
+                                        ndn x y := wrap (Z.ldiff (unsigned x) (unsigned y));
+                                        uand x := wrap (ZArith.Zdigits.bit_value (Z.eqb (unsigned (wrap (-1)%Z)) (unsigned x)));
+                                        uor x := wrap (ZArith.Zdigits.bit_value (negb (Z.eqb (unsigned (wrap 0)) (unsigned x))));
+                                        uxor x := wrap (ZArith.Zdigits.bit_value (un_xor (unsigned x)));
+                                        
+                                        
 
-    divu x y := wrap (Z.div (unsigned x) (unsigned y));
-    divs x y := wrap (Z.quot (signed x) (signed y));
-    modu x y := wrap (Z.modulo (unsigned x) (unsigned y));
-    mods x y := wrap (Z.rem (signed x) (signed y));
+                                        mul x y := wrap (Z.mul (unsigned x) (unsigned y));
+                                        mulhss x y := wrap (Z.mul (signed x) (signed y) / 2^width);
+                                        mulhsu x y := wrap (Z.mul (signed x) (unsigned y) / 2^width);
+                                        mulhuu x y := wrap (Z.mul (unsigned x) (unsigned y) / 2^width);
 
-    slu x y := wrap (Z.shiftl (unsigned x) (unsigned y));
-    sru x y := wrap (Z.shiftr (unsigned x) (unsigned y));
-    srs x y := wrap (Z.shiftr (signed x) (unsigned y));
+                                        divu x y := wrap (Z.div (unsigned x) (unsigned y));
+                                        divs x y := wrap (Z.quot (signed x) (signed y));
+                                        modu x y := wrap (Z.modulo (unsigned x) (unsigned y));
+                                        mods x y := wrap (Z.rem (signed x) (signed y));
 
-    eqb x y := Z.eqb (unsigned x) (unsigned y);
-    ltu x y := Z.ltb (unsigned x) (unsigned y);
-    lts x y := Z.ltb (signed x) (signed y);
+                                        slu x y := wrap (Z.shiftl (unsigned x) (unsigned y));
+                                        sru x y := wrap (Z.shiftr (unsigned x) (unsigned y));
+                                        srs x y := wrap (Z.shiftr (signed x) (unsigned y));
 
-    sextend oldwidth z := wrap ((unsigned z + 2^(oldwidth-1)) mod 2^oldwidth - 2^(oldwidth-1));
-  |}.
+                                        eqb x y := Z.eqb (unsigned x) (unsigned y);
+                                        ltu x y := Z.ltb (unsigned x) (unsigned y);
+                                        lts x y := Z.ltb (signed x) (signed y);
+
+                                        sextend oldwidth z := wrap ((unsigned z + 2^(oldwidth-1)) mod 2^oldwidth - 2^(oldwidth-1));
+                                      |}.
+
 
   Lemma eq_unsigned {x y : rep} : unsigned x = unsigned y -> x = y.
   Proof.
@@ -98,58 +128,88 @@ Section WithWidth.
     apply eq_unsigned; assumption.
   Qed.
 End WithWidth.
+
+  
+
+Require coqutil.Word.Properties.                           
 Arguments word : clear implicits.
 Arguments ok : clear implicits.
 
-
-(* NOTE: this can be moved into a separate file to build Properties and the above in parallel *)
-(** [Add Ring] for sizes used in instruction sets of common processors *)
 Require coqutil.Word.Properties.
 Notation word1 := (word 1%Z).
 Instance word1_ok : word.ok word1 := ok 1 eq_refl.
 Add Ring wring1 : (Properties.word.ring_theory (word := word1))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word1)),
-       constants [Properties.word_cst]).
+                    (preprocess [autorewrite with rew_word_morphism],
+                     morphism (Properties.word.ring_morph (word := word1)),
+                     constants [Properties.word_cst]).
 Notation word8 := (word 8%Z).
 Instance word8_ok : word.ok word8 := ok 8 eq_refl.
 Add Ring wring8 : (Properties.word.ring_theory (word := word8))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word8)),
-       constants [Properties.word_cst]).
+                    (preprocess [autorewrite with rew_word_morphism],
+                     morphism (Properties.word.ring_morph (word := word8)),
+                     constants [Properties.word_cst]).
 Notation word16 := (word 16%Z).
 Instance word16_ok : word.ok word16 := ok 16 eq_refl.
 Add Ring wring16 : (Properties.word.ring_theory (word := word16))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word16)),
-       constants [Properties.word_cst]).
+                     (preprocess [autorewrite with rew_word_morphism],
+                      morphism (Properties.word.ring_morph (word := word16)),
+                      constants [Properties.word_cst]).
 Notation word32 := (word 32%Z).
 Instance word32_ok : word.ok word32 := ok 32 eq_refl.
 Add Ring wring32 : (Properties.word.ring_theory (word := word32))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word32)),
-       constants [Properties.word_cst]).
+                     (preprocess [autorewrite with rew_word_morphism],
+                      morphism (Properties.word.ring_morph (word := word32)),
+                      constants [Properties.word_cst]).
 Notation word64 := (word 64%Z).
 Instance word64_ok : word.ok word64 := ok 64 eq_refl.
 Add Ring wring64 : (Properties.word.ring_theory (word := word64))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word64)),
-       constants [Properties.word_cst]).
+                     (preprocess [autorewrite with rew_word_morphism],
+                      morphism (Properties.word.ring_morph (word := word64)),
+                      constants [Properties.word_cst]).
 Notation word128 := (word 128%Z).
 Instance word128_ok : word.ok word128 := ok 128 eq_refl.
 Add Ring wring128 : (Properties.word.ring_theory (word := word128))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word128)),
-       constants [Properties.word_cst]).
+                      (preprocess [autorewrite with rew_word_morphism],
+                       morphism (Properties.word.ring_morph (word := word128)),
+                       constants [Properties.word_cst]).
 Notation word256 := (word 256%Z).
 Instance word256_ok : word.ok word256 := ok 256 eq_refl.
 Add Ring wring256 : (Properties.word.ring_theory (word := word256))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word256)),
-       constants [Properties.word_cst]).
+                      (preprocess [autorewrite with rew_word_morphism],
+                       morphism (Properties.word.ring_morph (word := word256)),
+                       constants [Properties.word_cst]).
 Notation word512 := (word 512%Z).
 Instance word512_ok : word.ok word512 := ok 512 eq_refl.
 Add Ring wring512 : (Properties.word.ring_theory (word := word512))
-      (preprocess [autorewrite with rew_word_morphism],
-       morphism (Properties.word.ring_morph (word := word512)),
-       constants [Properties.word_cst]).
+                      (preprocess [autorewrite with rew_word_morphism],
+                       morphism (Properties.word.ring_morph (word := word512)),
+                       constants [Properties.word_cst]).
+
+Notation word5 := (word 5%Z).
+Instance word5_ok : word.ok word5 := ok 5 eq_refl.
+Add Ring wring5 : (Properties.word.ring_theory (word := word5))
+                      (preprocess [autorewrite with rew_word_morphism],
+                       morphism (Properties.word.ring_morph (word := word5)),
+                       constants [Properties.word_cst]).
+
+Notation word2 := (word 2%Z).
+Instance word2_ok : word.ok word2 := ok 2 eq_refl.
+Add Ring wring2 : (Properties.word.ring_theory (word := word2))
+                      (preprocess [autorewrite with rew_word_morphism],
+                       morphism (Properties.word.ring_morph (word := word2)),
+                       constants [Properties.word_cst]).
+
+Notation word4 := (word 4%Z).
+Instance word4_ok : word.ok word4 := ok 4 eq_refl.
+Add Ring wring4 : (Properties.word.ring_theory (word := word4))
+                      (preprocess [autorewrite with rew_word_morphism],
+                       morphism (Properties.word.ring_morph (word := word4)),
+                       constants [Properties.word_cst]).
+
+
+
+
+
+
+
+
