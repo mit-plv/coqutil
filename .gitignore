@@ -7,4 +7,5 @@ Makefile.coq.*
 .depend
 .lia.cache
 .nia.cache
+.DS_Store
 \#*\#
