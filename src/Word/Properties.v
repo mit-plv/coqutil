@@ -1,4 +1,4 @@
-Require Import Coq.ZArith.BinInt.
+Require Import Coq.ZArith.BinInt Ring.
 Require Import coqutil.Z.div_mod_to_equations.
 Require Import coqutil.Z.Lia Btauto.
 Require Coq.setoid_ring.Ring_theory.
