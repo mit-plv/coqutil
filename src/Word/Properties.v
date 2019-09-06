@@ -74,11 +74,11 @@ Module word.
       prove_ring_morph.
       rewrite <-Z.sub_0_l; symmetry; rewrite <-Z.sub_0_l, Zdiv.Zminus_mod_idemp_r. auto.
     Qed.
-    Lemma ring_morph_eqb : forall x y : Z, (x =? y) = true -> of_Z x = of_Z y.
-    Proof. intros. f_equal. eapply Z.eqb_eq. assumption. Qed.
+    Lemma ring_morph_eqb : forall x y : Z, Zbool.Zeq_bool x y = true -> of_Z x = of_Z y.
+    Proof. intros. f_equal. apply Zbool.Zeq_is_eq_bool. assumption. Qed.
     Lemma ring_morph :
       Ring_theory.ring_morph (of_Z 0) (of_Z 1) add   mul   sub   opp   Logic.eq
-                             0        1        Z.add Z.mul Z.sub Z.opp Z.eqb     of_Z.
+                             0        1        Z.add Z.mul Z.sub Z.opp Zbool.Zeq_bool of_Z.
     Proof.
       split; auto using ring_morph_add, ring_morph_sub, ring_morph_mul,
                         ring_morph_opp, ring_morph_eqb.
@@ -425,6 +425,19 @@ Section RingDemoAndTest.
                                   (word.mul (word.of_Z 4) (word.of_Z L)))
                         (word.of_Z 4)) as A.
     { intros. ring. } clear A.
+  Abort.
+
+  (* This test case illustrates why it's better to use Zbool.Zeq_bool instead of Z.eqb
+     when defining word.ring_morph.
+     "Add Ring" adds the option "sign get_signZ_th" by default, but get_signZ_th uses
+     Zbool.Zeq_bool instead of Z.eqb, so if we use Z.eqb, the sign option fails and is
+     ignored, and ring_simplify creates terms like "add x (mul (of_Z (-1)) y)"
+     instead of just "sub x y". *)
+  Goal False.
+    assert (forall (w1 w2 w3: word),
+               word.sub (word.add w1 w2) (word.add w2 w3) =
+               word.sub w1 w3) as A.
+    { intros. ring_simplify (sub (add w1 w2) (add w2 w3)). reflexivity. } clear A.
   Abort.
 
 End RingDemoAndTest.
