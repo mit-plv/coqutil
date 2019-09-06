@@ -25,8 +25,7 @@ Module Z.
 
   Ltac mod_free t :=
     lazymatch t with
-    | ?t1 ?t2 => mod_free t1; mod_free t2
-    | Z.modulo => fail "contains mod"
+    | context[Z.modulo] => fail "contains mod"
     | _ => idtac
     end.
 
