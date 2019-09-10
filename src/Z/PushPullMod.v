@@ -25,7 +25,10 @@ Module Z.
 
   Ltac mod_free t :=
     lazymatch t with
-    | context[Z.modulo] => fail "contains mod"
+    | Z.modulo ?a ?b => fail "contains" a "mod" b
+    | Z.add ?a ?b => mod_free a; mod_free b
+    | Z.sub ?a ?b => mod_free a; mod_free b
+    | Z.mul ?a ?b => mod_free a; mod_free b
     | _ => idtac
     end.
 
