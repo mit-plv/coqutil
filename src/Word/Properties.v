@@ -1,4 +1,4 @@
-Require Import Coq.ZArith.BinInt Ring.
+From Coq Require Import ZArith.
 Require Import coqutil.Z.div_mod_to_equations.
 Require Import coqutil.Z.Lia Btauto.
 Require Import coqutil.Z.PushPullMod.
