@@ -265,36 +265,46 @@ Ltac simpl_unrecogs u :=
 Inductive Abstracted{T}: T -> T -> Type :=
   mk_Abstracted: forall (t1 t2: T), t1 = t2 -> Abstracted t1 t2.
 
-Ltac remember_unrecogs u :=
+(* pass u as a hypothesis rather than an ltac argument to make sure that "remember"
+   also modifies the subterms of u *)
+Ltac remember_unrecogs_step :=
   let a := fresh "A" in
-  lazymatch u with
-  | @Build_unrecogs ?K ?V ?M (?P :: ?Ps) ?ks ?kss ?vs ?ovs ?ms =>
+  lazymatch goal with
+  | u := @Build_unrecogs ?K ?V ?M (?P :: ?Ps) ?ks ?kss ?vs ?ovs ?ms |- _ =>
     let name := fresh "P" in remember P as name eqn: a;
-    apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V M Ps ks kss vs ovs ms)
-  | @Build_unrecogs ?K ?V ?M nil (?k :: ?ks) ?kss ?vs ?ovs ?ms =>
+    apply mk_Abstracted in a
+  | u := @Build_unrecogs ?K ?V ?M nil (?k :: ?ks) ?kss ?vs ?ovs ?ms |- _ =>
     let name := fresh "k" in remember k as name eqn: a;
-    apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V M nil ks kss vs ovs ms)
-  | @Build_unrecogs ?K ?V ?M nil nil (?ks :: ?kss) ?vs ?ovs ?ms =>
+    apply mk_Abstracted in a
+  | u := @Build_unrecogs ?K ?V ?M nil nil (?ks :: ?kss) ?vs ?ovs ?ms |- _ =>
     let name := fresh "ks" in remember ks as name eqn: a;
-    apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V M nil nil kss vs ovs ms)
-  | @Build_unrecogs ?K ?V ?M nil nil nil (?v :: ?vs) ?ovs ?ms =>
+    apply mk_Abstracted in a
+  | u := @Build_unrecogs ?K ?V ?M nil nil nil (?v :: ?vs) ?ovs ?ms |- _ =>
     let name := fresh "v" in remember v as name eqn: a;
-    apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V M nil nil nil vs ovs ms)
-  | @Build_unrecogs ?K ?V ?M nil nil nil nil (?ov :: ?ovs) ?ms =>
+    apply mk_Abstracted in a
+  | u := @Build_unrecogs ?K ?V ?M nil nil nil nil (?ov :: ?ovs) ?ms |- _ =>
     let name := fresh "ov" in remember ov as name eqn: a;
-    apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V M nil nil nil nil ovs ms)
-  | @Build_unrecogs ?K ?V ?M nil nil nil nil nil (?m :: ?ms) =>
+    apply mk_Abstracted in a
+  | u := @Build_unrecogs ?K ?V ?M nil nil nil nil nil (?m :: ?ms) |- _ =>
     let name := fresh "m" in remember m as name eqn: a;
-    apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V M nil nil nil nil nil ms)
-  | @Build_unrecogs ?K ?V ?M nil nil nil nil nil nil =>
-    idtac
+    apply mk_Abstracted in a
   end.
+
+Ltac shrink_unrecogs :=
+  lazymatch goal with
+  | u := @Build_unrecogs ?K ?V ?M (?P :: ?Ps) ?ks  ?kss ?vs ?ovs ?ms |- _ => clear u; set (u := @Build_unrecogs K V M Ps  ks  kss vs  ovs ms)
+  | u := @Build_unrecogs ?K ?V ?M nil (?k :: ?ks)  ?kss ?vs ?ovs ?ms |- _ => clear u; set (u := @Build_unrecogs K V M nil ks  kss vs  ovs ms)
+  | u := @Build_unrecogs ?K ?V ?M nil nil (?ks :: ?kss) ?vs ?ovs ?ms |- _ => clear u; set (u := @Build_unrecogs K V M nil nil kss vs  ovs ms)
+  | u := @Build_unrecogs ?K ?V ?M nil nil nil (?v :: ?vs)  ?ovs  ?ms |- _ => clear u; set (u := @Build_unrecogs K V M nil nil nil vs  ovs ms)
+  | u := @Build_unrecogs ?K ?V ?M nil nil nil nil (?ov :: ?ovs) ?ms  |- _ => clear u; set (u := @Build_unrecogs K V M nil nil nil nil ovs ms)
+  | u := @Build_unrecogs ?K ?V ?M nil nil nil nil nil    (?m :: ?ms) |- _ => clear u; set (u := @Build_unrecogs K V M nil nil nil nil nil ms)
+  end.
+
+Ltac remember_unrecogs U :=
+  let u := fresh "u" in
+  set (u := U);
+  repeat (remember_unrecogs_step; shrink_unrecogs);
+  clear u.
 
 Ltac abstract_unrecogs mapok :=
   lazymatch type of mapok with
