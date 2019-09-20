@@ -28,37 +28,49 @@ Hint Unfold
      map.undef_on
   : unf_map_defs.
 
-Record unrecogs{K V: Type} := {
-  unrecog_Props: list Prop;
-  unrecog_keys: list K;
-  unrecog_keysets: list (K -> Prop);
-  unrecog_values: list V;
-  unrecog_option_values: list (option V);
-}.
-Arguments Build_unrecogs {_} {_} _ _ _ _.
+Section Unrecogs.
+  Context (K V: Type).
+  Context {M: map.map K V}.
+  Record unrecogs := {
+    unrecog_Props: list Prop;
+    unrecog_keys: list K;
+    unrecog_keysets: list (K -> Prop);
+    unrecog_values: list V;
+    unrecog_option_values: list (option V);
+    unrecog_maps: list M;
+  }.
+
+  Definition empty_unrecogs: unrecogs :=
+    @Build_unrecogs nil nil nil nil nil nil.
+
+  (* TODO this could/should remove duplicates *)
+  Definition union_unrecogs: unrecogs -> unrecogs -> unrecogs :=
+    fun '(Build_unrecogs ps1 ks1 kss1 vs1 ovs1 ms1) '(Build_unrecogs ps2 ks2 kss2 vs2 ovs2 ms2) =>
+      Build_unrecogs (ps1 ++ ps2) (ks1 ++ ks2) (kss1 ++ kss2) (vs1 ++ vs2) (ovs1 ++ ovs2) (ms1 ++ ms2).
+
+  Definition unrecog_Prop(P: Prop): unrecogs :=
+    Build_unrecogs (cons P nil) nil nil nil nil nil.
+
+  Definition unrecog_key(k: K): unrecogs :=
+    Build_unrecogs nil (cons k nil) nil nil nil nil.
+
+  Definition unrecog_keyset(ks: K -> Prop): unrecogs :=
+    Build_unrecogs nil nil (cons ks nil) nil nil nil.
+
+  Definition unrecog_value(v: V): unrecogs :=
+    Build_unrecogs nil nil nil (cons v nil) nil nil.
+
+  Definition unrecog_option_value(ov: option V): unrecogs :=
+    Build_unrecogs nil nil nil nil (cons ov nil) nil.
+
+  Definition unrecog_map(m: M): unrecogs :=
+    Build_unrecogs nil nil nil nil nil (cons m nil).
+
+End Unrecogs.
+
+Arguments Build_unrecogs {_} {_} {_} _ _ _ _.
 Arguments unrecogs: clear implicits.
-
-Definition empty_unrecogs(K V: Type): unrecogs K V :=
-  @Build_unrecogs K V nil nil nil nil nil.
-
-Definition union_unrecogs{K V: Type}: unrecogs K V -> unrecogs K V -> unrecogs K V :=
-  fun '(Build_unrecogs ps1 ks1 kss1 vs1 ovs1) '(Build_unrecogs ps2 ks2 kss2 vs2 ovs2) =>
-    Build_unrecogs (ps1 ++ ps2) (ks1 ++ ks2) (kss1 ++ kss2) (vs1 ++ vs2) (ovs1 ++ ovs2).
-
-Definition unrecog_Prop(K V: Type)(P: Prop): unrecogs K V :=
-  Build_unrecogs (cons P nil) nil nil nil nil.
-
-Definition unrecog_key(K V: Type)(k: K): unrecogs K V :=
-  Build_unrecogs nil (cons k nil) nil nil nil.
-
-Definition unrecog_keyset(K V: Type)(ks: K -> Prop): unrecogs K V :=
-  Build_unrecogs nil nil (cons ks nil) nil nil.
-
-Definition unrecog_value(K V: Type)(v: V): unrecogs K V :=
-  Build_unrecogs nil nil nil (cons v nil) nil.
-
-Definition unrecog_option_value(K V: Type)(ov: option V): unrecogs K V :=
-  Build_unrecogs nil nil nil nil (cons ov nil).
+Arguments union_unrecogs {_} {_} {_} _ _.
 
 Ltac is_bound_var_access e :=
   let e := eval cbn [fst snd] in e in
@@ -227,7 +239,7 @@ with unrecogs_in_map K V e :=
   | (fun (x: ?T) => ?B) =>
     match is_var' B with
     | true => constr:(empty_unrecogs K V)
-    | false => fail 10000 "uninterpreted maps such as" B "are not supported yet"
+    | false => constr:(unrecog_map K V B)
     end
   end.
 
@@ -238,6 +250,7 @@ Ltac simpl_unrecogs u :=
            unrecog_keysets
            unrecog_values
            unrecog_option_values
+           unrecog_maps
            empty_unrecogs
            union_unrecogs
            unrecog_Prop
@@ -245,6 +258,7 @@ Ltac simpl_unrecogs u :=
            unrecog_keyset
            unrecog_value
            unrecog_option_value
+           unrecog_map
            List.app
        ] in u.
 
@@ -254,27 +268,31 @@ Inductive Abstracted{T}: T -> T -> Type :=
 Ltac remember_unrecogs u :=
   let a := fresh "A" in
   lazymatch u with
-  | @Build_unrecogs ?K ?V (?P :: ?Ps) ?ks ?kss ?vs ?ovs =>
+  | @Build_unrecogs ?K ?V ?M (?P :: ?Ps) ?ks ?kss ?vs ?ovs ?ms =>
     let name := fresh "P" in remember P as name eqn: a;
     apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V Ps ks kss vs ovs)
-  | @Build_unrecogs ?K ?V nil (?k :: ?ks) ?kss ?vs ?ovs =>
+    remember_unrecogs (@Build_unrecogs K V M Ps ks kss vs ovs ms)
+  | @Build_unrecogs ?K ?V ?M nil (?k :: ?ks) ?kss ?vs ?ovs ?ms =>
     let name := fresh "k" in remember k as name eqn: a;
     apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V nil ks kss vs ovs)
-  | @Build_unrecogs ?K ?V nil nil (?ks :: ?kss) ?vs ?ovs =>
+    remember_unrecogs (@Build_unrecogs K V M nil ks kss vs ovs ms)
+  | @Build_unrecogs ?K ?V ?M nil nil (?ks :: ?kss) ?vs ?ovs ?ms =>
     let name := fresh "ks" in remember ks as name eqn: a;
     apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V nil nil kss vs ovs)
-  | @Build_unrecogs ?K ?V nil nil nil (?v :: ?vs) ?ovs =>
+    remember_unrecogs (@Build_unrecogs K V M nil nil kss vs ovs ms)
+  | @Build_unrecogs ?K ?V ?M nil nil nil (?v :: ?vs) ?ovs ?ms =>
     let name := fresh "v" in remember v as name eqn: a;
     apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V nil nil nil vs ovs)
-  | @Build_unrecogs ?K ?V nil nil nil nil (?ov :: ?ovs) =>
+    remember_unrecogs (@Build_unrecogs K V M nil nil nil vs ovs ms)
+  | @Build_unrecogs ?K ?V ?M nil nil nil nil (?ov :: ?ovs) ?ms =>
     let name := fresh "ov" in remember ov as name eqn: a;
     apply mk_Abstracted in a;
-    remember_unrecogs (@Build_unrecogs K V nil nil nil nil ovs)
-  | @Build_unrecogs ?K ?V nil nil nil nil nil =>
+    remember_unrecogs (@Build_unrecogs K V M nil nil nil nil ovs ms)
+  | @Build_unrecogs ?K ?V ?M nil nil nil nil nil (?m :: ?ms) =>
+    let name := fresh "m" in remember m as name eqn: a;
+    apply mk_Abstracted in a;
+    remember_unrecogs (@Build_unrecogs K V M nil nil nil nil nil ms)
+  | @Build_unrecogs ?K ?V ?M nil nil nil nil nil nil =>
     idtac
   end.
 
