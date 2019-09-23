@@ -1,1 +1,1 @@
--R ./src coqutil
+-R ./src/coqutil/ coqutil
