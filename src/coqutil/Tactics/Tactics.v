@@ -80,8 +80,7 @@ Tactic Notation "unique" "eapply" constr(p) "in" "copy" "of" ident(H) :=
   let H' := fresh H "_uac" in
   pose proof H as H';
   unshelve eapply p in H';
-  try assumption;
-  ensure_new H'.
+  [ ensure_new H' | assumption .. ].
 
 Ltac deep_destruct H :=
   lazymatch type of H with
