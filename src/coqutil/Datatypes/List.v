@@ -41,7 +41,7 @@ Section WithA.
     revert dependent xs; induction n, xs; cbn; auto; try lia; [].
     intros; rewrite IHn; trivial; lia.
   Qed.
-  
+
   Lemma length_firstn_inbounds n (xs : list A) (H : le n (length xs))
     : length (firstn n xs) = n.
   Proof.
@@ -61,8 +61,40 @@ Section WithA.
     { rewrite skipn_all, app_nil_r, firstn_all2, length_nil; Lia.lia. }
   Qed.
 
+  Lemma skipn_nil n: skipn n (@nil A) = nil.
+  Proof. destruct n; reflexivity. Qed.
+
   Lemma skipn_app n (xs ys : list A) : skipn n (xs ++ ys) = skipn n xs ++ skipn (n - length xs) ys.
-  Admitted.
+  Proof.
+    revert n ys.
+    induction xs; intros.
+    - simpl. rewrite skipn_nil. simpl. rewrite PeanoNat.Nat.sub_0_r. reflexivity.
+    - simpl. destruct n.
+      + simpl. reflexivity.
+      + simpl. apply IHxs.
+  Qed.
+
   Lemma skipn_skipn n m (xs : list A) : skipn n (skipn m xs) = skipn (n + m) xs.
-  Admitted.
+  Proof.
+    revert m xs.
+    induction n; intros.
+    - simpl. reflexivity.
+    - change (S n + m) with (S (n + m)).
+      destruct xs as [|x xs].
+      + simpl. rewrite skipn_nil. reflexivity.
+      + destruct m as [|m].
+        * simpl. rewrite PeanoNat.Nat.add_0_r. reflexivity.
+        * change (skipn (S m) (x :: xs)) with (skipn m xs).
+          change (skipn (S (n + S m)) (x :: xs)) with (skipn (n + S m) xs).
+          rewrite <- IHn.
+          clear IHn x.
+          revert n m.
+          induction xs; intros.
+          { simpl. rewrite !skipn_nil. reflexivity. }
+          { destruct m as [|m].
+            - simpl. reflexivity.
+            - change (skipn (S m) (a :: xs)) with (skipn m xs).
+              change (skipn (S (S m)) (a :: xs)) with (skipn (S m) xs).
+              apply IHxs. }
+  Qed.
 End WithA.
