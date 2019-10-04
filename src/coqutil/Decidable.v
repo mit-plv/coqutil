@@ -3,6 +3,7 @@ Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.ZArith.BinInt.
 Require Import Coq.NArith.NArith.
+Require Coq.Strings.String.
 
 (* needed because it unfolds to Nat.leb and then typeclass search picks Nat.leb_spec
    instead of Nat.ltb_spec *)
@@ -47,6 +48,15 @@ Module Z.
   Qed.
 End Z.
 
+Module String.
+  Lemma eqb_spec: EqDecider String.eqb.
+  Proof.
+    intros. destruct (String.eqb x y) eqn: E; constructor.
+    - apply String.eqb_eq. assumption.
+    - apply String.eqb_neq. assumption.
+  Qed.
+End String.
+
 Hint Resolve
      Nat.eqb_spec
      Nat.leb_spec
@@ -59,6 +69,7 @@ Hint Resolve
      Z.geb_spec
      Z.leb_spec
      Z.ltb_spec
+     String.eqb_spec
 : typeclass_instances.
 
 
