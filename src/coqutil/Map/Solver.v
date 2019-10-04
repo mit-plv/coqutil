@@ -412,7 +412,7 @@ Ltac preprocess_impl mapok stopearly :=
       end;
       clear_abstract_Props;
       revert_all_Props;
-      unfold set in *; simpl in *;
+      unfold PropSet.set in *; simpl in *;
       revert_all_option_values okname;
       revert_all_values okname;
       revert_all_keys okname;
@@ -420,7 +420,7 @@ Ltac preprocess_impl mapok stopearly :=
       revert_all_maps okname;
       let mname := fresh "M" in
       match type of keq_spec_name with
-      | EqDecider ?f => generalize keq_spec_name; generalize f
+      | EqDecider ?f => generalize keq_spec_name; generalize (f: K -> K -> bool)
       end;
       generalize okname;
       generalize Inst as mname;
