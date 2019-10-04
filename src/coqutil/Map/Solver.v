@@ -360,44 +360,34 @@ Ltac revert_all_Props :=
              end
          end.
 
+Ltac revert_by_type T :=
+  repeat match goal with
+         | x: ?U |- _ => change T in x; revert x
+         end.
+
 Ltac revert_all_keys mapok :=
   lazymatch type of mapok with
-  | @map.ok ?K ?V ?Inst =>
-    repeat match goal with
-           | x: K |- _ => revert x
-           end
+  | @map.ok ?K ?V ?Inst => revert_by_type K
   end.
 
 Ltac revert_all_values mapok :=
   lazymatch type of mapok with
-  | @map.ok ?K ?V ?Inst =>
-    repeat match goal with
-           | x: V |- _ => revert x
-           end
+  | @map.ok ?K ?V ?Inst => revert_by_type V
   end.
 
 Ltac revert_all_option_values mapok :=
   lazymatch type of mapok with
-  | @map.ok ?K ?V ?Inst =>
-    repeat match goal with
-           | x: option V |- _ => revert x
-           end
+  | @map.ok ?K ?V ?Inst => revert_by_type (option V)
   end.
 
 Ltac revert_all_keysets mapok :=
   lazymatch type of mapok with
-  | @map.ok ?K ?V ?Inst =>
-    repeat match goal with
-           | x: K -> Prop |- _ => revert x
-           end
+  | @map.ok ?K ?V ?Inst => revert_by_type (K -> Prop)
   end.
 
 Ltac revert_all_maps mapok :=
   lazymatch type of mapok with
-  | @map.ok ?K ?V ?Inst =>
-    repeat match goal with
-           | x: @map.rep K V Inst |- _ => revert x
-           end
+  | @map.ok ?K ?V ?Inst => revert_by_type (@map.rep K V Inst)
   end.
 
 Ltac preprocess_impl mapok stopearly :=
