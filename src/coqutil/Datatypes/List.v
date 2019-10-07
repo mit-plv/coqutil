@@ -1,5 +1,7 @@
 Require Import coqutil.sanity.
+Require Import coqutil.Tactics.destr.
 Require Import Coq.Lists.List Coq.micromega.Lia.
+
 
 Section WithA.
   Context {A : Type}.
@@ -97,4 +99,37 @@ Section WithA.
               change (skipn (S (S m)) (a :: xs)) with (skipn (S m) xs).
               apply IHxs. }
   Qed.
+
+  Lemma nth_error_nil_Some: forall i (a: A), nth_error nil i = Some a -> False.
+  Proof.
+    intros. destruct i; simpl in *; discriminate.
+  Qed.
+
+  Lemma nth_error_single_Some: forall (a1 a2: A) i,
+      nth_error (a1 :: nil) i = Some a2 ->
+      i = O /\ a1 = a2.
+  Proof.
+    intros. destruct i; inversion H; auto. simpl in *.
+    exfalso. eapply nth_error_nil_Some. eassumption.
+  Qed.
+
+  Lemma nth_error_cons_Some: forall (a1 a2: A) (l: list A) i,
+      nth_error (a1 :: l) i = Some a2 ->
+      i = O /\ a1 = a2 \/ exists j, i = S j /\ nth_error l j = Some a2.
+  Proof.
+    intros. destruct i; simpl in *.
+    - inversion H. auto.
+    - eauto.
+  Qed.
+
+  Lemma nth_error_app_Some: forall (a: A) (l1 l2: list A) i,
+      nth_error (l1 ++ l2) i = Some a ->
+      nth_error l1 i = Some a \/ nth_error l2 (i - length l1) = Some a.
+  Proof.
+    intros.
+    destr (Nat.ltb i (length l1)).
+    - left. rewrite nth_error_app1 in H; assumption.
+    - right. rewrite nth_error_app2 in H; assumption.
+  Qed.
+
 End WithA.

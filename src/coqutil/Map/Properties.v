@@ -153,6 +153,12 @@ Module map.
         + rewrite get_empty in H0. congruence.
     Qed.
 
+    Lemma extends_get: forall {m1 m2} {k: key} {v: value},
+        map.get m1 k = Some v ->
+        map.extends m2 m1 ->
+        map.get m2 k = Some v.
+    Proof. unfold map.extends. intros. eauto. Qed.
+
     Lemma put_extends: forall k v m1 m2,
         extends m2 m1 ->
         extends (put m2 k v) (put m1 k v).
@@ -238,6 +244,54 @@ Module map.
         exists st', map.putmany_of_list bs vs st = Some st'.
     Proof.
       induction bs, vs; cbn; try discriminate; intros; eauto.
+    Qed.
+
+    Lemma putmany_of_list_find_index: forall keys vals (m1 m2: map) k v,
+        putmany_of_list keys vals m1 = Some m2 ->
+        get m2 k = Some v ->
+        (exists n, List.nth_error keys n = Some k /\ List.nth_error vals n = Some v) \/
+        (get m1 k = Some v).
+    Proof.
+      induction keys; intros.
+      - simpl in H. destruct vals; try discriminate. replace m2 with m1 in * by congruence. eauto.
+      - simpl in H.
+        destruct vals; try discriminate. specialize IHkeys with (1 := H) (2 := H0).
+        destruct IHkeys as [IH | IH].
+        + destruct IH as (n & IH).
+          left. exists (S n). simpl. exact IH.
+        + rewrite get_put_dec in IH. destr (key_eqb a k).
+          * subst. left. exists O. simpl. auto.
+          * right. assumption.
+    Qed.
+
+    Lemma getmany_of_list_get: forall keys n (m: map) vals k v,
+        getmany_of_list m keys = Some vals ->
+        List.nth_error keys n = Some k ->
+        List.nth_error vals n = Some v ->
+        get m k = Some v.
+    Proof.
+      induction keys; intros.
+      - apply List.nth_error_nil_Some in H0. contradiction.
+      - unfold getmany_of_list in *. simpl in *.
+        destr (get m a); try discriminate.
+        destr (List.option_all (List.map (get m) keys)); try discriminate.
+        destruct n.
+        + simpl in *. destr vals; congruence.
+        + simpl in *. destr vals; try discriminate. inversion H. subst. eauto.
+    Qed.
+
+    Lemma extends_putmany_of_list_empty: forall argnames argvals (lL lH: map),
+        putmany_of_list argnames argvals empty = Some lH ->
+        getmany_of_list lL argnames = Some argvals ->
+        extends lL lH.
+    Proof.
+      unfold extends. intros.
+      pose proof putmany_of_list_find_index as P.
+      specialize P with (1 := H) (2 := H1). destruct P as [P | P]; cycle 1. {
+        rewrite get_empty in P. discriminate.
+      }
+      destruct P as (n & P1 & P2).
+      eapply getmany_of_list_get; eassumption.
     Qed.
 
     Lemma only_differ_putmany : forall (bs : list key) (vs : list value) st st',

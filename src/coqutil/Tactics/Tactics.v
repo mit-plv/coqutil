@@ -75,3 +75,15 @@ Ltac destruct_one_match_hyporgoal_test check cleanup :=
   | |- context[match ?d with _ => _ end]      => check d; destr d; subst
   | H: context[match ?d with _ => _ end] |- _ => check d; destr d; subst; cleanup H
   end.
+
+(* What "split" really should be: does not unfold definitions to discover more
+   conjunctions, but does split multiple conjunctions *)
+Ltac ssplit :=
+  repeat match goal with
+         | |- _ /\ _ => split
+         end.
+
+(* needed because of https://github.com/coq/coq/issues/10848 *)
+Ltac prewrite lhs lem :=
+  pattern lhs;
+  eapply eq_rect; [|symmetry; eapply lem].

@@ -1,4 +1,5 @@
 Require Import coqutil.Tactics.autoforward.
+Require Import coqutil.Decidable. (* adds hints to typeclass_instances needed by autoforward *)
 
 Ltac destr d :=
   match type of d with
