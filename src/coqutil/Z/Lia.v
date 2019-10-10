@@ -1,6 +1,24 @@
 Require Import Coq.micromega.Lia.
 Require Import Coq.omega.Omega.
 
+(* Note: running is_lia before lia is not always what you want, because lia can also
+   solve contradictory goals where the conclusion is not LIA,
+   and it can also deal with conjunctions and disjunctions *)
+Ltac is_lia P :=
+  lazymatch P with
+  | @eq Z _ _ => idtac
+  | not (@eq Z _ _) => idtac
+  | (_ < _)%Z => idtac
+  | (_ <= _)%Z => idtac
+  | (_ <= _ < _)%Z => idtac
+  | @eq nat _ _ => idtac
+  | not (@eq nat _ _) => idtac
+  | (_ < _)%nat => idtac
+  | (_ <= _)%nat => idtac
+  | (_ <= _ < _)%nat => idtac
+  | _ => fail "The term" P "is not LIA"
+  end.
+
 (* We have encountered cases where lia is insanely slower than omega,
    (https://github.com/coq/coq/issues/9848), but not the other way. *)
 Ltac compare_tacs omegatac liatac :=
