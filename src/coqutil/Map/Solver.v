@@ -5,6 +5,12 @@ Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Properties.
 Require Import coqutil.Datatypes.PropSet.
 
+(* Redefine some functions so that we can cbn/cbv them without accidentally simplifying
+   user terms. *)
+Local Definition fst: forall {A B : Type}, A * B -> A := Eval cbv delta [fst] in @fst.
+Local Definition snd: forall {A B : Type}, A * B -> B := Eval cbv delta [snd] in @snd.
+Local Definition app: forall {A : Type}, list A -> list A -> list A := Eval cbv delta [app] in @app.
+
 Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_derived_map_defs.
 
 Hint Unfold
@@ -46,7 +52,7 @@ Section Unrecogs.
   (* TODO this could/should remove duplicates *)
   Definition union_unrecogs: unrecogs -> unrecogs -> unrecogs :=
     fun '(Build_unrecogs ps1 ks1 kss1 vs1 ovs1 ms1) '(Build_unrecogs ps2 ks2 kss2 vs2 ovs2 ms2) =>
-      Build_unrecogs (ps1 ++ ps2) (ks1 ++ ks2) (kss1 ++ kss2) (vs1 ++ vs2) (ovs1 ++ ovs2) (ms1 ++ ms2).
+      Build_unrecogs (app ps1 ps2) (app ks1 ks2) (app kss1 kss2) (app vs1 vs2) (app ovs1 ovs2) (app ms1 ms2).
 
   Definition unrecog_Prop(P: Prop): unrecogs :=
     Build_unrecogs (cons P nil) nil nil nil nil nil.
@@ -259,7 +265,7 @@ Ltac simpl_unrecogs u :=
            unrecog_value
            unrecog_option_value
            unrecog_map
-           List.app
+           app
        ] in u.
 
 Inductive Abstracted{T}: T -> T -> Type :=
