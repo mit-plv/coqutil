@@ -48,14 +48,22 @@ Module map.
     Definition getmany_of_list (m : map) (keys : list key) : option (list value) :=
       List.option_all (List.map (get m) keys).
 
-    Fixpoint putmany_of_list (keys : list key) (values : list value) (init : rep) {struct keys} : option map :=
+    Fixpoint putmany_of_list (l : list (key*value)) (init : rep) {struct l} : map :=
+      match l with
+      | nil => init
+      | cons (k,v) l =>
+        putmany_of_list l (put init k v)
+      end.
+    Definition of_list l := putmany_of_list l empty.
+
+    Fixpoint putmany_of_list_zip (keys : list key) (values : list value) (init : rep) {struct keys} : option map :=
       match keys, values with
       | nil, nil => Some init
       | cons k keys, cons v values =>
-        putmany_of_list keys values (put init k v)
+        putmany_of_list_zip keys values (put init k v)
       | _, _ => None
       end.
-    Definition of_list keys values := putmany_of_list keys values empty.
+    Definition of_list_zip keys values := putmany_of_list_zip keys values empty.
 
     Import PrimitivePair.
 

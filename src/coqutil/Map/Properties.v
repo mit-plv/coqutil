@@ -171,10 +171,10 @@ Module map.
         eapply H. assumption.
     Qed.
 
-    Lemma putmany_of_list_extends_exists: forall ks vs m1 m1' m2,
-        putmany_of_list ks vs m1 = Some m1' ->
+    Lemma putmany_of_list_zip_extends_exists: forall ks vs m1 m1' m2,
+        putmany_of_list_zip ks vs m1 = Some m1' ->
         extends m2 m1 ->
-        exists m2', putmany_of_list ks vs m2 = Some m2' /\ extends m2' m1'.
+        exists m2', putmany_of_list_zip ks vs m2 = Some m2' /\ extends m2' m1'.
     Proof.
       induction ks; intros.
       - destruct vs; simpl in H; [|discriminate].
@@ -186,9 +186,9 @@ Module map.
         + auto using put_extends.
     Qed.
 
-    Lemma putmany_of_list_extends: forall ks vs m1 m1' m2 m2',
-        putmany_of_list ks vs m1 = Some m1' ->
-        putmany_of_list ks vs m2 = Some m2' ->
+    Lemma putmany_of_list_zip_extends: forall ks vs m1 m1' m2 m2',
+        putmany_of_list_zip ks vs m1 = Some m1' ->
+        putmany_of_list_zip ks vs m2 = Some m2' ->
         extends m2 m1 ->
         extends m2' m1'.
     Proof.
@@ -231,23 +231,23 @@ Module map.
         eassumption.
     Qed.
 
-    Lemma putmany_of_list_sameLength : forall bs vs st st',
-        map.putmany_of_list bs vs st = Some st' ->
+    Lemma putmany_of_list_zip_sameLength : forall bs vs st st',
+        map.putmany_of_list_zip bs vs st = Some st' ->
         length bs = length vs.
     Proof.
       induction bs, vs; cbn; try discriminate; trivial; [].
-      intros; destruct (map.putmany_of_list bs vs st) eqn:?; eauto using f_equal.
+      intros; destruct (map.putmany_of_list_zip bs vs st) eqn:?; eauto using f_equal.
     Qed.
 
     Lemma sameLength_putmany_of_list : forall bs vs st,
         length bs = length vs ->
-        exists st', map.putmany_of_list bs vs st = Some st'.
+        exists st', map.putmany_of_list_zip bs vs st = Some st'.
     Proof.
       induction bs, vs; cbn; try discriminate; intros; eauto.
     Qed.
 
-    Lemma putmany_of_list_find_index: forall keys vals (m1 m2: map) k v,
-        putmany_of_list keys vals m1 = Some m2 ->
+    Lemma putmany_of_list_zip_find_index: forall keys vals (m1 m2: map) k v,
+        putmany_of_list_zip keys vals m1 = Some m2 ->
         get m2 k = Some v ->
         (exists n, List.nth_error keys n = Some k /\ List.nth_error vals n = Some v) \/
         (get m1 k = Some v).
@@ -281,12 +281,12 @@ Module map.
     Qed.
 
     Lemma extends_putmany_of_list_empty: forall argnames argvals (lL lH: map),
-        putmany_of_list argnames argvals empty = Some lH ->
+        putmany_of_list_zip argnames argvals empty = Some lH ->
         getmany_of_list lL argnames = Some argvals ->
         extends lL lH.
     Proof.
       unfold extends. intros.
-      pose proof putmany_of_list_find_index as P.
+      pose proof putmany_of_list_zip_find_index as P.
       specialize P with (1 := H) (2 := H1). destruct P as [P | P]; cycle 1. {
         rewrite get_empty in P. discriminate.
       }
@@ -295,19 +295,19 @@ Module map.
     Qed.
 
     Lemma only_differ_putmany : forall (bs : list key) (vs : list value) st st',
-        map.putmany_of_list bs vs st = Some st' ->
+        map.putmany_of_list_zip bs vs st = Some st' ->
         map.only_differ st (PropSet.of_list bs) st'.
     Proof.
       induction bs, vs; cbn; try discriminate.
       - inversion 1; subst. cbv; eauto.
       - intros ? ? H x.
         simpl.
-        destruct (map.putmany_of_list bs vs st) eqn:Heqo.
+        destruct (map.putmany_of_list_zip bs vs st) eqn:Heqo.
         + specialize IHbs with (1 := H). specialize (IHbs x).
           destruct IHbs as [IHbs | IHbs]; unfold PropSet.elem_of in *; simpl; auto.
           rewrite get_put_dec in IHbs.
           destr (key_eqb a x); auto.
-        + apply putmany_of_list_sameLength in H.
+        + apply putmany_of_list_zip_sameLength in H.
           apply (sameLength_putmany_of_list _ _ st) in H.
           destruct H. rewrite H in Heqo. discriminate.
     Qed.
