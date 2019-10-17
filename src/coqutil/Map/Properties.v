@@ -478,6 +478,9 @@ Module map.
       unfold same_domain in *. intuition (eauto using sub_domain_trans).
     Qed.
 
+    Lemma same_domain_sym(m1 m2: map)(S: same_domain m1 m2): same_domain m2 m1.
+    Proof. unfold same_domain in *. tauto. Qed.
+
     Lemma sub_domain_put(m1 m2: map)(k: key)(v1 v2: value)
         (S: sub_domain m1 m2):
         sub_domain (put m1 k v1) (put m2 k v2).
@@ -492,16 +495,44 @@ Module map.
         exact S.
     Qed.
 
+    Lemma sub_domain_put_l(m1 m2: map)(k: key)(v v1: value)
+        (S: sub_domain m1 m2)
+        (G: map.get m1 k = Some v):
+        sub_domain (put m1 k v1) m2.
+    Proof.
+      unfold sub_domain in *. intros k' v' G'.
+      destr (key_eqb k' k).
+      - subst k'. rewrite get_put_same in G'. inversion_option. subst v'.
+        eapply S. eassumption.
+      - rewrite get_put_diff in G' by assumption.
+        eapply S. eassumption.
+    Qed.
+
     Lemma sub_domain_put_r(m1 m2: map)(k: key)(v: value)
         (S: sub_domain m1 m2):
-        sub_domain m1 (put m2 k v).
+        sub_domain m1 (map.put m2 k v).
     Proof.
       unfold sub_domain in *. intros k' v' G.
       destr (key_eqb k' k).
-      - subst k'. exists v. apply get_put_same.
-      - specialize S with (1 := G).
-        rewrite get_put_diff by assumption.
-        exact S.
+      - subst k'. exists v. rewrite get_put_same. reflexivity.
+      - rewrite get_put_diff by assumption.
+        eapply S. eassumption.
+    Qed.
+
+    Lemma same_domain_put_l(m1 m2: map)(k: key)(v v1: value)
+        (S: same_domain m1 m2)
+        (G: map.get m1 k = Some v):
+        same_domain (put m1 k v1) m2.
+    Proof.
+      unfold same_domain in *. intuition (eauto using sub_domain_put_l, sub_domain_put_r).
+    Qed.
+
+    Lemma same_domain_put_r(m1 m2: map)(k: key)(v v2: value)
+        (S: same_domain m1 m2)
+        (G: map.get m2 k = Some v):
+        same_domain m1 (put m2 k v2).
+    Proof.
+      unfold same_domain in *. intuition (eauto using sub_domain_put_l, sub_domain_put_r).
     Qed.
 
     Lemma sub_domain_putmany_r(m1 m2 m: map)
@@ -594,6 +625,18 @@ Module map.
             specialize IHn with (1 := G2).
             specialize IHn with (1 := GP).
             exact IHn.
+    Qed.
+
+    Lemma same_domain_preserves_undef_on(m m': map)(s: key -> Prop):
+      map.undef_on m s ->
+      map.same_domain m m' ->
+      map.undef_on m' s.
+    Proof.
+      intros U S. unfold undef_on, same_domain, sub_domain, agree_on in *.
+      intros. specialize (U _ H). rewrite get_empty in *.
+      destruct S as [S1 S2].
+      destruct (get m' k) eqn: E; [exfalso|reflexivity].
+      specialize S2 with (1 := E). destruct S2 as [v2 S2]. congruence.
     Qed.
 
   End WithMap.
