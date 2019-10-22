@@ -54,7 +54,11 @@ Module map.
       | cons (k,v) l =>
         putmany_of_list l (put init k v)
       end.
-    Definition of_list l := putmany_of_list l empty.
+    Fixpoint of_list (l : list (key * value)) : rep :=
+      match l with
+      | nil => map.empty
+      | cons (k,v) l => put (of_list l) k v
+      end.
 
     Fixpoint putmany_of_list_zip (keys : list key) (values : list value) (init : rep) {struct keys} : option map :=
       match keys, values with

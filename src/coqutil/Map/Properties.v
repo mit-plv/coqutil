@@ -639,5 +639,30 @@ Module map.
       specialize S2 with (1 := E). destruct S2 as [v2 S2]. congruence.
     Qed.
 
+    Lemma get_of_list_In_NoDup l :
+      List.NoDup (List.map fst l) ->
+      forall k v,
+      List.In (k, v) l ->
+      map.get (map.of_list l) k = Some v.
+    Proof.
+      induction l; cbn; intros; try contradiction.
+      inversion H; subst; clear H.
+      specialize (IHl H4); clear H4.
+      destruct a, H0.
+      { inversion H; clear H; subst.
+        erewrite map.get_put_same; exact eq_refl. }
+      erewrite map.get_put_diff; eauto.
+      intro eqX; subst; eapply H3, List.in_map_iff.
+      eexists; split; cbn; eauto; trivial.
+    Qed.
+
+    Lemma all_gets_from_map_of_NoDup_list fs :
+      List.NoDup (List.map fst fs) ->
+      List.Forall (fun '(k, v) => map.get (map.of_list fs) k = Some v) fs.
+    Proof.
+      intros.
+      eapply List.Forall_forall; intros [] ?.
+      eapply get_of_list_In_NoDup; eauto.
+    Qed.
   End WithMap.
 End map.
