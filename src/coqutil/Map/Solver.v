@@ -399,6 +399,10 @@ Ltac revert_all_maps mapok :=
 Ltac preprocess_impl mapok stopearly :=
   intros;
   repeat autounfold with unf_derived_set_defs unf_derived_map_defs in *;
+  repeat (so fun hyporgoal => match hyporgoal with
+          | context[PropSet.of_list (cons ?k nil)] => change (PropSet.of_list (cons k nil)) with
+                (PropSet.union (PropSet.singleton_set k) PropSet.empty_set) in *
+          end);
   lazymatch type of mapok with
   | @map.ok ?K ?V ?Inst =>
     let okname := fresh "Ok" in set (okname := mapok : map.ok Inst);

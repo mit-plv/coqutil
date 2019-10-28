@@ -2,6 +2,7 @@ Require Import coqutil.Decidable.
 Require Import coqutil.Datatypes.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
+Require Import Coq.Lists.List. Import ListNotations.
 
 (*Local Set Ltac Profiling.*)
 
@@ -15,6 +16,12 @@ Section TestGoals.
   Import Map.Interface.map.
 
   (** *** Part 0: Lemmas which broke at some point (regression tests) *)
+
+  Lemma only_differ_of_singleton_list: forall r x v,
+      map.only_differ r (PropSet.of_list [x]) (map.put r x v).
+  Proof.
+    Time map_solver mapspecs.
+  Qed.
 
   Lemma only_differ_trans_union: forall initialS st2 finalS mv2 mv1,
       only_differ st2 mv2 finalS ->
