@@ -312,6 +312,110 @@ Module map.
           destruct H. rewrite H in Heqo. discriminate.
     Qed.
 
+    Lemma putmany_of_list_zip_get_oldval: forall keys values (m1 m2: map) k v,
+        map.putmany_of_list_zip keys values m1 = Some m2 ->
+        ~ List.In k keys ->
+        map.get m1 k = Some v ->
+        map.get m2 k = Some v.
+    Proof.
+      induction keys; intros.
+      - simpl in H. destruct values; try discriminate.
+        replace m2 with m1 in * by congruence. assumption.
+      - simpl in H.
+        destruct values; try discriminate.
+        simpl in H0.
+        eapply IHkeys.
+        + eassumption.
+        + intro C. apply H0. auto.
+        + rewrite get_put_dec. destr (key_eqb a k).
+          * exfalso. apply H0. auto.
+          * assumption.
+    Qed.
+
+    Lemma putmany_of_list_zip_get_newval:
+      forall (keys : list key) (values : list value) m1 m2 k i v,
+        map.putmany_of_list_zip keys values m1 = Some m2 ->
+        List.NoDup keys ->
+        List.nth_error keys i = Some k ->
+        List.nth_error values i = Some v ->
+        map.get m2 k = Some v.
+    Proof.
+      induction keys; intros.
+      - simpl in H. destruct values; try discriminate.
+        replace m2 with m1 in * by congruence. apply List.nth_error_nil_Some in H1. contradiction.
+      - simpl in H.
+        destruct values; try discriminate.
+        inversion H0. subst. clear H0.
+        apply List.nth_error_cons_Some in H1.
+        apply List.nth_error_cons_Some in H2.
+        destruct H1 as [ [? ?] | [i1 [ ? ? ] ] ];
+          destruct H2 as [ [? ?] | [i2 [ ? ? ] ] ].
+        + subst.
+          eapply putmany_of_list_zip_get_oldval; try eassumption.
+          apply map.get_put_same.
+        + subst. discriminate.
+        + subst. discriminate.
+        + subst. replace i2 with i1 in * by congruence. clear i2.
+          eauto.
+    Qed.
+
+    Lemma put_putmany_commute k v m1 m2 : put (putmany m1 m2) k v = putmany m1 (put m2 k v).
+    Proof.
+      apply map_ext. intro k'.
+      destr (key_eqb k k').
+      - subst k'. rewrite get_put_same. erewrite get_putmany_right; [reflexivity|].
+        apply get_put_same.
+      - rewrite get_put_diff by congruence.
+        pose proof (putmany_spec m1 m2 k') as P.
+        destruct P as [(v' & G1 & G2) | (G1 & G2)]; rewrite G2.
+        + erewrite get_putmany_right; [reflexivity|].
+          rewrite get_put_diff by congruence. assumption.
+        + rewrite get_putmany_left; [reflexivity|].
+          rewrite get_put_diff by congruence. assumption.
+    Qed.
+
+    Lemma putmany_of_list_zip_to_putmany_aux:
+      forall (ks: list key) (vs: list value)(m m2 r: map),
+        putmany_of_list_zip ks vs (putmany m m2) = Some r ->
+        exists r', putmany_of_list_zip ks vs m2 = Some r' /\ r = putmany m r'.
+    Proof.
+      induction ks; intros.
+      - destruct vs; try discriminate. simpl in H. inversion H. subst.
+        eexists. simpl. eauto.
+      - destruct vs as [|v vs]; try discriminate. simpl in *.
+        eapply IHks.
+        rewrite <- put_putmany_commute.
+        assumption.
+    Qed.
+
+    Lemma putmany_of_list_zip_to_putmany: forall (ks: list key) (vs: list value) (m r: map),
+        map.putmany_of_list_zip ks vs m = Some r ->
+        exists r', map.putmany_of_list_zip ks vs map.empty = Some r' /\
+                   r = map.putmany m r'.
+    Proof.
+      intros.
+      apply putmany_of_list_zip_to_putmany_aux.
+      rewrite putmany_empty_r. assumption.
+    Qed.
+
+    Lemma putmany_of_list_zip_empty_find_value: forall keys values (m: map) i k,
+        map.putmany_of_list_zip keys values map.empty = Some m ->
+        List.nth_error keys i = Some k ->
+        exists v, List.nth_error values i = Some v.
+    Proof.
+      induction keys; intros.
+      - apply List.nth_error_nil_Some in H0. contradiction.
+      - simpl in *. destruct values; try discriminate.
+        destruct i.
+        + simpl in *. eexists. reflexivity.
+        + simpl in *.
+          apply putmany_of_list_zip_sameLength in H.
+          pose proof sameLength_putmany_of_list as Q.
+          specialize Q with (1 := H). specialize (Q map.empty).
+          destruct Q as [m' Q].
+          eapply IHkeys. 2: eassumption. exact Q.
+    Qed.
+
     Lemma invert_getmany_of_tuple_Some: forall n ks (vs: HList.tuple value (S n)) m,
         getmany_of_tuple m ks = Some vs ->
         get m (PrimitivePair.pair._1 ks) = Some (PrimitivePair.pair._1 vs) /\
@@ -405,21 +509,6 @@ Module map.
         apply build_getmany_of_tuple_Some; simpl.
         + apply get_in_disjoint_putmany; assumption.
         + apply IHn. assumption.
-    Qed.
-
-    Lemma put_putmany_commute k v m1 m2 : put (putmany m1 m2) k v = putmany m1 (put m2 k v).
-    Proof.
-      apply map_ext. intro k'.
-      destr (key_eqb k k').
-      - subst k'. rewrite get_put_same. erewrite get_putmany_right; [reflexivity|].
-        apply get_put_same.
-      - rewrite get_put_diff by congruence.
-        pose proof (putmany_spec m1 m2 k') as P.
-        destruct P as [(v' & G1 & G2) | (G1 & G2)]; rewrite G2.
-        + erewrite get_putmany_right; [reflexivity|].
-          rewrite get_put_diff by congruence. assumption.
-        + rewrite get_putmany_left; [reflexivity|].
-          rewrite get_put_diff by congruence. assumption.
     Qed.
 
     Lemma putmany_of_tuple_to_putmany_aux
