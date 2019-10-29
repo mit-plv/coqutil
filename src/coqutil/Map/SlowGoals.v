@@ -33,4 +33,32 @@ Proof.
   Time map_solver_core.
 Time Qed.
 
+Goal
+  forall (S : Set) (T : Type) (M0 : map.map S T),
+  map.ok M0 ->
+  forall b : S -> S -> bool,
+  EqDecider b ->
+  forall
+    (l st0 middle_regs middle_regs0 finalRegsH middle_regs1 middle_regs2 middle_regs3
+     finalRegsH' : M0) (ks1 ks ks0 : S -> Prop) (k0 k x : S) (p_sp0 v v0 v3 v1 v2 : T),
+  map.get middle_regs k0 = Some p_sp0 ->
+  (forall (x0 : S) (w : T), map.get l x0 = Some w -> map.get middle_regs x0 = Some w) ->
+  map.get middle_regs1 k0 = Some v3 ->
+  (forall (x0 : S) (w : T), map.get finalRegsH x0 = Some w -> map.get middle_regs1 x0 = Some w) ->
+  (forall x0 : S, x0 \in ks1 \/ map.get middle_regs0 x0 = map.get middle_regs1 x0) ->
+  (forall x0 : S,
+   x0 \in ks \/ map.get (map.put (map.put middle_regs2 k v1) k0 v2) x0 = map.get middle_regs3 x0) ->
+  (forall x0 : S, x0 \in union ks1 ks0 \/ map.get middle_regs1 x0 = map.get middle_regs2 x0) ->
+  (forall x0 : S, x0 \in ks \/ map.get l x0 = map.get finalRegsH' x0) ->
+  (forall x0 : S,
+   x0 \in ks0 \/ map.get (map.put (map.put middle_regs k v) k0 v0) x0 = map.get middle_regs0 x0) ->
+  (forall x0 : S, x0 \in ks0 \/ map.get map.empty x0 = map.get st0 x0) ->
+  x \in union ks empty_set \/ map.get middle_regs x = map.get middle_regs3 x.
+Proof.
+  (* Time map_solver_core.
+     Does not return within one hour.
+     This goal probably does not hold, though, but it would still be good if
+     it returned faster. *)
+Abort.
+
 (*Goal True. idtac "End of SlowGoals.v". Abort.*)
