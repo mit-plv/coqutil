@@ -1,5 +1,6 @@
 .coqdeps.d
 Makefile.coq.*
+.Makefile.coq.*
 *.vo
 *~
 *.glob
