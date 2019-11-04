@@ -238,9 +238,8 @@ Module word.
       destruct (Z.testbit z (width - 1)) eqn:Hw1; cbn [Z.b2z];
         rewrite ?Z.mul_1_r, ?Z.mul_0_r, ?Z.opp_0, ?Z.add_0_r, ?Z.land_0_r;
         autorewrite with z_bitwise_no_hyps z_bitwise_with_hyps; cbn [Z.pred];
-        destruct (Z.ltb_spec i (width-1)), (Z.ltb_spec i width); cbn; blia || btauto || trivial.
+        destruct (Z.ltb_spec i (width-1)), (Z.ltb_spec i width) ,(Z.ltb_spec (width-1) width) ; cbn; blia || btauto || trivial.
       { assert (i = width-1) by blia; congruence. }
-      { destruct (Z.ltb_spec (width-1) width); blia || btauto. }
       { assert (i = width-1) by blia; congruence. }
     Qed.
 
