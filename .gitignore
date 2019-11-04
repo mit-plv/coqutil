@@ -2,6 +2,7 @@
 Makefile.coq.*
 .Makefile.coq.*
 *.vo
+*.vos
 *~
 *.glob
 *.aux
