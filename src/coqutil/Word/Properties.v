@@ -368,6 +368,37 @@ Module word.
     Proof. intros. ring. Qed.
     Lemma mul_assoc: forall (x y z: word), word.mul x (word.mul y z) = word.mul (word.mul x y) z.
     Proof. intros. ring. Qed.
+
+    Lemma of_Z_inj_mod: forall x y,
+        x mod 2 ^ width = y mod 2 ^ width ->
+        word.of_Z x = word.of_Z y.
+    Proof.
+      intros.
+      apply word.unsigned_inj.
+      rewrite ?word.unsigned_of_Z.
+      unfold word.wrap.
+      assumption.
+    Qed.
+
+    Lemma of_Z_eq_by_moddiff0: forall x y,
+        (x - y) mod 2 ^ width = 0 ->
+        word.of_Z x = word.of_Z y.
+    Proof.
+      intros. apply of_Z_inj_mod.
+      apply Z.mod_divide in H; cycle 1. {
+        pose proof word.width_pos.
+        apply Z.pow_nonzero; blia.
+      }
+      unfold Z.divide in H.
+      destruct H as [k H].
+      apply Z.sub_move_r in H.
+      subst x.
+      rewrite <- Zplus_mod_idemp_l.
+      rewrite Z_mod_mult.
+      rewrite Z.add_0_l.
+      reflexivity.
+    Qed.
+
   End WordConvenienceKitchenSink.
 End word.
 
