@@ -153,6 +153,47 @@ Module map.
         + rewrite get_empty in H0. congruence.
     Qed.
 
+    Lemma split_diff: forall {m m1 m2 m3 m4: map},
+        map.same_domain m2 m4 ->
+        map.split m m1 m2 ->
+        map.split m m3 m4 ->
+        m1 = m3 /\ m2 = m4.
+    Proof.
+      intros.
+      unfold split, same_domain, disjoint, sub_domain in *.
+      destruct H as [S24 S42].
+      destruct H0 as [? S12].
+      destruct H1 as [? S34].
+      subst.
+      assert (forall k, get (putmany m1 m2) k = get (putmany m3 m4) k) as G. {
+        intro. rewrite H0. reflexivity.
+      }
+      split;
+        apply map.map_ext;
+        intro k; specialize (G k); do 2 rewrite get_putmany_dec in G;
+        destr (get m1 k);
+        destr (get m2 k);
+        destr (get m3 k);
+        destr (get m4 k);
+        repeat match goal with
+               | H: _, A: get _ _ = Some _ |- _ => specialize H with (1 := A)
+               | H: exists _, _ |- _ => destruct H
+               end;
+        try contradiction;
+        try congruence.
+    Qed.
+
+    Lemma split_det: forall {m m' m1 m2: map},
+        map.split m  m1 m2 ->
+        map.split m' m1 m2 ->
+        m = m'.
+    Proof.
+      unfold map.split.
+      intros *. intros [? ?] [? ?].
+      subst.
+      reflexivity.
+    Qed.
+
     Lemma extends_get: forall {m1 m2} {k: key} {v: value},
         map.get m1 k = Some v ->
         map.extends m2 m1 ->
