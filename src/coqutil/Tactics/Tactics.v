@@ -76,6 +76,11 @@ Ltac destruct_one_match_hyporgoal_test check cleanup :=
   | H: context[match ?d with _ => _ end] |- _ => check d; destr d; subst; cleanup H
   end.
 
+Ltac specialize_hyp H :=
+    repeat match type of H with
+           | ?P -> ?Q => let F := fresh in assert P as F; [clear H|specialize (H F); clear F]
+           end.
+
 (* What "split" really should be: does not unfold definitions to discover more
    conjunctions, but does split multiple conjunctions *)
 Ltac ssplit :=

@@ -70,6 +70,21 @@ Section PropSetLemmas.
     setoid_rewrite in_app_iff.
     intuition idtac.
   Qed.
+
+  Lemma disjoint_diff_l: forall (A B C: set E),
+      disjoint A C ->
+      disjoint (diff A B) C.
+  Proof.
+    intros. unfold set, disjoint, diff in *. firstorder idtac.
+  Qed.
+
+  Lemma disjoint_diff_r: forall (A B C: set E),
+      disjoint C A ->
+      disjoint C (diff A B).
+  Proof.
+    intros. unfold set, disjoint, diff in *. firstorder idtac.
+  Qed.
+
 End PropSetLemmas.
 
 Require Import Coq.Program.Tactics.

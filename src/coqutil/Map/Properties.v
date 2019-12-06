@@ -272,6 +272,38 @@ Module map.
         eassumption.
     Qed.
 
+    Lemma getmany_of_list_exists_elem: forall m ks k vs,
+        List.In k ks ->
+        map.getmany_of_list m ks = Some vs ->
+        exists v, map.get m k = Some v.
+    Proof.
+      induction ks; intros.
+      - cbv in H. contradiction.
+      - destruct H as [A | A].
+        + subst a. unfold map.getmany_of_list in H0. simpl in H0.
+          destruct (get m k); try discriminate.
+          destruct (List.option_all (List.map (get m) ks)); try discriminate.
+          inversion H0. eauto.
+        + unfold map.getmany_of_list in H0. simpl in H0.
+          destruct (get m a); try discriminate.
+          destruct (List.option_all (List.map (get m) ks)) eqn: E; try discriminate.
+          eauto.
+    Qed.
+
+    Lemma getmany_of_list_exists: forall m (P: key -> Prop) (ks: list key),
+        List.Forall P ks ->
+        (forall k, P k -> exists v, map.get m k = Some v) ->
+        exists vs, map.getmany_of_list m ks = Some vs.
+    Proof.
+      induction ks; intros.
+      - exists nil. reflexivity.
+      - inversion H. subst. clear H.
+        edestruct IHks as [vs IH]; [assumption..|].
+        edestruct H0 as [v ?]; [eassumption|].
+        exists (cons v vs). cbn. rewrite H. unfold map.getmany_of_list in IH.
+        rewrite IH. reflexivity.
+    Qed.
+
     Lemma putmany_of_list_zip_sameLength : forall bs vs st st',
         map.putmany_of_list_zip bs vs st = Some st' ->
         length bs = length vs.
