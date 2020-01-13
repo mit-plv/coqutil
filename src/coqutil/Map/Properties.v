@@ -827,4 +827,70 @@ Module map.
       eapply get_of_list_In_NoDup; eauto.
     Qed.
   End WithMap.
+
+  Section WithTwoMaps.
+    Context {K V1 V2: Type}{M1: map.map K V1}{M2: map.map K V2}
+            (keqb: K -> K -> bool) {keqb_spec: EqDecider keqb}
+            {OK1: map.ok M1} {OK2: map.ok M2}.
+
+    Definition map_all_values(f: V1 -> option V2)(m1: M1): list K -> option M2 :=
+      fix rec keys :=
+        match keys with
+        | nil => Some map.empty
+        | cons k ks =>
+          match map.get m1 k with
+          | Some v1 => match f v1 with
+                       | Some v2 => match rec ks with
+                                    | Some res => Some (map.put res k v2)
+                                    | None => None
+                                    end
+                       | None => None
+                       end
+          | None => None
+          end
+        end.
+
+    Ltac invert :=
+      repeat match goal with
+             | H: match ?x with _ => _ end = _ |- _ => destr x; try discriminate; []
+             | H: Some _ = Some _ |- _ => apply eq_of_eq_Some in H
+             | H: _ /\ _ |- _ => destruct H
+             | _ => progress subst
+             end.
+
+    Lemma get_map_all_values(f: V1 -> option V2):
+      forall (keys: list K) (m1: M1) (m2: M2) (k: K) (v1: V1),
+        map_all_values f m1 keys = Some m2 ->
+        List.In k keys ->
+        map.get m1 k = Some v1 ->
+        exists v2, f v1 = Some v2 /\ map.get m2 k = Some v2.
+    Proof.
+      induction keys; intros.
+      - simpl in *. contradiction.
+      - simpl in *.
+        destruct H0.
+        + subst. rewrite H1 in H. invert. rewrite map.get_put_same. eauto.
+        + invert. rewrite map.get_put_dec.
+          * destr (keqb a k).
+            { (* Automation? clear keqb keqb_spec OK1 OK2 IHkeys. firstorder congruence. (* <- fails *) *)
+              subst. eexists. split; [|reflexivity]. congruence. }
+            { eauto. }
+    Qed.
+
+    Lemma map_all_values_get(f: V1 -> option V2):
+      forall {keys: list K} {m1: M1} {m2: M2} {k: K} {v2: V2},
+        map.get m2 k = Some v2 ->
+        map_all_values f m1 keys = Some m2 ->
+        List.In k keys /\ exists v1, map.get m1 k = Some v1 /\ f v1 = Some v2.
+    Proof.
+      induction keys; intros.
+      - simpl in *. invert. rewrite map.get_empty in H. discriminate.
+      - simpl in *. invert.
+        rewrite map.get_put_dec in H.
+        destr (keqb a k).
+        + subst. invert. eauto.
+        + (* Automation? firstorder eauto. takes too long *)
+          specialize IHkeys with (1 := H) (2 := E1). invert. eauto.
+    Qed.
+  End WithTwoMaps.
 End map.
