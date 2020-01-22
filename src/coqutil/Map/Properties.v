@@ -11,8 +11,6 @@ Module map.
          get_remove_diff
          get_put_same
          get_put_diff
-         get_putmany_left
-         get_putmany_right
       : map_spec_hints_separate.
 
     Ltac prover :=
@@ -27,6 +25,28 @@ Module map.
     Proof. prover. Qed.
     Lemma get_put_dec m x y v : get (put m x v) y = if key_eqb x y then Some v else get m y.
     Proof. prover. Qed.
+
+    Lemma get_putmany_left: forall m1 m2 k, get m2 k = None -> get (putmany m1 m2) k = get m1 k.
+    Proof.
+      unfold putmany. intros m1 m2.
+      eapply fold_spec.
+      - intros. reflexivity.
+      - intros. rewrite get_put_dec in *.
+        destr (key_eqb k k0). 1: discriminate.
+        eauto.
+    Qed.
+
+    Lemma get_putmany_right: forall m1 m2 k v, get m2 k = Some v -> get (putmany m1 m2) k = Some v.
+    Proof.
+      unfold putmany. intros m1 m2.
+      eapply fold_spec.
+      - intros. rewrite get_empty in H. discriminate.
+      - intros. rewrite get_put_dec in *.
+        destr (key_eqb k k0). 1: assumption. eauto.
+    Qed.
+
+    Hint Resolve get_putmany_left get_putmany_right : map_spec_hints_separate.
+
     Lemma get_putmany_dec m1 m2 k : get (putmany m1 m2) k =
       match get m2 k with Some v => Some v | None => get m1 k end.
     Proof. prover. Qed.
@@ -833,22 +853,12 @@ Module map.
             (keqb: K -> K -> bool) {keqb_spec: EqDecider keqb}
             {OK1: map.ok M1} {OK2: map.ok M2}.
 
-    Definition map_all_values(f: V1 -> option V2)(m1: M1): list K -> option M2 :=
-      fix rec keys :=
-        match keys with
-        | nil => Some map.empty
-        | cons k ks =>
-          match map.get m1 k with
-          | Some v1 => match f v1 with
-                       | Some v2 => match rec ks with
-                                    | Some res => Some (map.put res k v2)
-                                    | None => None
-                                    end
-                       | None => None
-                       end
-          | None => None
-          end
-        end.
+    Definition map_all_values(f: V1 -> option V2): M1 -> option M2 :=
+      fold (fun acc k v1 => match acc, f v1 with
+                            | Some acc, Some v2 => Some (put acc k v2)
+                            | _, _ => None
+                            end)
+           (Some map.empty).
 
     Ltac invert :=
       repeat match goal with
@@ -858,39 +868,32 @@ Module map.
              | _ => progress subst
              end.
 
-    Lemma get_map_all_values(f: V1 -> option V2):
-      forall (keys: list K) (m1: M1) (m2: M2) (k: K) (v1: V1),
-        map_all_values f m1 keys = Some m2 ->
-        List.In k keys ->
+    Lemma map_all_values_fw(f: V1 -> option V2)(m1: M1)(m2: M2):
+        map_all_values f m1 = Some m2 ->
+        forall (k: K) (v1: V1),
         map.get m1 k = Some v1 ->
         exists v2, f v1 = Some v2 /\ map.get m2 k = Some v2.
     Proof.
-      induction keys; intros.
-      - simpl in *. contradiction.
-      - simpl in *.
-        destruct H0.
-        + subst. rewrite H1 in H. invert. rewrite map.get_put_same. eauto.
-        + invert. rewrite map.get_put_dec.
-          * destr (keqb a k).
-            { (* Automation? clear keqb keqb_spec OK1 OK2 IHkeys. firstorder congruence. (* <- fails *) *)
-              subst. eexists. split; [|reflexivity]. congruence. }
-            { eauto. }
+      unfold map_all_values. revert m2.
+      eapply fold_spec; intros.
+      - rewrite get_empty in H0. discriminate.
+      - invert.
+        rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
+        destr (keqb k k0); invert; eauto.
     Qed.
 
-    Lemma map_all_values_get(f: V1 -> option V2):
-      forall {keys: list K} {m1: M1} {m2: M2} {k: K} {v2: V2},
+    Lemma map_all_values_bw(f: V1 -> option V2)(m1: M1)(m2: M2):
+        map_all_values f m1 = Some m2 ->
+        forall (k: K) (v2: V2),
         map.get m2 k = Some v2 ->
-        map_all_values f m1 keys = Some m2 ->
-        List.In k keys /\ exists v1, map.get m1 k = Some v1 /\ f v1 = Some v2.
+        exists v1, f v1 = Some v2 /\ map.get m1 k = Some v1.
     Proof.
-      induction keys; intros.
-      - simpl in *. invert. rewrite map.get_empty in H. discriminate.
-      - simpl in *. invert.
-        rewrite map.get_put_dec in H.
-        destr (keqb a k).
-        + subst. invert. eauto.
-        + (* Automation? firstorder eauto. takes too long *)
-          specialize IHkeys with (1 := H) (2 := E1). invert. eauto.
+      unfold map_all_values. revert m2.
+      eapply fold_spec; intros.
+      - invert. rewrite get_empty in H0. discriminate.
+      - invert.
+        rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
+        destr (keqb k k0); invert; eauto.
     Qed.
   End WithTwoMaps.
 End map.

@@ -13,7 +13,7 @@ Module map.
     empty : rep;
     put : rep -> key -> value -> rep;
     remove : rep -> key -> rep;
-    putmany : rep -> rep -> rep;
+    fold{R: Type}: (R -> key -> value -> R) -> R -> rep -> R;
   }.
   Arguments map : clear implicits.
   Global Coercion rep : map >-> Sortclass.
@@ -25,14 +25,17 @@ Module map.
     get_put_diff : forall m k v k', k <> k' -> get (put m k' v) k = get m k;
     get_remove_same : forall m k, get (remove m k) k = None;
     get_remove_diff : forall m k k', k <> k' -> get (remove m k') k = get m k;
-    get_putmany_left : forall m1 m2 k, get m2 k = None -> get (putmany m1 m2) k = get m1 k;
-    get_putmany_right : forall m1 m2 k v, get m2 k = Some v -> get (putmany m1 m2) k = Some v;
+    fold_spec{R: Type} : forall (P: rep -> R -> Prop) (f: R -> key -> value -> R) r0,
+        P empty r0 ->
+        (forall k v m r, get m k = None -> P m r -> P (put m k v) (f r k v)) ->
+        forall m, P m (fold f r0 m);
   }.
   Arguments ok {_ _} _.
 
   Section WithMap.
     Context {key value : Type} {map : map key value} {map_ok : ok map}.
 
+    Definition putmany: map -> map -> map := fold put.
     Definition extends (m1 m2 : map) := forall x w, get m2 x = Some w -> get m1 x = Some w.
     Definition agree_on (P : set key) m1 m2 := forall k, elem_of k P -> get m1 k = get m2 k.
     Definition only_differ(m1: map)(ks: set key)(s2: map) :=

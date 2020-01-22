@@ -89,6 +89,22 @@ Section SortedList.
     destruct mm as [|[kk vv] ?]; rewrite ?Bool.andb_true_r; trivial.
     repeat (eapply Bool.andb_true_iff in H; destruct H as [?GG H]); eauto 2 using ltb_trans.
   Qed.
+  Lemma sorted_cons: forall l k v,
+      sorted ((k, v) :: l) = true ->
+      sorted l = true /\ List.find (fun p => eqb k (fst p)) l = None.
+  Proof.
+    induction l; intros.
+    - simpl. auto.
+    - simpl in *. destruct a as [k' v'].
+      apply Bool.andb_true_iff in H. destruct H.
+      split; [assumption|]. simpl.
+      destruct (eqb k k') eqn: E. {
+        unfold eqb in E. rewrite H in E. simpl in E. discriminate E.
+      }
+      eapply IHl. 1: assumption. destruct l as [|[k'' v''] l]; try reflexivity.
+      apply Bool.andb_true_iff in H0. destruct H0.
+      apply Bool.andb_true_iff. eauto using ltb_trans.
+  Qed.
 
   Definition map : map.map key parameters.value :=
     let wrapped_put m k v := Build_rep (put (value m) k v) (minimize_eq_proof Bool.bool_dec (sorted_put _ _ _ (_value_ok m))) in
@@ -102,8 +118,15 @@ Section SortedList.
                    end;
     map.put := wrapped_put;
     map.remove := wrapped_remove;
-    map.putmany m1 m2 := List.fold_right (fun '(k, v) m => wrapped_put m k v) m1 (value m2)
+    map.fold R f r0 m := List.fold_right (fun '(k, v) r => f r k v) r0 (value m);
   |}.
+
+  Lemma eq_value {x y : rep} : value x = value y -> x = y.
+  Proof.
+    cbv [value]; destruct x as [x px], y as [y py].
+    intro; subst y.
+    apply f_equal, Eqdep_dec.UIP_dec; decide equality.
+  Qed.
 
   Axiom TODO_andres: False.
   Global Instance map_ok : map.ok map.
@@ -115,14 +138,32 @@ Section SortedList.
     { case TODO_andres. }
     { case TODO_andres. }
     { case TODO_andres. }
-    { case TODO_andres. }
-    { case TODO_andres. }
-  Qed.
-  Lemma eq_value {x y : rep} : value x = value y -> x = y.
-  Proof.
-    cbv [value]; destruct x as [x px], y as [y py].
-    intro; subst y.
-    apply f_equal, Eqdep_dec.UIP_dec; decide equality.
+    { intros.
+      simpl. remember (value m) as l. generalize dependent m.
+      induction l; intros.
+      - simpl.
+        match type of H with
+        | P ?m' r0 => replace m with m'; [exact H|]
+        end.
+        eapply eq_value. exact Heql.
+      - simpl. destruct a as [k v].
+        destruct m as [l' pl']. simpl in Heql.
+        destruct l' as [|[k0 v0] l']. 1: discriminate.
+        inversion Heql. subst l' v0 k0. clear Heql.
+        destruct (sorted_cons _ _ _ pl') as [A B].
+        specialize (IHl {| value := l; _value_ok := A |} eq_refl).
+        specialize H0 with (2 := IHl).
+        cbn in H0. specialize (H0 k v).
+        rewrite B in H0.
+        specialize (H0 eq_refl).
+        match goal with
+        | H: P ?m' ?r |- P ?m ?r => replace m with m'; [exact H|]
+        end.
+        eapply eq_value. simpl.
+        destruct l as [|[k0 v0] l]. 1: reflexivity.
+        simpl in pl'|-*. apply Bool.andb_true_iff in pl'. destruct pl' as [C D].
+        rewrite C.
+        reflexivity. }
   Qed.
 End SortedList.
 Arguments map : clear implicits.

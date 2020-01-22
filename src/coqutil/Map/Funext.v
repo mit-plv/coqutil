@@ -15,6 +15,13 @@ End parameters. Notation parameters := parameters.parameters.
 
 Section SortedList.
   Context {p : unique! parameters} {ok : parameters.ok p}.
+  Context (magic_fold: forall R : Type, (R -> key -> value -> R) -> R -> (key -> option value) -> R).
+  (* We can't fold over the elements of a set defined using a function, so we just assume fold_spec: *)
+  Hypothesis magic_fold_is_magic: forall R P r0 f,
+      P (fun _ : key => None) r0 ->
+      (forall k v m r, m k = None -> P m r -> P (fun q : key => if eqb q k then Some v else m q) (f r k v)) ->
+      forall m, P m (magic_fold R f r0 m).
+
   Definition map : map.map key parameters.value :=
     {|
     map.rep := key -> option value;
@@ -22,16 +29,17 @@ Section SortedList.
     map.get m := m;
     map.put m k v q := if eqb q k then Some v else m q;
     map.remove m k q := if eqb q k then None else m q;
-    map.putmany m1 m2 q := match m2 q with Some v => Some v | _ => m1 q end
+    map.fold := magic_fold;
   |}.
 
   Global Instance map_ok : map.ok map.
   Proof.
-    split; cbv [map.rep map.empty map.get map.put map.remove map.putmany map]; intros;
+    split; cbv [map.rep map.empty map.get map.put map.remove map.fold map]; intros;
       repeat match goal with
       | |- context[eqb ?a ?b] => destruct (eqb_ok a b)
       | |- context[match ?x with _ => _ end] => destruct x eqn:?
-      end; solve [ congruence | eauto | eauto using functional_extensionality ].
+      end; try solve [ congruence | eauto | eauto using functional_extensionality ].
+    eapply magic_fold_is_magic; eassumption.
   Qed.
 End SortedList.
 Arguments map : clear implicits.
