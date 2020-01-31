@@ -1,4 +1,3 @@
-Global Unset Refine Instance Mode.
 Global Unset Universe Minimization ToSet.
 Global Set Default Goal Selector "!".
 
