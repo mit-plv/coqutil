@@ -639,6 +639,11 @@ Ltac map_solver_core :=
   let keq_specT := type of keq_spec in
   unify keq_specT (EqDecider keq);
   intros;
+  subst;
+  repeat match goal with
+         | k: K |- _ => clear k
+         | v: V |- _ => clear v
+         end;
   map_solver_core_impl Ok.
 
 Ltac log_goal :=

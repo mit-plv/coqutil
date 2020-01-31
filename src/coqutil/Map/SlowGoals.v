@@ -6,6 +6,35 @@ Require Import coqutil.Map.Solver.
 (*Local Set Ltac Profiling.*)
 
 Goal
+  forall (S : Set) (T : Type) (M : map.map S T),
+  map.ok M ->
+  forall b : S -> S -> bool,
+  EqDecider b ->
+  forall (l initialL_regs middle_regs lH' middle_regs0 finalRegsH middle_regs1 finalRegsH0 : M)
+    (ks0 ks : S -> Prop) (k k2 k6 k1 k7 k5 k4 k3 k0 x : S) (p_sp0 : T),
+  k7 = k6 ->
+  k5 = k6 ->
+  (forall (x0 : S) (w : T), map.get l x0 = Some w -> map.get initialL_regs x0 = Some w) ->
+  map.get initialL_regs k2 = Some p_sp0 ->
+  (forall x0 : S, x0 \in union ks (singleton_set k) \/ map.get initialL_regs x0 = map.get middle_regs x0) ->
+  (forall (x0 : S) (w : T), map.get lH' x0 = Some w -> map.get middle_regs x0 = Some w) ->
+  map.get middle_regs k2 = Some p_sp0 ->
+  k4 = k1 ->
+  (forall x0 : S, x0 \in union ks0 (singleton_set k) \/ map.get middle_regs x0 = map.get middle_regs0 x0) ->
+  (forall (x0 : S) (w : T), map.get finalRegsH x0 = Some w -> map.get middle_regs0 x0 = Some w) ->
+  map.get middle_regs0 k2 = Some p_sp0 ->
+  k3 = k1 ->
+  (forall x0 : S,
+   x0 \in union (union ks ks0) (singleton_set k) \/ map.get middle_regs0 x0 = map.get middle_regs1 x0) ->
+  (forall (x0 : S) (w : T), map.get finalRegsH0 x0 = Some w -> map.get middle_regs1 x0 = Some w) ->
+  map.get middle_regs1 k2 = Some p_sp0 ->
+  k0 = k1 ->
+  x \in union (union ks ks0) (singleton_set k) \/ map.get initialL_regs x = map.get middle_regs1 x.
+Proof.
+  (* Time map_solver_core.   126s *)
+Abort.
+
+Goal
   forall (T T0 : Type) (M : map.map T T0),
   map.ok M ->
   forall (keq: T -> T -> bool), EqDecider keq ->
