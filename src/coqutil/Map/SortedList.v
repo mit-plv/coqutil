@@ -128,7 +128,7 @@ Section SortedList.
     apply f_equal, Eqdep_dec.UIP_dec; decide equality.
   Qed.
 
-  Axiom TODO_andres: False.
+  Local Axiom TODO_andres: False.
   Global Instance map_ok : map.ok map.
   Proof.
     split.
