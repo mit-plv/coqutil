@@ -92,15 +92,20 @@ Module byte.
     assumption.
   Qed.
 
-  Lemma wrap_unsigned: forall x, wrap (unsigned x) = unsigned x.
+  Lemma unsigned_range: forall b, 0 <= unsigned b < 2 ^ 8.
   Proof.
-    intros. unfold wrap, unsigned.
-    apply Z.mod_small. split.
+    intros. unfold unsigned. split.
     - apply N2Z.is_nonneg.
     - change (2 ^ 8) with (Z.of_N (N.succ 255)).
       apply N2Z.inj_lt.
       apply N.lt_succ_r.
-      apply (Byte.to_N_bounded x).
+      apply (Byte.to_N_bounded b).
   Qed.
 
+  Lemma wrap_unsigned: forall x, byte.wrap (byte.unsigned x) = byte.unsigned x.
+  Proof.
+    intros. unfold byte.wrap, byte.unsigned.
+    apply Z.mod_small.
+    apply unsigned_range.
+  Qed.
 End byte.
