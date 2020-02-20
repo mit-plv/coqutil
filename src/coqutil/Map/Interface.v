@@ -41,6 +41,11 @@ Module map.
     Definition only_differ(m1: map)(ks: set key)(s2: map) :=
       forall x, elem_of x ks \/ get m1 x = get s2 x.
     Definition undef_on m P := agree_on P m empty.
+    Definition injective(m: map): Prop :=
+      forall k1 k2 v,
+        map.get m k1 = Some v -> map.get m k2 = Some v -> k1 = k2.
+    Definition not_in_range(m: map)(l: list value): Prop :=
+      List.Forall (fun v => forall k, map.get m k <> Some v) l.
     Definition disjoint (a b : map) :=
       forall k v1 v2, get a k = Some v1 -> get b k = Some v2 -> False.
     Definition sub_domain(m1 m2: map): Prop :=
@@ -62,6 +67,8 @@ Module map.
       | nil => map.empty
       | cons (k,v) l => put (of_list l) k v
       end.
+
+    Definition keys(m : map): list key := fold (fun acc k v => cons k acc) nil m.
 
     Fixpoint putmany_of_list_zip (keys : list key) (values : list value) (init : rep) {struct keys} : option map :=
       match keys, values with

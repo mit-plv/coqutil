@@ -1,4 +1,5 @@
-Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidable coqutil.Map.Interface. Import map.
+Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidable coqutil.Map.Interface.
+Import map.
 Require Import coqutil.Datatypes.Option.
 
 Module map.
@@ -214,6 +215,43 @@ Module map.
       reflexivity.
     Qed.
 
+    Lemma split_put_l2r: forall m m1 m2 k v,
+        get m1 k = None ->
+        split m (put m1 k v) m2 ->
+        split m m1 (put m2 k v).
+    Proof.
+      unfold map.split, map.disjoint.
+      intros. destruct H0. subst. split.
+      - apply map.map_ext.
+        intros.
+        rewrite !get_putmany_dec.
+        rewrite !get_put_dec.
+        destr (key_eqb k k0).
+        + subst.
+          destr (map.get m2 k0). 2: reflexivity.
+          specialize H1 with (2 := E).
+          rewrite map.get_put_same in H1.
+          exfalso. eauto.
+        + destr (map.get m2 k0); reflexivity.
+      - intros.
+        rewrite get_put_dec in H2.
+        destr (key_eqb k k0).
+        + subst. apply eq_of_eq_Some in H2.
+          congruence.
+        + specialize H1 with (2 := H2).
+          rewrite map.get_put_diff in H1 by congruence.
+          eauto.
+    Qed.
+
+    Lemma split_put_r2l: forall m m1 m2 k v,
+        get m2 k = None ->
+        split m m1 (put m2 k v) ->
+        split m (put m1 k v) m2.
+    Proof.
+      intros. apply split_comm. apply split_put_l2r. 1: assumption.
+      apply split_comm. assumption.
+    Qed.
+
     Lemma extends_get: forall {m1 m2} {k: key} {v: value},
         map.get m1 k = Some v ->
         map.extends m2 m1 ->
@@ -230,6 +268,41 @@ Module map.
       + subst. rewrite get_put_same in H0. exact H0.
       + rewrite get_put_diff in H0; try congruence.
         eapply H. assumption.
+    Qed.
+
+    Lemma fold_empty{R: Type}: forall (f: R -> key -> value -> R) (r0: R),
+        map.fold f r0 map.empty = r0.
+    Proof.
+      intros. remember map.empty as m. generalize Heqm.
+      eapply map.fold_spec; intros.
+      - reflexivity.
+      - apply (f_equal (fun m => map.get m k)) in Heqm0.
+        rewrite map.get_put_same in Heqm0.
+        rewrite map.get_empty in Heqm0.
+        discriminate.
+    Qed.
+
+    Lemma in_keys: forall m k v,
+        get m k = Some v ->
+        List.In k (keys m).
+    Proof.
+      intro m. unfold keys.
+      eapply fold_spec; intros.
+      - rewrite get_empty in H. discriminate.
+      - rewrite get_put_dec in H1. simpl.
+        destr (key_eqb k k0); eauto.
+    Qed.
+
+    Lemma keys_NoDup(m: map): List.NoDup (map.keys m).
+    Proof.
+      eapply proj1 with (B := forall k, List.In k (map.keys m) -> map.get m k <> None).
+      unfold keys.
+      eapply fold_spec.
+      - split; [constructor|]. intros. simpl in *. contradiction.
+      - intros. destruct H0. split.
+        + constructor. 2: assumption. intro C. specialize (H1 _ C). contradiction.
+        + intros. rewrite get_put_dec. destr (key_eqb k k0). 1: congruence.
+          simpl in *. destruct H2. 1: congruence. eauto.
     Qed.
 
     Lemma putmany_of_list_zip_extends_exists: forall ks vs m1 m1' m2,
@@ -324,6 +397,19 @@ Module map.
         rewrite IH. reflexivity.
     Qed.
 
+    Lemma getmany_of_list_in_map: forall (m: map) ks vs,
+        map.getmany_of_list m ks = Some vs ->
+        List.Forall (fun v => exists k, map.get m k = Some v) vs.
+    Proof.
+      induction ks; intros; unfold map.getmany_of_list, List.option_all in H; simpl in *.
+      - apply eq_of_eq_Some in H. subst. constructor.
+      - repeat match goal with
+               | H: match ?x with _ => _ end = _ |- _ => destr x; try discriminate
+               end.
+        apply eq_of_eq_Some in H. subst.
+        constructor; eauto.
+    Qed.
+
     Lemma putmany_of_list_zip_sameLength : forall bs vs st st',
         map.putmany_of_list_zip bs vs st = Some st' ->
         length bs = length vs.
@@ -339,17 +425,33 @@ Module map.
       induction bs, vs; cbn; try discriminate; intros; eauto.
     Qed.
 
-    Lemma putmany_of_list_zip_find_index: forall keys vals (m1 m2: map) k v,
-        putmany_of_list_zip keys vals m1 = Some m2 ->
+    Lemma putmany_of_list_zip_nil_keys: forall (vs: list value) (m1 m2: map),
+        map.putmany_of_list_zip nil vs m1 = Some m2 -> vs = nil.
+    Proof.
+      intros.
+      apply putmany_of_list_zip_sameLength in H.
+      destruct vs; simpl in *; congruence.
+    Qed.
+
+    Lemma putmany_of_list_zip_nil_values: forall (ks: list key) (m1 m2: map),
+        map.putmany_of_list_zip ks nil m1 = Some m2 -> ks = nil.
+    Proof.
+      intros.
+      apply putmany_of_list_zip_sameLength in H.
+      destruct ks; simpl in *; congruence.
+    Qed.
+
+    Lemma putmany_of_list_zip_find_index: forall ks vs (m1 m2: map) k v,
+        putmany_of_list_zip ks vs m1 = Some m2 ->
         get m2 k = Some v ->
-        (exists n, List.nth_error keys n = Some k /\ List.nth_error vals n = Some v) \/
+        (exists n, List.nth_error ks n = Some k /\ List.nth_error vs n = Some v) \/
         (get m1 k = Some v).
     Proof.
-      induction keys; intros.
-      - simpl in H. destruct vals; try discriminate. replace m2 with m1 in * by congruence. eauto.
+      induction ks; intros.
+      - simpl in H. destruct vs; try discriminate. replace m2 with m1 in * by congruence. eauto.
       - simpl in H.
-        destruct vals; try discriminate. specialize IHkeys with (1 := H) (2 := H0).
-        destruct IHkeys as [IH | IH].
+        destruct vs; try discriminate. specialize IHks with (1 := H) (2 := H0).
+        destruct IHks as [IH | IH].
         + destruct IH as (n & IH).
           left. exists (S n). simpl. exact IH.
         + rewrite get_put_dec in IH. destr (key_eqb a k).
@@ -357,20 +459,20 @@ Module map.
           * right. assumption.
     Qed.
 
-    Lemma getmany_of_list_get: forall keys n (m: map) vals k v,
-        getmany_of_list m keys = Some vals ->
-        List.nth_error keys n = Some k ->
-        List.nth_error vals n = Some v ->
+    Lemma getmany_of_list_get: forall ks n (m: map) vs k v,
+        getmany_of_list m ks = Some vs ->
+        List.nth_error ks n = Some k ->
+        List.nth_error vs n = Some v ->
         get m k = Some v.
     Proof.
-      induction keys; intros.
+      induction ks; intros.
       - apply List.nth_error_nil_Some in H0. contradiction.
       - unfold getmany_of_list in *. simpl in *.
         destr (get m a); try discriminate.
-        destr (List.option_all (List.map (get m) keys)); try discriminate.
+        destr (List.option_all (List.map (get m) ks)); try discriminate.
         destruct n.
-        + simpl in *. destr vals; congruence.
-        + simpl in *. destr vals; try discriminate. inversion H. subst. eauto.
+        + simpl in *. destr vs; congruence.
+        + simpl in *. destr vs; try discriminate. inversion H. subst. eauto.
     Qed.
 
     Lemma extends_putmany_of_list_empty: forall argnames argvals (lL lH: map),
@@ -405,19 +507,19 @@ Module map.
           destruct H. rewrite H in Heqo. discriminate.
     Qed.
 
-    Lemma putmany_of_list_zip_get_oldval: forall keys values (m1 m2: map) k v,
-        map.putmany_of_list_zip keys values m1 = Some m2 ->
-        ~ List.In k keys ->
+    Lemma putmany_of_list_zip_get_oldval: forall ks vs (m1 m2: map) k v,
+        map.putmany_of_list_zip ks vs m1 = Some m2 ->
+        ~ List.In k ks ->
         map.get m1 k = Some v ->
         map.get m2 k = Some v.
     Proof.
-      induction keys; intros.
-      - simpl in H. destruct values; try discriminate.
+      induction ks; intros.
+      - simpl in H. destruct vs; try discriminate.
         replace m2 with m1 in * by congruence. assumption.
       - simpl in H.
-        destruct values; try discriminate.
+        destruct vs; try discriminate.
         simpl in H0.
-        eapply IHkeys.
+        eapply IHks.
         + eassumption.
         + intro C. apply H0. auto.
         + rewrite get_put_dec. destr (key_eqb a k).
@@ -426,18 +528,18 @@ Module map.
     Qed.
 
     Lemma putmany_of_list_zip_get_newval:
-      forall (keys : list key) (values : list value) m1 m2 k i v,
-        map.putmany_of_list_zip keys values m1 = Some m2 ->
-        List.NoDup keys ->
-        List.nth_error keys i = Some k ->
-        List.nth_error values i = Some v ->
+      forall (ks : list key) (vs : list value) m1 m2 k i v,
+        map.putmany_of_list_zip ks vs m1 = Some m2 ->
+        List.NoDup ks ->
+        List.nth_error ks i = Some k ->
+        List.nth_error vs i = Some v ->
         map.get m2 k = Some v.
     Proof.
-      induction keys; intros.
-      - simpl in H. destruct values; try discriminate.
+      induction ks; intros.
+      - simpl in H. destruct vs; try discriminate.
         replace m2 with m1 in * by congruence. apply List.nth_error_nil_Some in H1. contradiction.
       - simpl in H.
-        destruct values; try discriminate.
+        destruct vs; try discriminate.
         inversion H0. subst. clear H0.
         apply List.nth_error_cons_Some in H1.
         apply List.nth_error_cons_Some in H2.
@@ -491,14 +593,14 @@ Module map.
       rewrite putmany_empty_r. assumption.
     Qed.
 
-    Lemma putmany_of_list_zip_empty_find_value: forall keys values (m: map) i k,
-        map.putmany_of_list_zip keys values map.empty = Some m ->
-        List.nth_error keys i = Some k ->
-        exists v, List.nth_error values i = Some v.
+    Lemma putmany_of_list_zip_empty_find_value: forall ks vs (m: map) i k,
+        map.putmany_of_list_zip ks vs map.empty = Some m ->
+        List.nth_error ks i = Some k ->
+        exists v, List.nth_error vs i = Some v.
     Proof.
-      induction keys; intros.
+      induction ks; intros.
       - apply List.nth_error_nil_Some in H0. contradiction.
-      - simpl in *. destruct values; try discriminate.
+      - simpl in *. destruct vs; try discriminate.
         destruct i.
         + simpl in *. eexists. reflexivity.
         + simpl in *.
@@ -506,7 +608,7 @@ Module map.
           pose proof sameLength_putmany_of_list as Q.
           specialize Q with (1 := H). specialize (Q map.empty).
           destruct Q as [m' Q].
-          eapply IHkeys. 2: eassumption. exact Q.
+          eapply IHks. 2: eassumption. exact Q.
     Qed.
 
     Lemma invert_getmany_of_tuple_Some: forall n ks (vs: HList.tuple value (S n)) m,
@@ -846,6 +948,77 @@ Module map.
       eapply List.Forall_forall; intros [] ?.
       eapply get_of_list_In_NoDup; eauto.
     Qed.
+
+    Lemma getmany_of_list_injective_NoDup: forall m ks vs,
+        map.injective m ->
+        List.NoDup ks ->
+        map.getmany_of_list m ks = Some vs ->
+        List.NoDup vs.
+    Proof.
+      intros.
+      rewrite List.NoDup_nth_error in *.
+      intros.
+      destr (List.nth_error vs i); cycle 1. {
+        exfalso. apply (proj2 (List.nth_error_Some vs i) H2 E).
+      }
+      assert (R: j < length vs). {
+        apply (proj1 (List.nth_error_Some vs j)). congruence.
+      }
+      pose proof (getmany_of_list_length _ _ _ H1) as P.
+      destr (List.nth_error ks i); cycle 1. {
+        exfalso. apply (proj2 (List.nth_error_Some ks i)).
+        - Lia.blia.
+        - assumption.
+      }
+      pose proof (getmany_of_list_get _ _ _ _ _ _ H1 E0 E) as Q.
+      destr (List.nth_error ks j); cycle 1. {
+        apply (proj1 (List.nth_error_None ks j)) in E1. Lia.blia.
+      }
+      symmetry in H3.
+      pose proof (getmany_of_list_get _ _ _ _ _ _ H1 E1 H3) as T.
+      unfold map.injective in H.
+      specialize (H _ _ _ Q T). subst k0.
+      eapply H0.
+      - Lia.blia.
+      - congruence.
+    Qed.
+
+    Lemma injective_put: forall (m: map) k v,
+        (forall k, map.get m k <> Some v) ->
+        map.injective m ->
+        map.injective (map.put m k v).
+    Proof.
+      unfold map.injective.
+      intros.
+      rewrite get_put_dec in H1.
+      rewrite get_put_dec in H2.
+      destr (key_eqb k k1); destr (key_eqb k k2); try congruence.
+      eauto.
+    Qed.
+
+    Lemma empty_injective: map.injective map.empty.
+    Proof. unfold injective. intros. rewrite map.get_empty in H. discriminate. Qed.
+
+    Lemma not_in_range_empty: forall (l: list value),
+        map.not_in_range map.empty l.
+    Proof.
+      unfold not_in_range.
+      induction l; intros; constructor; intros;
+        rewrite ?map.get_empty; [congruence|auto].
+    Qed.
+
+    Lemma not_in_range_put: forall (m: map)(l: list value)(x: key)(y: value),
+        ~ List.In y l ->
+        not_in_range m l ->
+        not_in_range (map.put m x y) l.
+    Proof.
+      intros. unfold not_in_range in *. apply List.Forall_forall. intros.
+      eapply List.Forall_forall in H0. 2: eassumption.
+      rewrite get_put_dec.
+      destr (key_eqb x k).
+      - subst. intro C. apply eq_of_eq_Some in C. subst. contradiction.
+      - eapply H0.
+    Qed.
   End WithMap.
 
   Section WithTwoMaps.
@@ -895,5 +1068,23 @@ Module map.
         rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
         destr (keqb k k0); invert; eauto.
     Qed.
+
+    Lemma map_all_values_not_None_fw: forall (f : V1 -> option V2) (m1 : M1) (m2 : M2) (k: K),
+        map_all_values f m1 = Some m2 ->
+        get m1 k <> None ->
+        get m2 k <> None.
+    Proof.
+      intros f m1.
+      unfold map_all_values.
+      eapply map.fold_spec.
+      - intros. apply eq_of_eq_Some in H. subst. exfalso. rewrite map.get_empty in H0. congruence.
+      - intros. destr r; try discriminate. destr (f v); try discriminate.
+        apply eq_of_eq_Some in H1. subst m2.
+        rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
+        destr (keqb k k0).
+        + congruence.
+        + eauto.
+    Qed.
+
   End WithTwoMaps.
 End map.

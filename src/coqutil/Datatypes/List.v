@@ -2,6 +2,7 @@ Require Import coqutil.sanity.
 Require Import coqutil.Decidable.
 Require Import coqutil.Tactics.destr coqutil.Tactics.Tactics.
 Require Import coqutil.Z.Lia.
+Require Import coqutil.Datatypes.Option.
 Require Import Coq.Lists.List. Import ListNotations.
 
 
@@ -68,6 +69,79 @@ Section WithA.
         destruct s.
         * simpl in *. contradiction.
         * reflexivity.
+  Qed.
+
+  Lemma nth_error_option_all: forall {l1: list (option A)} {l2: list A} (i: nat),
+    option_all l1 = Some l2 ->
+    (i < List.length l1)%nat ->
+    exists v, nth_error l2 i = Some v.
+  Proof.
+    induction l1; intros.
+    - simpl in *. exfalso. inversion H0.
+    - simpl in *. destr a; try discriminate. destr (option_all l1); try discriminate.
+      apply eq_of_eq_Some in H. subst l2.
+      destruct i as [|j].
+      + simpl. eauto.
+      + simpl. assert (j < List.length l1)%nat as D by blia. eauto.
+  Qed.
+
+  Lemma In_option_all: forall {l1: list (option A)} {l2: list A} {v1o: option A},
+    option_all l1 = Some l2 ->
+    In v1o l1 ->
+    exists v1, v1o = Some v1 /\ In v1 l2.
+  Proof.
+    induction l1; intros.
+    - simpl in *. contradiction.
+    - simpl in *. destr a; try discriminate. destr (option_all l1); try discriminate.
+      apply eq_of_eq_Some in H. subst l2.
+      destruct H0.
+      + subst. simpl. eauto.
+      + simpl. firstorder idtac.
+  Qed.
+
+  (* same as nodup from standard library but using BoolSpec instead of sumbool *)
+  Definition dedup{A: Type}(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}: list A -> list A :=
+    fix rec l :=
+      match l with
+      | [] => []
+      | x :: xs => if List.find (aeqb x) xs then rec xs else x :: rec xs
+      end.
+
+  Lemma dedup_preserves_In(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}(l: list A) a:
+    In a l <-> In a (dedup aeqb l).
+  Proof.
+    induction l.
+    - simpl. firstorder idtac.
+    - simpl. split; intro H.
+      + destruct H.
+        * subst. destruct_one_match.
+          { apply find_some in E. destruct E as [E1 E2].
+            destr (aeqb a a0). 2: discriminate. subst a0. firstorder idtac. }
+          { simpl. auto. }
+        * destruct_one_match.
+          { apply find_some in E. destruct E as [E1 E2].
+            destr (aeqb a0 a1). 2: discriminate. subst a0. firstorder idtac. }
+          { simpl. firstorder idtac. }
+      + destruct_one_match_hyp.
+        * apply find_some in E. destruct E as [E1 E2].
+          destr (aeqb a0 a1). 2: discriminate. subst a0. firstorder idtac.
+        * simpl in H. destruct H.
+          { subst. auto. }
+          { firstorder idtac. }
+  Qed.
+
+  Lemma NoDup_dedup(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}: forall (l: list A),
+      NoDup (dedup aeqb l).
+  Proof.
+    induction l.
+    - simpl. constructor.
+    - simpl. destruct_one_match.
+      + assumption.
+      + constructor. 2: assumption.
+        intro C.
+        apply dedup_preserves_In in C.
+        pose proof (find_none _ _ E _ C).
+        destr (aeqb a a); congruence.
   Qed.
 
   Section WithStep.
