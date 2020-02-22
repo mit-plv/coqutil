@@ -66,8 +66,13 @@ Goal True. compare_tacs ltac:(wait 10%Z; exact I) ltac:(loop_forever). Abort.
 
 *)
 
+Ltac omega_safe := idtac. (* can be overridden with "fail" *)
+Ltac lia_safe := idtac. (* can be overridden with "fail" *)
+
 Ltac compare_omega_lia_timed :=
-  compare_tacs ltac:(time "omega" omega) ltac:(time "lia" lia).
+  compare_tacs
+    ltac:(tryif omega_safe then time "omega" omega else idtac "Did not dare to run omega")
+    ltac:(tryif lia_safe   then time "lia"   lia   else idtac "Did not dare to run lia").
 
 Ltac compare_omega_lia :=
   compare_tacs ltac:(omega) ltac:(lia).
