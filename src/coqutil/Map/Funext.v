@@ -21,6 +21,10 @@ Section SortedList.
       P (fun _ : key => None) r0 ->
       (forall k v m r, m k = None -> P m r -> P (fun q : key => if eqb q k then Some v else m q) (f r k v)) ->
       forall m, P m (magic_fold R f r0 m).
+  Hypothesis magic_fold_respects_relations: forall {A B : Type} (R : A -> B -> Prop)
+      (fa : A -> key -> value -> A) (fb : B -> key -> value -> B),
+      (forall (a : A) (b : B) (k : key) (v : value), R a b -> R (fa a k v) (fb b k v)) ->
+      forall a0 b0, R a0 b0 -> forall m, R (magic_fold A fa a0 m) (magic_fold B fb b0 m).
 
   Definition map : map.map key parameters.value :=
     {|
@@ -39,7 +43,8 @@ Section SortedList.
       | |- context[eqb ?a ?b] => destruct (eqb_ok a b)
       | |- context[match ?x with _ => _ end] => destruct x eqn:?
       end; try solve [ congruence | eauto | eauto using functional_extensionality ].
-    eapply magic_fold_is_magic; eassumption.
+    - eapply magic_fold_is_magic; eassumption.
+    - eapply magic_fold_respects_relations; eassumption.
   Qed.
 End SortedList.
 Arguments map : clear implicits.

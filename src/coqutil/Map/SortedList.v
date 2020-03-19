@@ -164,6 +164,17 @@ Section SortedList.
         simpl in pl'|-*. apply Bool.andb_true_iff in pl'. destruct pl' as [C D].
         rewrite C.
         reflexivity. }
+    { intros.
+      simpl. remember (value m) as l. generalize dependent m.
+      induction l; intros.
+      - simpl. assumption.
+      - simpl. destruct a as [k v].
+        destruct m as [l' pl']. simpl in Heql.
+        destruct l' as [|[k0 v0] l']. 1: discriminate.
+        inversion Heql. subst l' v0 k0. clear Heql.
+        destruct (sorted_cons _ _ _ pl') as [HA HB].
+        specialize (IHl {| value := l; _value_ok := HA |} eq_refl).
+        eapply H. exact IHl. }
   Qed.
 End SortedList.
 Arguments map : clear implicits.

@@ -29,6 +29,12 @@ Module map.
         P empty r0 ->
         (forall k v m r, get m k = None -> P m r -> P (put m k v) (f r k v)) ->
         forall m, P m (fold f r0 m);
+    (* Folding over a map preserves relations: *)
+    fold_parametricity: forall {A B : Type} (R : A -> B -> Prop)
+                               (fa: A -> key -> value -> A) (fb: B -> key -> value -> B),
+        (forall a b k v, R a b -> R (fa a k v) (fb b k v)) ->
+        forall a0 b0, R a0 b0 -> forall m, R (fold fa a0 m) (fold fb b0 m);
+
   }.
   Arguments ok {_ _} _.
 
