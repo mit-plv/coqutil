@@ -25,58 +25,47 @@ Proof.
   intros. subst. assumption.
 Qed.
 
-Tactic Notation "rewr" tactic(getEq) "in" "*|-" :=
-  repeat match goal with
-         | H: ?A |- _  => let E := getEq A in
-                          match type of E with
-                          | ?LHS = _ => progress (pattern LHS in H;
-                                                  apply (rew_zoom_fw E) in H)
-                          end
-         end.
-
-Tactic Notation "rewr" tactic(getEq) "in" "|-*" :=
-  repeat match goal with
-           | |- ?A => let E := getEq A in
-                      match type of E with
-                      | ?LHS = _ => progress (pattern LHS;
-                                              apply (rew_zoom_bw E))
-                      end
-         end.
-
-Tactic Notation "rewr" tactic(getEq) "in" "*" := rewr getEq in *|-; rewr getEq in |-*.
-
 Ltac concl P :=
   match P with
   | ?A -> ?B => concl B
   | _ => P
   end.
 
+Ltac rewr_hyp_step getEq sidecond :=
+  match goal with
+  | H: ?A |- _  => let E := getEq A in
+                   let T := type of E in
+                   let EQ := concl T in
+                   match EQ with
+                   | ?LHS = _ => progress (pattern LHS in H;
+                                           eapply rew_zoom_fw in H;
+                                           [ | apply E; sidecond ])
+                   end
+  end.
+
+Ltac rewr_goal_step getEq sidecond :=
+  match goal with
+  | |- ?A => let E := getEq A in
+             let T := type of E in
+             let EQ := concl T in
+             match EQ with
+             | ?LHS = _ => progress (pattern LHS;
+                                     eapply rew_zoom_bw;
+                                     [ apply E; sidecond | ])
+             end
+  end.
+
 Tactic Notation "rewr" tactic(getEq) "in" "*|-" "by" tactic3(sidecond) :=
-  repeat match goal with
-         | H: ?A |- _  => let E := getEq A in
-                          let T := type of E in
-                          let EQ := concl T in
-                          match EQ with
-                          | ?LHS = _ => progress (pattern LHS in H;
-                                                  eapply rew_zoom_fw in H;
-                                                  [ | apply E; sidecond ])
-                          end
-         end.
-
+  repeat (idtac; rewr_hyp_step ltac:(getEq) ltac:(sidecond)).
 Tactic Notation "rewr" tactic(getEq) "in" "|-*" "by" tactic3(sidecond) :=
-  repeat match goal with
-         | |- ?A => let E := getEq A in
-                    let T := type of E in
-                    let EQ := concl T in
-                    match EQ with
-                    | ?LHS = _ => progress (pattern LHS;
-                                            eapply rew_zoom_bw;
-                                            [ apply E; sidecond | ])
-                    end
-         end.
-
+  repeat (idtac; rewr_goal_step ltac:(getEq) ltac:(sidecond)).
 Tactic Notation "rewr" tactic(getEq) "in" "*" "by" tactic3(sidecond) :=
   rewr getEq in *|- by sidecond; rewr getEq in |-* by sidecond.
+
+Tactic Notation "rewr" tactic(getEq) "in" "*|-" := rewr getEq in *|- by fail.
+Tactic Notation "rewr" tactic(getEq) "in" "|-*" := rewr getEq in |-* by fail.
+Tactic Notation "rewr" tactic(getEq) "in" "*" := rewr getEq in * by fail.
+
 
 (* Demo: *)
 
