@@ -3,6 +3,7 @@ Require Import coqutil.Z.Lia.
 Require Import coqutil.Word.Interface coqutil.Datatypes.HList coqutil.Datatypes.PrimitivePair.
 Require Import coqutil.Word.Properties.
 Require Import coqutil.Z.bitblast.
+Require Import coqutil.Z.prove_Zeq_bitwise.
 Require Import coqutil.Byte.
 Local Set Universe Polymorphism.
 
@@ -57,6 +58,30 @@ Section LittleEndian.
         rewrite <-IHn.
         rewrite combine_split.
         Z.bitblast_core. }
+  Qed.
+
+  Arguments Z.mul: simpl never.
+  Arguments Z.pow: simpl never.
+  Arguments Z.of_nat: simpl never.
+
+  Lemma combine_bound: forall {n: nat} (t: HList.tuple byte n),
+      0 <= LittleEndian.combine n t < 2 ^ (8 * Z.of_nat n).
+  Proof.
+    induction n; intros.
+    - destruct t. cbv. intuition discriminate.
+    - destruct t as [b t]. unfold LittleEndian.combine. simpl.
+      specialize (IHn t).
+      match goal with
+      | |- context [?F n t] => change (F n t) with (LittleEndian.combine n t)
+      end.
+      pose proof (byte.unsigned_range b).
+      replace (8 * Z.of_nat (S n)) with (8 * Z.of_nat n + 8) by blia.
+      rewrite Z.pow_add_r by blia.
+      rewrite Z.or_to_plus. 1: blia.
+      replace (2 * (2 * (2 * (2 * (2 * (2 * (2 * (2 * LittleEndian.combine n t)))))))) with
+          (LittleEndian.combine n t * 2 ^ 8) by blia.
+      rewrite <- Z.shiftl_mul_pow2 by blia.
+      prove_Zeq_bitwise.
   Qed.
 
 End LittleEndian.
