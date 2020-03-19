@@ -4,6 +4,7 @@ Require Import coqutil.Tactics.destr coqutil.Tactics.Tactics.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Datatypes.Option.
 Require Import Coq.Lists.List. Import ListNotations.
+Require Import Coq.Sorting.Permutation.
 
 
 Section WithA.
@@ -268,6 +269,19 @@ Section WithA.
   Lemma endswith_cons_l (x : A) xs ys :
     endswith ys xs -> endswith (cons x ys) xs.
   Proof. inversion 1; subst. eexists (cons x _). exact eq_refl. Qed.
+
+  Lemma fold_right_change_order{R: Type}(f: A -> R -> R)
+        (f_comm: forall a1 a2 r, f a1 (f a2 r) = f a2 (f a1 r)):
+    forall l1 l2: list A,
+      Permutation l1 l2 ->
+      forall r0, fold_right f r0 l1 = fold_right f r0 l2.
+  Proof.
+    induction 1; intros.
+    - reflexivity.
+    - simpl. f_equal. auto.
+    - simpl. apply f_comm.
+    - rewrite IHPermutation1, IHPermutation2. reflexivity.
+  Qed.
 
 End WithA.
 

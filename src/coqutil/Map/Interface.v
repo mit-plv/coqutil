@@ -76,6 +76,8 @@ Module map.
 
     Definition keys(m : map): list key := fold (fun acc k v => cons k acc) nil m.
 
+    Definition tuples(m: map): list (key * value) := fold (fun l k v => cons (k, v) l) nil m.
+
     Fixpoint putmany_of_list_zip (keys : list key) (values : list value) (init : rep) {struct keys} : option map :=
       match keys, values with
       | nil, nil => Some init

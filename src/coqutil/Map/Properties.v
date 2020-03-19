@@ -1,6 +1,7 @@
 Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidable coqutil.Map.Interface.
 Import map.
 Require Import coqutil.Datatypes.Option.
+Require Import Coq.Sorting.Permutation.
 
 Module map.
   Section WithMap.
@@ -303,6 +304,263 @@ Module map.
         + constructor. 2: assumption. intro C. specialize (H1 _ C). contradiction.
         + intros. rewrite get_put_dec. destr (key_eqb k k0). 1: congruence.
           simpl in *. destruct H2. 1: congruence. eauto.
+    Qed.
+
+    Lemma fold_two_spec:
+      forall {R1 R2: Type} (P: map -> R1 -> R2 -> Prop)
+             (f1: R1 -> key -> value -> R1) (f2: R2 -> key -> value -> R2) r01 r02,
+        P map.empty r01 r02 ->
+        (forall k v m r1 r2, map.get m k = None ->
+                             P m r1 r2 ->
+                             P (map.put m k v) (f1 r1 k v) (f2 r2 k v)) ->
+        forall m, P m (map.fold f1 r01 m) (map.fold f2 r02 m).
+    Proof.
+      intros.
+      pose proof (fold_parametricity
+        (fun '(r11, r21) r12 => r12 = r11)
+        (fun '(r1, r2) k v => (f1 r1 k v, f2 r2 k v)) f1) as Q.
+      specialize Q with (a0 := (r01, r02)) (b0 := r01) (m := m).
+      simpl in Q.
+      destruct (map.fold (fun '(r1, r2) (k : key) (v : value) => (f1 r1 k v, f2 r2 k v)) (r01, r02) m)
+        as [r1 r2] eqn: E.
+      rewrite Q. 3: reflexivity. 2: {
+        intros. destruct a as [r1' r2'].  subst r1'. reflexivity.
+      }
+      clear Q.
+      pose proof (fold_parametricity
+        (fun '(r11, r21) r22 => r22 = r21)
+        (fun '(r1, r2) k v => (f1 r1 k v, f2 r2 k v)) f2) as Q.
+      specialize Q with (a0 := (r01, r02)) (b0 := r02) (m := m).
+      simpl in Q.
+      rewrite E in Q.
+      rewrite Q. 3: reflexivity. 2: {
+        intros. destruct a as [r1' r2'].  subst r2'. reflexivity.
+      }
+      clear Q.
+      revert r1 r2 E.
+      eapply map.fold_spec; intros.
+      - congruence.
+      - destruct r as [ri1 ri2]. inversion E. subst r1 r2. clear E.
+        eauto.
+    Qed.
+
+    Lemma tuples_NoDup: forall m, List.NoDup (tuples m).
+    Proof.
+      intros.
+      eapply proj1 with (B := forall k v, List.In (k, v) (tuples m) -> map.get m k = Some v).
+      unfold tuples.
+      eapply map.fold_spec.
+      - simpl. intuition constructor.
+      - intros. destruct H0. intuition (try constructor; try assumption).
+        + intro C. specialize H1 with (1 := C). congruence.
+        + simpl in *. destruct H2.
+          * inversion H2; rewrite map.get_put_same; congruence.
+          * rewrite get_put_dec.
+            destr (key_eqb k k0).
+            -- subst k0. specialize H1 with (1 := H2). congruence.
+            -- eauto.
+    Qed.
+
+    Lemma fold_to_tuples_fold : forall {R: Type} (f: R -> key -> value -> R) r0 m,
+        map.fold f r0 m =
+        List.fold_right (fun '(k, v) r => f r k v) r0 (tuples m).
+    Proof.
+      intros. unfold tuples.
+      eapply fold_two_spec with
+          (f1 := f)
+          (f2 := (fun (l : list (key * value)) (k : key) (v : value) => cons (k, v) l)).
+      - reflexivity.
+      - intros. subst. simpl. reflexivity.
+    Qed.
+
+    Lemma tuples_spec: forall (m: map) (k : key) (v : value),
+        List.In (k, v) (tuples m) <-> map.get m k = Some v.
+    Proof.
+      intro m. unfold tuples.
+      eapply map.fold_spec; intros; split; intros; simpl in *.
+      - contradiction.
+      - rewrite map.get_empty in H. discriminate.
+      - rewrite get_put_dec.
+        destr (key_eqb k k0).
+        + subst k0. destruct H1.
+          * inversion H1; subst v0. reflexivity.
+          * specialize (H0 k v0). apply proj1 in H0. specialize (H0 H1).
+            congruence.
+        + destruct H1.
+          * congruence.
+          * eapply H0. assumption.
+      - rewrite get_put_dec in H1.
+        destr (key_eqb k k0).
+        + subst k0. inversion H1; subst v0. auto.
+        + right. eapply H0. assumption.
+    Qed.
+
+    Lemma fold_spec_with_order : forall m, exists (l: list (key * value)),
+      (forall k v, List.In (k, v) l <-> map.get m k = Some v) /\
+      forall {R: Type} (f: R -> key -> value -> R) r0,
+        map.fold f r0 m = List.fold_right (fun '(k, v) r => f r k v) r0 l.
+    Proof.
+      intros. eexists. split.
+      - eapply tuples_spec.
+      - intros. eapply fold_to_tuples_fold.
+    Qed.
+
+    Lemma fold_comm{R: Type}(f: R -> key -> value -> R)
+          (f_comm: forall r k1 v1 k2 v2, f (f r k1 v1) k2 v2 = f (f r k2 v2) k1 v1):
+      forall r0 m k v,
+        map.fold f (f r0 k v) m = f (map.fold f r0 m) k v.
+    Proof.
+      intros.
+      eapply fold_two_spec with (f1 := f) (f2 := f) (r01 := f r0 k v) (r02 := r0).
+      - reflexivity.
+      - intros. subst. apply f_comm.
+    Qed.
+
+    Lemma map_ind(P: map -> Prop):
+      P map.empty ->
+      (forall m, P m -> forall k v, map.get m k = None -> P (map.put m k v)) ->
+      forall m, P m.
+    Proof.
+      intros Base Step.
+      eapply (map.fold_spec (fun (m: map) (_: unit) => P m) (fun acc _ _ => acc) tt Base).
+      intros.
+      eapply Step; assumption.
+    Qed.
+
+    Lemma tuples_put: forall m k v,
+        map.get m k = None ->
+        forall k0 v0, List.In (k0, v0) (tuples (map.put m k v)) <-> List.In (k0, v0) ((k, v) :: tuples m).
+    Proof.
+      intros.
+      rewrite (tuples_spec (map.put m k v)).
+      simpl.
+      rewrite (tuples_spec m).
+      rewrite get_put_dec.
+      destr (key_eqb k k0); intuition congruence.
+    Qed.
+
+    Lemma fold_put{R: Type}(f: R -> key -> value -> R)
+          (f_comm: forall r k1 v1 k2 v2, f (f r k1 v1) k2 v2 = f (f r k2 v2) k1 v1):
+      forall r0 m k v,
+        map.get m k = None ->
+        map.fold f r0 (map.put m k v) = f (map.fold f r0 m) k v.
+    Proof.
+      intros.
+      do 2 rewrite fold_to_tuples_fold.
+      match goal with
+      | |- ?L = f (List.fold_right ?F r0 (tuples m)) k v =>
+        change (L = List.fold_right F r0 (cons (k, v) (tuples m)))
+      end.
+      apply List.fold_right_change_order.
+      - intros [k1 v1] [k2 v2] r. apply f_comm.
+      - apply NoDup_Permutation.
+        + apply tuples_NoDup.
+        + constructor.
+          * pose proof (tuples_spec m k v). intuition congruence.
+          * apply tuples_NoDup.
+        + intros [k0 v0].
+          rewrite (tuples_put m k v H).
+          reflexivity.
+    Qed.
+
+    Lemma fold_remove{R: Type}(f: R -> key -> value -> R)
+      (f_comm: forall r k1 v1 k2 v2, f (f r k1 v1) k2 v2 = f (f r k2 v2) k1 v1):
+      forall r0 m k v,
+        map.get m k = Some v ->
+        map.fold f r0 m = f (map.fold f r0 (map.remove m k)) k v.
+    Proof.
+      intros.
+      replace m with (map.put (map.remove m k) k v) at 1.
+      - rewrite fold_put; eauto using map.get_remove_same.
+      - apply map.map_ext.
+        intros.
+        rewrite get_put_dec.
+        destr (key_eqb k k0); try rewrite map.get_remove_diff; congruence.
+    Qed.
+
+    Lemma remove_empty(x: key): map.remove map.empty x = map.empty.
+    Proof.
+      apply map.map_ext. intros.
+      rewrite get_remove_dec.
+      destr (key_eqb x k). 1: rewrite map.get_empty. all: congruence.
+    Qed.
+
+    Lemma fold_base_cases{R: Type}(f: R -> key -> value -> R):
+      forall r0 m,
+        (m = map.empty -> map.fold f r0 m = r0) /\
+        (forall k v, m = map.put map.empty k v -> map.fold f r0 m = f r0 k v).
+    Proof.
+      intros r0 m.
+      eapply map.fold_spec; intros; split; intros.
+      - reflexivity.
+      - exfalso.
+        apply (f_equal (fun m => map.get m k)) in H.
+        rewrite map.get_put_same in H.
+        rewrite map.get_empty in H.
+        discriminate.
+      - exfalso.
+        apply (f_equal (fun m => map.get m k)) in H1.
+        rewrite map.get_put_same in H1.
+        rewrite map.get_empty in H1.
+        discriminate.
+      - destruct H0.
+        destr (key_eqb k0 k). 2: {
+          apply (f_equal (fun m => map.get m k)) in H1.
+          rewrite map.get_put_same in H1.
+          rewrite map.get_put_diff in H1 by congruence.
+          rewrite map.get_empty in H1.
+          discriminate.
+        }
+        subst.
+        pose proof H1.
+        apply (f_equal (fun m => map.get m k)) in H1.
+        do 2 rewrite map.get_put_same in H1.
+        apply Option.eq_of_eq_Some in H1.
+        subst v0.
+        rewrite H0. 1: reflexivity.
+        apply map.map_ext.
+        intros.
+        rewrite map.get_empty.
+        destr (key_eqb k k0).
+        + subst. assumption.
+        + apply (f_equal (fun m => map.get m k0)) in H3.
+          rewrite map.get_put_diff in H3 by congruence.
+          rewrite map.get_put_diff in H3 by congruence.
+          rewrite map.get_empty in H3.
+          exact H3.
+    Qed.
+
+    Lemma fold_singleton{R: Type}(f: R -> key -> value -> R):
+      forall r0 k v,
+        map.fold f r0 (map.put map.empty k v) = f r0 k v.
+    Proof.
+      intros.
+      pose proof (fold_base_cases f r0 (map.put map.empty k v)).
+      apply proj2 in H.
+      eauto.
+    Qed.
+
+    Lemma fold_to_list{R: Type}(f: R -> key -> value -> R):
+      forall r0 m,
+      exists l, map.fold f r0 m = List.fold_right (fun '(k, v) r => f r k v) r0 l /\
+                forall k v, List.In (k, v) l <-> map.get m k = Some v.
+    Proof.
+      intros r0 m.
+      eapply map.fold_spec; intros.
+      - exists nil. split; [reflexivity|]. intros. rewrite map.get_empty. simpl. intuition congruence.
+      - destruct H0 as [l [? ?] ]. subst r.
+        exists (cons (k,v) l). split; [reflexivity|].
+        intros. simpl. intuition idtac.
+        + inversion H2. subst k0 v0. rewrite map.get_put_same. reflexivity.
+        + specialize (H1 k0 v0). apply proj1 in H1. specialize (H1 H2).
+          rewrite get_put_dec.
+          destr (key_eqb k k0).
+          * subst k0. exfalso. congruence.
+          * assumption.
+        + rewrite get_put_dec in H0.
+          destr (key_eqb k k0).
+          * left. congruence.
+          * right. apply H1. assumption.
     Qed.
 
     Lemma putmany_of_list_zip_extends_exists: forall ks vs m1 m1' m2,
