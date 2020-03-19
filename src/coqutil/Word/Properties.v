@@ -324,6 +324,14 @@ Module word.
       destruct (Z.ltb_spec i width); auto.
     Qed.
 
+    Lemma of_Z_signed: forall x: word, of_Z (signed x) = x.
+    Proof.
+      intros.
+      apply signed_inj.
+      rewrite signed_of_Z.
+      apply swrap_signed.
+    Qed.
+
     Lemma signed_eqb x y : eqb x y = Z.eqb (signed x) (signed y).
     Proof.
       rewrite unsigned_eqb.
