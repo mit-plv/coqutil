@@ -26,7 +26,9 @@ End parameters. Notation parameters := parameters.parameters.
 
 Section SortedList.
   Context {p : unique! parameters} {ok : strict_order ltb}.
+
   Local Definition eqb k1 k2 := andb (negb (ltb k1 k2)) (negb (ltb k2 k1)).
+
   Fixpoint put m (k:key) (v:value) : list (key * value) :=
     match m with
     | nil => cons (k, v) nil
@@ -37,6 +39,7 @@ Section SortedList.
       | (* > *) false, true => cons (k', v') (put m' k v)
       end
     end.
+
   Fixpoint remove m (k:key) : list (key * value) :=
     match m with
     | nil => nil
@@ -47,12 +50,15 @@ Section SortedList.
       | (* > *) false, true => cons (k', v') (remove m' k)
       end
     end.
+
   Fixpoint sorted (m : list (key * value)) :=
     match m with
     | cons (k1, _) ((cons (k2, _) m'') as m') => andb (ltb k1 k2) (sorted m')
     | _ => true
     end.
+
   Record rep := { value : list (key * value) ; _value_ok : sorted value = true }.
+
   Lemma ltb_antisym k1 k2 (H:eqb k1 k2 = false) : ltb k1 k2 = negb (ltb k2 k1).
   Proof.
     apply Bool.andb_false_iff in H.
@@ -60,6 +66,7 @@ Section SortedList.
     { pose proof ltb_trans _ _ _ H1 H2; pose proof ltb_antirefl k1; congruence. }
     { destruct H; discriminate. }
   Qed.
+
   Lemma sorted_put m k v : sorted m = true -> sorted (put m k v) = true.
   Proof.
     revert v; revert k; induction m as [|[k0 v0] m]; trivial; []; intros k v H.
@@ -74,6 +81,7 @@ Section SortedList.
     destruct (ltb k1 k) eqn:?; rewrite ?Bool.andb_true_r; trivial; [].
     eapply Bool.andb_true_iff in H; destruct H; eassumption.
   Qed.
+
   Lemma sorted_remove m k : sorted m = true -> sorted (remove m k) = true.
   Proof.
     revert k; induction m as [|[k0 v0] m]; [trivial|]; []; intros k H.
@@ -89,21 +97,62 @@ Section SortedList.
     destruct mm as [|[kk vv] ?]; rewrite ?Bool.andb_true_r; trivial.
     repeat (eapply Bool.andb_true_iff in H; destruct H as [?GG H]); eauto 2 using ltb_trans.
   Qed.
+
+  Definition lookup(l: list (key * parameters.value))(k: key): option parameters.value :=
+    match List.find (fun p => eqb k (fst p)) l with
+    | Some (_, v) => Some v
+    | None => None
+    end.
+
+  Lemma eqb_refl: forall x: key, eqb x x = true.
+  Proof.
+    intros. unfold eqb. rewrite (@ltb_antirefl _ _ ok). reflexivity.
+  Qed.
+
+  Lemma eqb_true: forall k1 k2, eqb k1 k2 = true -> k1 = k2.
+  Proof.
+    unfold eqb. intros. eapply Bool.andb_true_iff in H. destruct H as [L1 L2].
+    destruct (ltb k1 k2) eqn: E12. 1: discriminate L1.
+    destruct (ltb k2 k1) eqn: E21. 1: discriminate L2.
+    eauto using ltb_total.
+  Qed.
+
+  Lemma eqb_sym: forall k1 k2, eqb k1 k2 = eqb k2 k1.
+  Proof.
+    unfold eqb. intros.
+    destruct (ltb k1 k2) eqn: E12;
+    destruct (ltb k2 k1) eqn: E21;
+    eauto using ltb_total.
+  Qed.
+
+  Lemma lookup_cons: forall k1 k2 v l,
+      lookup ((k1, v) :: l) k2 = if eqb k2 k1 then Some v else lookup l k2.
+  Proof.
+    unfold lookup. intros. simpl. rewrite eqb_sym. destruct (eqb k1 k2); reflexivity.
+  Qed.
+
   Lemma sorted_cons: forall l k v,
       sorted ((k, v) :: l) = true ->
-      sorted l = true /\ List.find (fun p => eqb k (fst p)) l = None.
+      sorted l = true /\ lookup l k = None /\ forall k0, ltb k0 k = true -> lookup l k0 = None.
   Proof.
     induction l; intros.
     - simpl. auto.
     - simpl in *. destruct a as [k' v'].
       apply Bool.andb_true_iff in H. destruct H.
       split; [assumption|]. simpl.
+      setoid_rewrite lookup_cons.
       destruct (eqb k k') eqn: E. {
         unfold eqb in E. rewrite H in E. simpl in E. discriminate E.
       }
-      eapply IHl. 1: assumption. destruct l as [|[k'' v''] l]; try reflexivity.
-      apply Bool.andb_true_iff in H0. destruct H0.
-      apply Bool.andb_true_iff. eauto using ltb_trans.
+      specialize IHl with (1 := v) (2 := H0).
+      destruct IHl as [IH1 [IH2 IH3]].
+      split; [solve [eauto]|].
+      intros k0 L0.
+      unfold eqb in E. rewrite H in E. simpl in E.
+      destruct (eqb k0 k') eqn: E2.
+      + unfold eqb in E2. rewrite  (ltb_trans _ _ _ L0 H) in E2. simpl in E2. discriminate.
+      + destruct l as [|[k'' v''] l]; try reflexivity.
+        apply Bool.andb_true_iff in H0. destruct H0. eauto using ltb_trans.
   Qed.
 
   Definition map : map.map key parameters.value :=
@@ -112,10 +161,7 @@ Section SortedList.
     {|
     map.rep := rep;
     map.empty := Build_rep nil eq_refl;
-    map.get m k := match List.find (fun p => eqb k (fst p)) (value m) with
-                   | Some (_, v) => Some v
-                   | None => None
-                   end;
+    map.get m k := lookup (value m) k;
     map.put := wrapped_put;
     map.remove := wrapped_remove;
     map.fold R f r0 m := List.fold_right (fun '(k, v) r => f r k v) r0 (value m);
@@ -132,7 +178,37 @@ Section SortedList.
   Global Instance map_ok : map.ok map.
   Proof.
     split.
-    { case TODO_andres. }
+    { intros [l1 ST1] [l2 ST2] F.
+      apply eq_value; unfold map.get, map in *; cbn [value] in *.
+      revert ST1 l2 ST2 F.
+      induction l1; intros.
+      - destruct l2 as [|[k v] t2]. 1: reflexivity.
+        specialize (F k). rewrite lookup_cons in F. rewrite eqb_refl in F. discriminate F.
+      - destruct a as [k1 v1].
+        destruct l2 as [|[k2 v2] l2].
+        + specialize (F k1). cbv [lookup] in F. simpl in F. rewrite eqb_refl in F. discriminate.
+        + setoid_rewrite lookup_cons in F.
+          apply sorted_cons in ST1. destruct ST1 as [ST1 [N1 M1]].
+          apply sorted_cons in ST2. destruct ST2 as [ST2 [N2 M2]].
+          specialize (IHl1 ST1 _ ST2).
+          destruct (eqb k1 k2) eqn: E12.
+          * apply eqb_true in E12. subst.
+            specialize (F k2) as F2. rewrite eqb_refl in F2.
+            apply Option.eq_of_eq_Some in F2. subst.
+            f_equal.
+            eapply IHl1.
+            simpl. intros.
+            specialize (F k).
+            destruct (eqb k k2) eqn: E2; try apply eqb_true in E2; congruence.
+          * exfalso.
+            unfold eqb in F.
+            apply Bool.andb_false_iff in E12. destruct E12 as [E12 | E12]; apply Bool.negb_false_iff in E12.
+            -- specialize (F k1). rewrite E12, (@ltb_antirefl _ _ ok) in F.
+               simpl in F.
+               specialize M2 with (1 := E12). congruence.
+            -- specialize (F k2). rewrite E12, (@ltb_antirefl _ _ ok) in F.
+               simpl in F.
+               specialize M1 with (1 := E12). congruence. }
     { intros; exact eq_refl. }
     { case TODO_andres. }
     { case TODO_andres. }
@@ -150,7 +226,7 @@ Section SortedList.
         destruct m as [l' pl']. simpl in Heql.
         destruct l' as [|[k0 v0] l']. 1: discriminate.
         inversion Heql. subst l' v0 k0. clear Heql.
-        destruct (sorted_cons _ _ _ pl') as [A B].
+        destruct (sorted_cons _ _ _ pl') as [A [B _]].
         specialize (IHl {| value := l; _value_ok := A |} eq_refl).
         specialize H0 with (2 := IHl).
         cbn in H0. specialize (H0 k v).
@@ -172,7 +248,7 @@ Section SortedList.
         destruct m as [l' pl']. simpl in Heql.
         destruct l' as [|[k0 v0] l']. 1: discriminate.
         inversion Heql. subst l' v0 k0. clear Heql.
-        destruct (sorted_cons _ _ _ pl') as [HA HB].
+        destruct (sorted_cons _ _ _ pl') as [HA [HB _]].
         specialize (IHl {| value := l; _value_ok := HA |} eq_refl).
         eapply H. exact IHl. }
   Qed.
