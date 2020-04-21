@@ -109,12 +109,27 @@ Section SortedList.
     intros. unfold eqb. rewrite (@ltb_antirefl _ _ ok). reflexivity.
   Qed.
 
-  Lemma eqb_true: forall k1 k2, eqb k1 k2 = true -> k1 = k2.
+  Lemma eqb_true: forall k1 k2, eqb k1 k2 = true <-> k1 = k2.
   Proof.
-    unfold eqb. intros. eapply Bool.andb_true_iff in H. destruct H as [L1 L2].
-    destruct (ltb k1 k2) eqn: E12. 1: discriminate L1.
-    destruct (ltb k2 k1) eqn: E21. 1: discriminate L2.
-    eauto using ltb_total.
+    unfold eqb. intros.
+    split; intros.
+    - eapply Bool.andb_true_iff in H. destruct H as [L1 L2].
+      destruct (ltb k1 k2) eqn: E12. 1: discriminate L1.
+      destruct (ltb k2 k1) eqn: E21. 1: discriminate L2.
+      eauto using ltb_total.
+    - subst.
+      apply Bool.andb_true_iff.
+      rewrite ltb_antirefl.
+      intuition.
+  Qed.
+
+  Lemma eqb_false: forall k1 k2, eqb k1 k2 = false <-> k1 <> k2.
+  Proof.
+    intros.
+    rewrite <-Bool.not_true_iff_false.
+    unfold not.
+    rewrite eqb_true.
+    intuition.
   Qed.
 
   Lemma eqb_sym: forall k1 k2, eqb k1 k2 = eqb k2 k1.
@@ -174,7 +189,6 @@ Section SortedList.
     apply f_equal, Eqdep_dec.UIP_dec; decide equality.
   Qed.
 
-  Local Axiom TODO_andres: False.
   Global Instance map_ok : map.ok map.
   Proof.
     split.
@@ -192,14 +206,14 @@ Section SortedList.
           apply sorted_cons in ST2. destruct ST2 as [ST2 [N2 M2]].
           specialize (IHl1 ST1 _ ST2).
           destruct (eqb k1 k2) eqn: E12.
-          * apply eqb_true in E12. subst.
+          * rewrite eqb_true in E12. subst.
             specialize (F k2) as F2. rewrite eqb_refl in F2.
             apply Option.eq_of_eq_Some in F2. subst.
             f_equal.
             eapply IHl1.
             simpl. intros.
             specialize (F k).
-            destruct (eqb k k2) eqn: E2; try apply eqb_true in E2; congruence.
+            destruct (eqb k k2) eqn: E2; try rewrite eqb_true in E2; congruence.
           * exfalso.
             unfold eqb in F.
             apply Bool.andb_false_iff in E12. destruct E12 as [E12 | E12]; apply Bool.negb_false_iff in E12.
@@ -210,10 +224,106 @@ Section SortedList.
                simpl in F.
                specialize M1 with (1 := E12). congruence. }
     { intros; exact eq_refl. }
-    { case TODO_andres. }
-    { case TODO_andres. }
-    { case TODO_andres. }
-    { case TODO_andres. }
+    {
+      intros [l ST] k v.
+      revert ST.
+      simpl.
+      induction l; intros; simpl.
+      - rewrite lookup_cons. rewrite eqb_refl. reflexivity.
+      - destruct a as [k1 v1].
+        apply sorted_cons in ST. destruct ST as [ST [N M]].
+        destruct (ltb k k1) eqn:Hlt1.
+        { rewrite lookup_cons. rewrite eqb_refl. reflexivity. }
+        destruct (ltb k1 k) eqn:Hlt2.
+        2: { rewrite lookup_cons. rewrite eqb_refl. reflexivity. }
+        rewrite lookup_cons. unfold eqb. rewrite Hlt1. rewrite Hlt2. simpl. apply IHl. assumption.
+    }
+    {
+      intros [l ST] k v' k'.
+      rewrite <-eqb_false.
+      simpl.
+      revert ST v' k'.
+      induction l; intros; simpl.
+      - rewrite lookup_cons. rewrite H. reflexivity.
+      - destruct a as [k1 v1].
+        apply sorted_cons in ST. destruct ST as [ST [N M]].
+        specialize (IHl ST).
+        destruct (ltb k' k1) eqn:Hlt1.
+        { rewrite lookup_cons. rewrite H. reflexivity. }
+        destruct (ltb k1 k') eqn:Hlt2.
+        { rewrite lookup_cons.
+          destruct (eqb k k1) eqn:Heq.
+          {
+            rewrite lookup_cons.
+            rewrite Heq.
+            reflexivity.
+          }
+          rewrite IHl by assumption.
+          rewrite lookup_cons.
+          rewrite Heq.
+          reflexivity.
+        }
+        assert (k1 = k') by (apply ltb_total; assumption).
+        subst.
+        do 2 rewrite lookup_cons.
+        rewrite H.
+        reflexivity.
+    }
+    {
+      intros [l ST] k.
+      simpl.
+      revert ST.
+      induction l; intros; simpl.
+      - reflexivity.
+      - destruct a as [k1 v1].
+        apply sorted_cons in ST. destruct ST as [ST [N M]].
+        destruct (ltb k k1) eqn:Hlt1.
+        { specialize M with (1 := Hlt1). rewrite lookup_cons.
+          replace (eqb k k1) with false by (unfold eqb; rewrite Hlt1; reflexivity).
+          assumption.
+        }
+        destruct (ltb k1 k) eqn:Hlt2.
+        {
+          rewrite lookup_cons.
+          replace (eqb k k1) with false.
+          2: {
+            unfold eqb.
+            rewrite Hlt2.
+            cbn.
+            rewrite Bool.andb_false_r.
+            reflexivity.
+          }
+          apply IHl.
+          assumption.
+        }
+        assert (k = k1) by (apply ltb_total; assumption).
+        subst.
+        assumption.
+    }
+    {
+      intros [l ST] k k'.
+      rewrite <-eqb_false.
+      simpl.
+      revert ST k'.
+      induction l; intros; simpl.
+      - reflexivity.
+      - destruct a as [k1 v1].
+        apply sorted_cons in ST. destruct ST as [ST [N M]].
+        specialize IHl with (1 := ST).
+        destruct (ltb k' k1) eqn:Hlt1.
+        { reflexivity. }
+        destruct (ltb k1 k') eqn:Hlt2.
+        { do 2 rewrite lookup_cons.
+          destruct (eqb k k1).
+          + reflexivity.
+          + apply IHl. assumption.
+        }
+        rewrite lookup_cons.
+        assert (k1 = k') by (apply ltb_total; assumption).
+        subst.
+        rewrite H.
+        reflexivity.
+    }
     { intros.
       simpl. remember (value m) as l. generalize dependent m.
       induction l; intros.
