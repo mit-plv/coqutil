@@ -283,6 +283,138 @@ Section WithA.
     - rewrite IHPermutation1, IHPermutation2. reflexivity.
   Qed.
 
+  Lemma hd_map {B} (f : A -> B) x l :
+    hd (f x) (map f l) = f (hd x l).
+  Proof. destruct l; reflexivity. Qed.
+
+  Lemma hd_skipn_nth_default (d:A) l i :
+    nth_default d l i = hd d (skipn i l).
+  Proof.
+    rewrite nth_default_eq.
+    revert i; induction l; destruct i; try reflexivity.
+    rewrite skipn_cons. eauto.
+  Qed.
+
+  Lemma firstn_length_firstn n (l : list A) :
+    firstn (length (firstn n l)) l = firstn n l.
+  Proof.
+    revert l; induction n; destruct l;
+      cbn [firstn length]; rewrite ?IHn; reflexivity.
+  Qed.
+
+  Lemma skipn_length_firstn n (l : list A) :
+    skipn (length (firstn n l)) l = skipn n l.
+  Proof.
+    revert l; induction n; destruct l;
+      cbn [skipn firstn length]; rewrite ?IHn; reflexivity.
+  Qed.
+
+  Lemma NoDup_app_iff (l1 l2 : list A) :
+    NoDup (l1 ++ l2) <-> (NoDup l1 /\ NoDup l2
+                          /\ (forall x, In x l1 -> ~ In x l2)
+                          /\ (forall x, In x l2 -> ~ In x l1)).
+  Proof.
+    revert l2; induction l1;
+      repeat match goal with
+             | _ => progress (intros; subst)
+             | _ => progress cbn [In]
+             | _ => rewrite app_nil_l
+             | _ => rewrite <-app_comm_cons
+             | _ => split
+             | H : _ /\ _ |- _ => destruct H
+             | H : _ \/ _ |- _ => destruct H
+             | H: ~ In _ (_ ++ _) |- _ =>
+               rewrite in_app_iff in H;
+                 apply Decidable.not_or in H
+             | H: NoDup (_ ++ _) |- _ =>
+               apply IHl1 in H
+             | H: NoDup (_ :: _) |- _ =>
+               inversion H; clear H; subst
+             | |- ~ (_ \/ _) => intro
+             | |- ~ In _ (_ ++_) =>
+               rewrite in_app_iff
+             | |- NoDup (_ ++ _) => apply IHl1
+             | |- NoDup (_ :: _) => constructor
+             | |- NoDup [] => constructor
+             | H1 : (forall x (H:In x ?l), _),
+                    H2 : In _ ?l |- _ => apply H1 in H2; tauto
+             | H : forall x (_:?a = x \/ _), _ |- _ =>
+               specialize (H a ltac:(tauto)); tauto
+             | _ => solve [eauto]
+             | _ => tauto
+             end.
+  Qed.
+
+  Lemma Forall2_impl_strong {B} (R1 R2 : A -> B -> Prop) xs ys :
+    (forall x y, R1 x y -> In x xs -> In y ys -> R2 x y) ->
+    Forall2 R1 xs ys -> Forall2 R2 xs ys.
+  Proof.
+    revert ys; induction xs; destruct ys; intros;
+      match goal with H : Forall2 _ _ _ |- _ =>
+                      inversion H; subst; clear H end;
+      constructor; eauto using in_eq, in_cons.
+  Qed.
+
+  Lemma Forall2_app_inv {B} (R : A -> B -> Prop)
+        xs1 xs2 ys1 ys2 :
+    length xs1 = length ys1 ->
+    Forall2 R (xs1 ++ xs2) (ys1 ++ ys2) ->
+    Forall2 R xs1 ys1 /\ Forall2 R xs2 ys2.
+  Proof.
+    revert xs2 ys1 ys2; induction xs1;
+      destruct ys1; cbn [length]; intros; try congruence.
+    all:repeat match goal with
+               | _ => rewrite app_nil_l in *
+               | _ => rewrite <-app_comm_cons in *
+               | H : Forall2 _ (_ :: _) _ |- _ =>
+                 inversion H; subst; clear H
+               | |- _ /\ _ => split
+               | |- Forall2 _ _ _ => constructor
+               | _ => solve [eauto]
+               | H : Forall2 _ (_ ++ _) _ |- _ =>
+                 apply IHxs1 in H; [ | congruence .. ];
+                   destruct H
+               end.
+  Qed.
+
+  Lemma NoDup_combine_l {B} xs ys :
+    NoDup xs -> NoDup (@combine A B xs ys).
+  Proof.
+    revert ys; induction xs; destruct ys; inversion 1;
+      intros; subst; cbn [combine]; constructor; auto; [ ].
+    let H := fresh in intro H; apply in_combine_l in H.
+    contradiction.
+  Qed.
+
+  Lemma nth_default_preserves_properties (P : A -> Prop) l n d :
+    (forall x, In x l -> P x) -> P d -> P (nth_default d l n).
+  Proof.
+    rewrite nth_default_eq.
+    destruct (nth_in_or_default n l d); auto.
+    congruence.
+  Qed.
+
+  Lemma Forall_nth_default (R : A -> Prop) d xs i :
+    Forall R xs -> R d ->
+    R (nth_default d xs i).
+  Proof.
+    apply nth_default_preserves_properties; intros;
+      try match goal with H : _ |- _ =>
+                          rewrite Forall_forall in H end;
+      auto.
+  Qed.
+
+  Lemma Forall_snoc (R : A -> Prop) xs x :
+    Forall R xs -> R x ->
+    Forall R (xs ++ [x]).
+  Proof.
+    induction xs; intros;
+      rewrite ?app_nil_l, <-?app_comm_cons;
+      try match goal with H : Forall _ (_ :: _) |- _ =>
+                          inversion H; clear H; subst end;
+      constructor; auto.
+  Qed.
+
 End WithA.
 
 
