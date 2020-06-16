@@ -180,11 +180,31 @@ Section PropSetLemmas.
     disjoint s1 s2.
   Proof. firstorder idtac. Qed.
 
-  Global Instance disjoint_sym : Symmetric (@disjoint E).
+  Global Instance Proper_union :
+    Proper (sameset ==> sameset ==> sameset) (@union E).
   Proof. firstorder idtac. Defined.
-  Global Instance Proper_disjoint
-    : Proper (sameset ==> sameset ==> iff) (@disjoint E).
+
+  Global Instance Proper_intersect :
+    Proper (sameset ==> sameset ==> sameset) (@intersect E).
   Proof. firstorder idtac. Defined.
+
+  Global Instance Proper_diff :
+    Proper (sameset ==> sameset ==> sameset) (@diff E).
+  Proof. firstorder idtac. Defined.
+
+  Global Instance Proper_add :
+    Proper (sameset ==> eq ==> sameset) (@add E).
+  Proof.
+    repeat intro; apply Proper_union; auto.
+    subst. firstorder idtac.
+  Defined.
+
+  Global Instance Proper_remove :
+    Proper (sameset ==> eq ==> sameset) (@remove E).
+  Proof.
+    repeat intro; apply Proper_diff; auto.
+    subst. firstorder idtac.
+  Defined.
 
   Global Instance subset_trans : Transitive (@subset E).
   Proof. firstorder idtac. Defined.
@@ -201,8 +221,10 @@ Section PropSetLemmas.
   Global Instance sameset_ref : Reflexive (@sameset E).
   Proof. firstorder idtac. Defined.
 
-  Global Instance Proper_union :
-    Proper (sameset ==> sameset ==> sameset) (@union E).
+  Global Instance disjoint_sym : Symmetric (@disjoint E).
+  Proof. firstorder idtac. Defined.
+  Global Instance Proper_disjoint
+    : Proper (sameset ==> sameset ==> iff) (@disjoint E).
   Proof. firstorder idtac. Defined.
 
   Section with_eqb.
