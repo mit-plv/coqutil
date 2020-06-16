@@ -1,4 +1,6 @@
 Require Import Coq.Lists.List. Import ListNotations.
+Require Import Coq.Classes.Morphisms.
+Require Import Coq.Classes.RelationClasses.
 
 Definition set(A: Type) := A -> Prop.
 
@@ -85,6 +87,189 @@ Section PropSetLemmas.
     intros. unfold set, disjoint, diff in *. firstorder idtac.
   Qed.
 
+  Lemma subset_empty_l (s : set E) :
+    subset empty_set s.
+  Proof. firstorder idtac. Qed.
+
+  Lemma union_empty_l (s : set E) :
+    sameset (union empty_set s) s.
+  Proof. firstorder idtac. Qed.
+
+  Lemma union_empty_r (s : set E) :
+    sameset (union s empty_set) s.
+  Proof. firstorder idtac. Qed.
+
+  Lemma disjoint_empty_l (s : set E) :
+    disjoint empty_set s.
+  Proof. firstorder idtac. Qed.
+
+  Lemma disjoint_empty_r (s : set E) :
+    disjoint s empty_set.
+  Proof. firstorder idtac. Qed.
+
+  Lemma union_comm (s1 s2 : set E) :
+    sameset (union s1 s2) (union s2 s1).
+  Proof. firstorder idtac. Qed.
+
+  Lemma union_assoc (s1 s2 s3 : set E) :
+    sameset (union s1 (union s2 s3)) (union (union s1 s2) s3).
+  Proof. firstorder idtac. Qed.
+
+  Lemma of_list_nil : sameset (@of_list E []) empty_set.
+  Proof. firstorder idtac. Qed.
+
+  Lemma of_list_singleton x: sameset (@of_list E [x]) (singleton_set x).
+  Proof. firstorder idtac. Qed.
+
+  Lemma sameset_iff (s1 s2 : set E) :
+    sameset s1 s2 <-> (forall e, s1 e <-> s2 e).
+  Proof. firstorder idtac. Qed.
+
+  Lemma add_union_singleton (x : E) s :
+    add s x = union (singleton_set x) s.
+  Proof. firstorder idtac. Qed.
+
+  Lemma not_union_iff (s1 s2 : set E) x :
+    ~ union s1 s2 x <-> ~ s1 x /\ ~ s2 x.
+  Proof. firstorder idtac. Qed.
+
+  Lemma disjoint_cons (s : set E) x l :
+    disjoint s (of_list (x :: l)) ->
+    disjoint s (of_list l) /\ disjoint s (singleton_set x).
+  Proof. firstorder idtac. Qed.
+
+  Lemma disjoint_sameset (s1 s2 s3 : set E) :
+    sameset s3 s1 ->
+    disjoint s1 s2 ->
+    disjoint s3 s2.
+  Proof. firstorder idtac. Qed.
+
+  Lemma disjoint_union_l_iff (s1 s2 s3 : set E) :
+    disjoint (union s1 s2) s3 <-> disjoint s1 s3 /\ disjoint s2 s3.
+  Proof. firstorder idtac. Qed.
+
+  Lemma disjoint_union_r_iff (s1 s2 s3 : set E) :
+    disjoint s1 (union s2 s3) <-> disjoint s1 s2 /\ disjoint s1 s3.
+  Proof. firstorder idtac. Qed.
+
+  Lemma subset_union_l (s1 s2 s3 : set E) :
+    subset s1 s3 ->
+    subset s2 s3 ->
+    subset (union s1 s2) s3.
+  Proof. firstorder idtac. Qed.
+
+  Lemma subset_union_rl (s1 s2 s3 : set E) :
+    subset s1 s2 ->
+    subset s1 (union s2 s3).
+  Proof. firstorder idtac. Qed.
+
+  Lemma subset_union_rr (s1 s2 s3 : set E) :
+    subset s1 s3 ->
+    subset s1 (union s2 s3).
+  Proof. firstorder idtac. Qed.
+
+  Lemma subset_disjoint_r (s1 s2 s3 : set E) :
+    subset s2 s3 ->
+    disjoint s1 s3 ->
+    disjoint s1 s2.
+  Proof. firstorder idtac. Qed.
+
+  Lemma subset_disjoint_l (s1 s2 s3 : set E) :
+    subset s1 s3 ->
+    disjoint s3 s2 ->
+    disjoint s1 s2.
+  Proof. firstorder idtac. Qed.
+
+  Global Instance disjoint_sym : Symmetric (@disjoint E).
+  Proof. firstorder idtac. Defined.
+  Global Instance Proper_disjoint
+    : Proper (sameset ==> sameset ==> iff) (@disjoint E).
+  Proof. firstorder idtac. Defined.
+
+  Global Instance subset_trans : Transitive (@subset E).
+  Proof. firstorder idtac. Defined.
+  Global Instance subset_ref : Reflexive (@subset E).
+  Proof. firstorder idtac. Defined.
+  Global Instance Proper_subset
+    : Proper (sameset ==> sameset ==> iff) (@subset E).
+  Proof. firstorder idtac. Defined.
+
+  Global Instance sameset_sym : Symmetric (@sameset E).
+  Proof. firstorder idtac. Defined.
+  Global Instance sameset_trans : Transitive (@sameset E).
+  Proof. firstorder idtac. Defined.
+  Global Instance sameset_ref : Reflexive (@sameset E).
+  Proof. firstorder idtac. Defined.
+
+  Global Instance Proper_union :
+    Proper (sameset ==> sameset ==> sameset) (@union E).
+  Proof. firstorder idtac. Defined.
+
+  Section with_eqb.
+    Context {eqb}
+            {eq_dec : forall x y : E, BoolSpec (x = y) (x <> y) (eqb x y)}.
+
+    Lemma disjoint_singleton_r_iff (x : E) (s : set E) :
+      ~ s x <->
+      disjoint s (singleton_set x).
+    Proof.
+      intros. split; [|firstorder idtac].
+      intros. intro y.
+      destruct (eq_dec x y);
+        subst; try firstorder idtac.
+    Qed.
+
+    Lemma disjoint_singleton_singleton (x y : E) :
+      y <> x ->
+      disjoint (singleton_set x) (singleton_set y).
+    Proof.
+      intros.
+      apply disjoint_singleton_r_iff;
+        firstorder congruence.
+    Qed.
+
+    Lemma disjoint_not_in x (l : list E) :
+      ~ In x l ->
+      disjoint (singleton_set x) (of_list l).
+    Proof.
+      intros. symmetry. apply disjoint_singleton_r_iff; eauto.
+    Qed.
+
+    Lemma NoDup_disjoint (l1 l2 : list E) :
+      NoDup (l1 ++ l2) ->
+      disjoint (of_list l1) (of_list l2).
+    Proof.
+      revert l2; induction l1; intros *;
+        rewrite ?app_nil_l, <-?app_comm_cons;
+        [ solve [firstorder idtac] | ].
+      inversion 1; intros; subst.
+      rewrite of_list_cons.
+      apply disjoint_union_l_iff; split; eauto.
+      apply disjoint_not_in; eauto.
+      rewrite in_app_iff in *. tauto.
+    Qed.
+
+    Lemma disjoint_NoDup (l1 l2 : list E) :
+      NoDup l1 ->
+      NoDup l2 ->
+      disjoint (of_list l1) (of_list l2) ->
+      NoDup (l1 ++ l2).
+    Proof.
+      revert l2; induction l1; intros *;
+        rewrite ?app_nil_l, <-?app_comm_cons;
+        [ solve [firstorder idtac] | ].
+      inversion 1; intros; subst.
+      match goal with H : disjoint (of_list (_ :: _)) _ |- _ =>
+                      symmetry in H;
+                        apply disjoint_cons in H; destruct H end.
+      match goal with H : disjoint _ (singleton_set _) |- _ =>
+                      apply disjoint_singleton_r_iff in H1;
+                        cbv [of_list] in H1
+      end.
+      constructor; [ rewrite in_app_iff; tauto | ].
+      apply IHl1; eauto using disjoint_sym.
+    Qed.
+  End with_eqb.
 End PropSetLemmas.
 
 Require Import Coq.Program.Tactics.
