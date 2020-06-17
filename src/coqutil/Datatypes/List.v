@@ -309,6 +309,22 @@ Section WithA.
       cbn [skipn firstn length]; rewrite ?IHn; reflexivity.
   Qed.
 
+  Lemma firstn_map{B: Type}: forall (f: A -> B) (n: nat) (l: list A),
+      firstn n (map f l) = map f (firstn n l).
+  Proof.
+    induction n; intros.
+    - reflexivity.
+    - simpl. destruct l; simpl; congruence.
+  Qed.
+
+  Lemma firstn_seq: forall (n from len: nat),
+      firstn n (seq from len) = seq from (min n len).
+  Proof.
+    induction n; intros.
+    - reflexivity.
+    - simpl. destruct len; simpl; f_equal; auto.
+  Qed.
+
   Lemma NoDup_app_iff (l1 l2 : list A) :
     NoDup (l1 ++ l2) <-> (NoDup l1 /\ NoDup l2
                           /\ (forall x, In x l1 -> ~ In x l2)

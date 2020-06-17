@@ -116,6 +116,9 @@ Module tuple.
       to_list (of_list xs) = xs.
     Proof. induction xs; cbn; congruence. Qed.
 
+    Lemma length_to_list {n} xs : length (@to_list n xs) = n.
+    Proof. revert xs; induction n; cbn; eauto. Qed.
+
     Lemma to_list_eq_rect a b xs pf
       : to_list (eq_rect a _ xs b pf) = to_list xs.
     Proof. destruct pf. cbn. trivial. Qed.
