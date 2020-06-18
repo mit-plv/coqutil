@@ -206,22 +206,22 @@ Section PropSetLemmas.
     subst. firstorder idtac.
   Defined.
 
-  Global Instance subset_trans : Transitive (@subset E).
+  Global Instance subset_trans : Transitive (@subset E) | 10.
   Proof. firstorder idtac. Defined.
-  Global Instance subset_ref : Reflexive (@subset E).
+  Global Instance subset_ref : Reflexive (@subset E) | 10.
   Proof. firstorder idtac. Defined.
   Global Instance Proper_subset
     : Proper (sameset ==> sameset ==> iff) (@subset E).
   Proof. firstorder idtac. Defined.
 
-  Global Instance sameset_sym : Symmetric (@sameset E).
+  Global Instance sameset_sym : Symmetric (@sameset E) | 10.
   Proof. firstorder idtac. Defined.
-  Global Instance sameset_trans : Transitive (@sameset E).
+  Global Instance sameset_trans : Transitive (@sameset E) | 10.
   Proof. firstorder idtac. Defined.
-  Global Instance sameset_ref : Reflexive (@sameset E).
+  Global Instance sameset_ref : Reflexive (@sameset E) | 10.
   Proof. firstorder idtac. Defined.
 
-  Global Instance disjoint_sym : Symmetric (@disjoint E).
+  Global Instance disjoint_sym : Symmetric (@disjoint E) | 10.
   Proof. firstorder idtac. Defined.
   Global Instance Proper_disjoint
     : Proper (sameset ==> sameset ==> iff) (@disjoint E).
