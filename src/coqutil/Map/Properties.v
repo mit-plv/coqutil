@@ -1126,6 +1126,58 @@ Module map.
         apply IHn.
     Qed.
 
+    Lemma putmany_of_disjoint_list_zip_same_domain: forall (ks: list key) (vs1 vs2: list value) m1 m2 m1' m2',
+      same_domain m1 m2 ->
+      putmany_of_disjoint_list_zip ks vs1 m1 = Some m1' ->
+      putmany_of_disjoint_list_zip ks vs2 m2 = Some m2' ->
+      same_domain m1' m2'.
+    Proof.
+      induction ks; intros.
+      - simpl in *.
+        destruct vs1; [|discriminate]. apply Option.eq_of_eq_Some in H0.
+        destruct vs2; [|discriminate]. apply Option.eq_of_eq_Some in H1.
+        subst. assumption.
+      - simpl in *.
+        destruct vs1; [discriminate|].
+        destruct (putmany_of_disjoint_list_zip ks vs1 m1) eqn: E1; [|discriminate].
+        destruct (get r a); [discriminate|].
+        apply Option.eq_of_eq_Some in H0.
+        destruct vs2; [discriminate|].
+        destruct (putmany_of_disjoint_list_zip ks vs2 m2) eqn: E2; [|discriminate].
+        destruct (get r0 a); [discriminate|].
+        apply Option.eq_of_eq_Some in H1.
+        subst.
+        apply same_domain_put.
+        eapply IHks; eassumption.
+    Qed.
+
+    Lemma of_disjoint_list_zip_same_domain: forall (ks: list key) (vs1 vs2: list value) m1 m2,
+      of_disjoint_list_zip ks vs1 = Some m1 ->
+      of_disjoint_list_zip ks vs2 = Some m2 ->
+      same_domain m1 m2.
+    Proof.
+      intros. eapply putmany_of_disjoint_list_zip_same_domain; try eassumption.
+      apply same_domain_refl.
+    Qed.
+
+    Lemma putmany_of_disjoint_list_zip_length: forall (ks: list key) (vs: list value) m1 m2,
+        putmany_of_disjoint_list_zip ks vs m1 = Some m2 ->
+        length ks = length vs.
+    Proof.
+      induction ks; intros.
+      - destruct vs; simpl in *; try congruence.
+      - destruct vs; simpl in *; try congruence.
+        destruct (putmany_of_disjoint_list_zip ks vs m1) eqn: E; try discriminate.
+        destruct (map.get r a) eqn: F; try discriminate. eauto.
+    Qed.
+
+    Lemma of_disjoint_list_zip_length: forall (ks: list key) (vs: list value) m,
+        of_disjoint_list_zip ks vs = Some m ->
+        length ks = length vs.
+    Proof.
+      unfold of_disjoint_list_zip. eauto using putmany_of_disjoint_list_zip_length.
+    Qed.
+
     Lemma sub_domain_value_indep
         (n: nat) (m: map) (ks: HList.tuple key n) (vs1 vs2: HList.tuple value n)
         (S: sub_domain (map.putmany_of_tuple ks vs1 map.empty) m):

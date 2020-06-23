@@ -87,6 +87,22 @@ Module map.
       end.
     Definition of_list_zip keys values := putmany_of_list_zip keys values empty.
 
+    Fixpoint putmany_of_disjoint_list_zip (keys : list key) (values : list value) (init : rep)
+             {struct keys} : option map :=
+      match keys, values with
+      | nil, nil => Some init
+      | cons k keys, cons v values =>
+        match putmany_of_disjoint_list_zip keys values init with
+        | Some m => match get m k with
+                    | Some _ => None
+                    | None => Some (put m k v)
+                    end
+        | None => None
+        end
+      | _, _ => None
+      end.
+    Definition of_disjoint_list_zip keys values := putmany_of_disjoint_list_zip keys values empty.
+
     Import PrimitivePair.
 
     Definition getmany_of_tuple(m: map){sz: nat}(keys: tuple key sz): option (tuple value sz) :=
