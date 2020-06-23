@@ -152,6 +152,13 @@ Section WithA.
       | 0%nat => nil
       | S n => cons start (unfoldn n (step start))
       end.
+
+    Lemma length_unfoldn: forall n start, length (unfoldn n start) = n.
+    Proof.
+      induction n; intros.
+      - reflexivity.
+      - simpl. f_equal. apply IHn.
+    Qed.
   End WithStep.
 
   Lemma length_nil : length (@nil A) = 0. Proof. reflexivity. Qed.
