@@ -21,25 +21,25 @@ Ltac is_lia P :=
 
 (* We have encountered cases where lia is insanely slower than omega,
    (https://github.com/coq/coq/issues/9848), but not the other way. *)
-Ltac compare_tacs omegatac liatac :=
+Ltac compare_tacs tacA tacB :=
   idtac; (* <-- needed to prevent invocations such as [intuition blia] from
                 applying blia right away instead of passing it to [intuition] *)
   lazymatch goal with
   | |- ?G =>
     let Ho := fresh in let Hl := fresh in
-    tryif (assert G as Ho by omegatac) then (
-      tryif (assert G as Hl by liatac) then (
+    tryif (assert G as Ho by tacA) then (
+      tryif (assert G as Hl by tacB) then (
         (* both succeed *)
         exact Ho
       ) else (
-        (* lia failed on a goal omega solved *)
-        idtac "BAD_LIA";
+        (* tacB failed on a goal tacA solved *)
+        idtac "BAD_B";
         exact Ho
       )
     ) else (
-      tryif (assert G as Hl by liatac) then (
-        (* omega failed on a goal lia solved *)
-        idtac "BAD_OMEGA";
+      tryif (assert G as Hl by tacB) then (
+        (* tacA failed on a goal tacB solved *)
+        idtac "BAD_A";
         exact Hl
       ) else (
         (* both failed (this can be intended) *)
@@ -82,4 +82,4 @@ Ltac blia := lia.
 
 (* bench-omega: This was introduced to be used if we fear that using lia would be slow or fail,
    but now that lia is improved and omega is deprecated, we use lia everywhere. *)
-Ltac bomega := lia.
+Ltac bomega := blia.
