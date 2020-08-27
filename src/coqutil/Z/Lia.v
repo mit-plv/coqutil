@@ -77,8 +77,15 @@ Ltac compare_omega_lia_timed :=
 Ltac compare_omega_lia :=
   compare_tacs ltac:(omega) ltac:(lia).
 
+Require Import Cdcl.Itauto.
+
+Ltac compare_lia_itauto_timed :=
+  compare_tacs
+    ltac:(time "original_lia" lia)
+    ltac:(time "itauto___lia" itauto lia).
+
 (* bench-lia to be used by all code, unless lia doesn't work *)
-Ltac blia := lia.
+Ltac blia := compare_lia_itauto_timed.
 
 (* bench-omega: This was introduced to be used if we fear that using lia would be slow or fail,
    but now that lia is improved and omega is deprecated, we use lia everywhere. *)
