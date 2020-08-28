@@ -77,12 +77,18 @@ Ltac compare_omega_lia_timed :=
 Ltac compare_omega_lia :=
   compare_tacs ltac:(omega) ltac:(lia).
 
+Global Unset Lia Cache.
+
 Require Import Cdcl.Itauto.
+
+Ltac lia_core := xlia zchecker.
+
+Ltac enhanced_lia := Zify.zify; itauto lia_core.
 
 Ltac compare_lia_itauto_timed :=
   compare_tacs
     ltac:(time "original_lia" lia)
-    ltac:(time "itauto___lia" itauto lia).
+    ltac:(time "enhanced_lia" enhanced_lia).
 
 (* bench-lia to be used by all code, unless lia doesn't work *)
 Ltac blia := compare_lia_itauto_timed.
