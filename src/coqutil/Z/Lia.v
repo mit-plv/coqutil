@@ -26,21 +26,21 @@ Ltac compare_tacs tacA tacB :=
                 applying blia right away instead of passing it to [intuition] *)
   lazymatch goal with
   | |- ?G =>
-    let Ho := fresh in let Hl := fresh in
-    tryif (assert G as Ho by tacA) then (
-      tryif (assert G as Hl by tacB) then (
+    let HA := fresh in let HB := fresh in
+    tryif (assert G as HA by tacA) then (
+      tryif (assert G as HB by tacB) then (
         (* both succeed *)
-        exact Ho
+        exact HA
       ) else (
         (* tacB failed on a goal tacA solved *)
         idtac "BAD_B";
-        exact Ho
+        exact HA
       )
     ) else (
-      tryif (assert G as Hl by tacB) then (
+      tryif (assert G as HB by tacB) then (
         (* tacA failed on a goal tacB solved *)
         idtac "BAD_A";
-        exact Hl
+        exact HB
       ) else (
         (* both failed (this can be intended) *)
         fail
