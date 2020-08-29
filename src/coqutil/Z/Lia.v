@@ -28,7 +28,7 @@ Ltac compare_tacs tacA tacB :=
   | |- ?G =>
     let HA := fresh in let HB := fresh in
     tryif (assert G as HA by tacA) then (
-      tryif (assert G as HB by tacB) then (
+      tryif (assert G as HB by (clear HA; tacB)) then (
         (* both succeed *)
         exact HA
       ) else (
