@@ -100,7 +100,7 @@ Module map.
   End OfListNatAt.
 
   Section OfListZAt.
-    Import BinInt.
+    Import BinInt. Local Open Scope Z_scope.
     Context {value : Type} {map : map Z value} {ok : map.ok map}.
     Definition of_list_Z (xs : list value) : map :=
       of_func (Znth_error xs) (List.map Z.of_nat (seq 0 (length xs))).
@@ -121,9 +121,26 @@ Module map.
     Lemma get_of_list_Z_at a xs i : get (of_list_Z_at a xs) i = Znth_error xs (i-a)%Z.
     Proof.
       cbv [of_list_Z_at].
-      replace i with (a+(i-a))%Z by Lia.lia.
+      replace i with (a+(i-a)) by Lia.lia.
       rewrite get_map_keys_always_invertible, get_of_list_Z by (intros; Lia.lia).
       f_equal; Lia.lia.
+    Qed.
+
+    Lemma get_of_list_Z_at_app a xs ys :
+      of_list_Z_at a (xs ++ ys) =
+      putmany (of_list_Z_at a xs) (of_list_Z_at (a+Z.of_nat (length xs)) ys).
+    Proof.
+      apply map_ext; intros k.
+      rewrite Properties.map.get_putmany_dec, 3get_of_list_Z_at.
+      cbv [Znth_error].
+      destruct (Z.ltb_spec (k-a) 0), (Z.ltb_spec ((k - (a + Z.of_nat (length xs)))) 0);
+        try Lia.lia; try trivial.
+      { rewrite nth_error_app1 by Lia.lia; trivial. }
+      { rewrite nth_error_app2 by Lia.lia; trivial.
+        case (nth_error ys (Z.to_nat (k - (a + Z.of_nat (length xs))))) eqn:?.
+        { rewrite <-Heqo. f_equal. Lia.lia. }
+        eapply nth_error_None in Heqo.
+        rewrite 2(proj2 (nth_error_None _ _)) by Lia.lia; trivial. }
     Qed.
   End OfListZAt.
 End map.
