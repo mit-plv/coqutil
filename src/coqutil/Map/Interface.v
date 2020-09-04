@@ -41,6 +41,11 @@ Module map.
   Section WithMap.
     Context {key value : Type} {map : map key value} {map_ok : ok map}.
 
+    Definition update (m : map) (k : key) (ov : option value) :=
+      match ov with
+      | None => remove m k
+      | Some v => put m k v
+      end.
     Definition putmany: map -> map -> map := fold put.
     Definition extends (m1 m2 : map) := forall x w, get m2 x = Some w -> get m1 x = Some w.
     Definition agree_on (P : set key) m1 m2 := forall k, elem_of k P -> get m1 k = get m2 k.

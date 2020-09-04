@@ -23,6 +23,11 @@ Module map.
       subst;
       eauto with map_spec_hints_separate.
 
+    Lemma get_update_same m k ov : get (update m k ov) k = ov.
+    Proof. case ov as [v|]; eauto using get_put_same, get_remove_same. Qed.
+    Lemma get_update_diff m k k' ov (H:k' <> k) : get (update m k ov) k' = get m k'.
+    Proof. case ov as [v|]; cbn; eauto using get_put_diff, get_remove_diff. Qed.
+
     Lemma get_remove_dec m x y : get (remove m x) y = if key_eqb x y then None else get m y.
     Proof. prover. Qed.
     Lemma get_put_dec m x y v : get (put m x v) y = if key_eqb x y then Some v else get m y.
