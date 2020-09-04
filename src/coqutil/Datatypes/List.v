@@ -9,6 +9,10 @@ Require Import Coq.Sorting.Permutation.
 
 Section WithA.
   Context {A : Type}.
+  Definition Znth_error {A} (xs : list A) z :=
+    if BinInt.Z.ltb z BinInt.Z0 then None
+    else List.nth_error xs (BinInt.Z.to_nat z).
+
   Fixpoint option_all (xs : list (option A)) {struct xs} : option (list A) :=
     match xs with
     | nil => Some nil
