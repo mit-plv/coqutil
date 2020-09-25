@@ -50,5 +50,33 @@ Module map.
       rewrite get_of_list_word_at, nth_error_Some.
       rewrite Nat2Z.inj_lt, ?Znat.Z2Nat.id; intuition.
     Qed.
+
+    Lemma of_list_word_at_app a xs ys :
+      of_list_word_at a (xs ++ ys) =
+      putmany (of_list_word_at (word.add a (word.of_Z (Z.of_nat (length xs)))) ys) (of_list_word_at a xs).
+    Proof.
+      eapply map_ext; intros k.
+      rewrite get_of_list_word_at.
+      pose proof word.unsigned_range (word.sub k a) as Hrange.
+      pose proof proj1 (nth_error_Some xs (Z.to_nat (word.unsigned (word.sub k a)))) as Hlength.
+      destruct (nth_error xs (Z.to_nat (word.unsigned (word.sub k a)))) as [v|] eqn:Hv.
+      { specialize (Hlength ltac:(discriminate)).
+        erewrite Properties.map.get_putmany_right;
+          rewrite ?nth_error_app1, ?get_of_list_word_at by Lia.lia; eassumption. }
+      clear Hlength; pose proof Hv as H'v; eapply nth_error_None in Hv; rename Hv into Hlength.
+      rewrite Properties.map.get_putmany_left; rewrite get_of_list_word_at; trivial.
+      rewrite nth_error_app2 by assumption.
+      f_equal.
+      transitivity (Z.to_nat (word.unsigned (word.sub k a) - Z.of_nat (length xs))); try Lia.lia.
+      f_equal.
+      transitivity (word.unsigned (word.sub (word.sub k a) (word.of_Z (Z.of_nat (length xs))))).
+      2: f_equal; ring.
+      symmetry.
+      rewrite word.unsigned_sub.
+      rewrite (word.unsigned_of_Z (Z.of_nat (length xs))).
+      cbv [word.wrap]; rewrite (Z.mod_small (Z.of_nat (length xs))) by Lia.lia.
+      eapply Z.mod_small.
+      split; Lia.lia.
+    Qed.
   End __.
 End map.
