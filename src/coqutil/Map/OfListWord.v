@@ -78,5 +78,31 @@ Module map.
       eapply Z.mod_small.
       split; Lia.lia.
     Qed.
+
+    Lemma adjacent_arrays_disjoint a xs ys (H : (Z.of_nat (length xs) + Z.of_nat (length ys) <= 2^width)%Z) :
+      disjoint (of_list_word_at (word.add a (word.of_Z (Z.of_nat (length xs)))) ys) (of_list_word_at a xs).
+    Proof.
+      intros k y x Hy Hx.
+      assert ((Z.of_nat (length xs) <= 2^width)%Z) by Lia.lia.
+      assert ((Z.of_nat (length ys) <= 2^width)%Z) by Lia.lia.
+      pose proof word.unsigned_range (word.sub k a) as Hrange.
+      pose proof word.unsigned_range (word.sub k (word.add a (word.of_Z (Z.of_nat (length xs))))) as Hr2.
+      rewrite get_of_list_word_at in *.
+      repeat match goal with H: nth_error ?l ?i = Some _ |- _ =>
+          let HH := fresh H in pose proof proj1 (nth_error_Some l i) as HH;
+          destruct (nth_error l i) in *; specialize (HH ltac:(discriminate));
+          inversion H; subst; clear H
+      end.
+      replace (length xs) with (Z.to_nat (Z.of_nat (length xs))) in Hx0 by Lia.lia; eapply Z2Nat.inj_lt in Hx0; try Lia.lia.
+      replace (length ys) with (Z.to_nat (Z.of_nat (length ys))) in Hy0 by Lia.lia; eapply Z2Nat.inj_lt in Hy0; try Lia.lia.
+
+      replace (word.sub k (word.add a (word.of_Z (Z.of_nat (length xs)))))
+         with (word.sub (word.sub k a) (word.of_Z (Z.of_nat (length xs)))) in Hy0 by ring.
+      set (word.sub k a) as i in *.
+      rewrite (word.unsigned_sub i), word.unsigned_of_Z in Hy0; cbv [word.wrap] in Hy0.
+      rewrite Zminus_mod_idemp_r in Hy0.
+      rewrite <-(Z_mod_plus _ 1), Z.mul_1_l in Hy0 by Lia.lia.
+      rewrite Z.mod_small in Hy0; Lia.lia.
+    Qed.
   End __.
 End map.
