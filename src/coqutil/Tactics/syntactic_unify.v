@@ -1,5 +1,3 @@
-Require Import coqutil.Tactics.rdelta.
-
 Ltac _syntactic_unify x y :=
   match constr:(Set) with
   | _ => is_evar x; unify x y
@@ -24,12 +22,12 @@ Ltac _syntactic_unify x y :=
   end.
 Tactic Notation "syntactic_unify" open_constr(x) open_constr(y) :=  _syntactic_unify x y.
 
-Ltac _syntactic_unify_deltavar X Y :=
-  let x := rdelta_var X in
-  let y := rdelta_var Y in
+Ltac _syntactic_unify_deltavar x y :=
   match constr:(Set) with
   | _ => is_evar x; unify x y
   | _ => is_evar y; unify x y
+  | _ => is_var x; let x := eval cbv delta [x] in x in _syntactic_unify_deltavar x y
+  | _ => is_var y; let y := eval cbv delta [y] in y in _syntactic_unify_deltavar x y
   | _ => lazymatch x with
          | ?f ?a => lazymatch y with ?g ?b => _syntactic_unify_deltavar f g; _syntactic_unify_deltavar a b end
          | (fun (a:?Ta) => ?f a)
