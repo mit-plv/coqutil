@@ -1,4 +1,5 @@
 Require Import coqutil.Decidable coqutil.Map.Interface coqutil.Map.MapKeys.
+Require Import coqutil.Z.Lia.
 Require coqutil.Decidable coqutil.Map.Properties.
 Require Coq.Lists.List.
 Import MapKeys.map Interface.map.
@@ -70,7 +71,7 @@ Module map.
       { eauto using get_of_func_None. }
     Qed.
 
-    Lemma get_of_func_type_supported k support (Hs : forall k, List.In k support) 
+    Lemma get_of_func_type_supported k support (Hs : forall k, List.In k support)
       : get (of_func support) k = f k.
     Proof. eauto using get_of_func_In. Qed.
   End OfFunc.
@@ -88,14 +89,14 @@ Module map.
       pose proof Nat.eqb_spec.
       cbv [of_list_nat].
       erewrite get_of_func_Some_supported; trivial; intros.
-      rewrite in_seq; split; try Lia.lia; cbn.
+      rewrite in_seq; split; try blia; cbn.
       apply nth_error_Some. congruence.
     Qed.
 
     Lemma get_of_list_nat_at a xs i : get (of_list_nat_at a xs) (a+i) = nth_error xs i.
     Proof.
       cbv [of_list_nat_at].
-      rewrite get_map_keys_always_invertible, get_of_list_nat; trivial; intros; Lia.lia.
+      rewrite get_map_keys_always_invertible, get_of_list_nat; trivial; intros; blia.
     Qed.
   End OfListNatAt.
 
@@ -114,16 +115,16 @@ Module map.
       erewrite get_of_func_Some_supported; trivial; intros.
       destruct (Z.ltb_spec k 0%Z) in *; try discriminate.
       eapply in_map_iff; exists (Z.to_nat k); rewrite ?in_seq;
-        repeat split; rewrite ?Znat.Z2Nat.id; try Lia.lia; cbn.
+        repeat split; rewrite ?Znat.Z2Nat.id; try blia; cbn.
       apply nth_error_Some. congruence.
     Qed.
 
     Lemma get_of_list_Z_at a xs i : get (of_list_Z_at a xs) i = Znth_error xs (i-a)%Z.
     Proof.
       cbv [of_list_Z_at].
-      replace i with (a+(i-a)) by Lia.lia.
-      rewrite get_map_keys_always_invertible, get_of_list_Z by (intros; Lia.lia).
-      f_equal; Lia.lia.
+      replace i with (a+(i-a)) by blia.
+      rewrite get_map_keys_always_invertible, get_of_list_Z by (intros; blia).
+      f_equal; blia.
     Qed.
 
     Lemma get_of_list_Z_at_app a xs ys :
@@ -134,13 +135,13 @@ Module map.
       rewrite Properties.map.get_putmany_dec, 3get_of_list_Z_at.
       cbv [Znth_error].
       destruct (Z.ltb_spec (k-a) 0), (Z.ltb_spec ((k - (a + Z.of_nat (length xs)))) 0);
-        try Lia.lia; try trivial.
-      { rewrite nth_error_app1 by Lia.lia; trivial. }
-      { rewrite nth_error_app2 by Lia.lia; trivial.
+        try blia; try trivial.
+      { rewrite nth_error_app1 by blia; trivial. }
+      { rewrite nth_error_app2 by blia; trivial.
         case (nth_error ys (Z.to_nat (k - (a + Z.of_nat (length xs))))) eqn:?.
-        { rewrite <-Heqo. f_equal. Lia.lia. }
+        { rewrite <-Heqo. f_equal. blia. }
         eapply nth_error_None in Heqo.
-        rewrite 2(proj2 (nth_error_None _ _)) by Lia.lia; trivial. }
+        rewrite 2(proj2 (nth_error_None _ _)) by blia; trivial. }
     Qed.
   End OfListZAt.
 End map.

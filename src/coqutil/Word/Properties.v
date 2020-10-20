@@ -173,7 +173,7 @@ Module word.
     Proof.
       rewrite word.unsigned_of_Z; cbv [wrap].
       change (-1) with (Z.opp 1).
-      rewrite Z.mod_opp_l_nz; rewrite ?Z.mod_small; try Lia.lia; [].
+      rewrite Z.mod_opp_l_nz; rewrite ?Z.mod_small; try blia; [].
       rewrite Z.ones_equiv.
       eapply Z.sub_1_r.
     Qed.

@@ -1,5 +1,5 @@
+Require Import Coq.ZArith.ZArith.
 Require Import Coq.micromega.Lia.
-Require Import Coq.omega.Omega.
 
 (* Note: running is_lia before lia is not always what you want, because lia can also
    solve contradictory goals where the conclusion is not LIA,
@@ -66,20 +66,5 @@ Goal True. compare_tacs ltac:(wait 10%Z; exact I) ltac:(loop_forever). Abort.
 
 *)
 
-Ltac omega_safe := idtac. (* can be overridden with "fail" *)
-Ltac lia_safe := idtac. (* can be overridden with "fail" *)
-
-Ltac compare_omega_lia_timed :=
-  compare_tacs
-    ltac:(tryif omega_safe then time "omega" omega else idtac "Did not dare to run omega")
-    ltac:(tryif lia_safe   then time "lia"   lia   else idtac "Did not dare to run lia").
-
-Ltac compare_omega_lia :=
-  compare_tacs ltac:(omega) ltac:(lia).
-
 (* bench-lia to be used by all code, unless lia doesn't work *)
 Ltac blia := lia.
-
-(* bench-omega: This was introduced to be used if we fear that using lia would be slow or fail,
-   but now that lia is improved and omega is deprecated, we use lia everywhere. *)
-Ltac bomega := blia.

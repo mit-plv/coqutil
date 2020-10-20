@@ -48,7 +48,7 @@ Section LittleEndian.
       { eapply byte.unsigned_inj.
         rewrite byte.unsigned_of_Z, <-byte.wrap_unsigned; cbv [byte.wrap].
         Z.bitblast; cbn; subst.
-        rewrite (Z.testbit_neg_r _ (i-8)) by bomega.
+        rewrite (Z.testbit_neg_r _ (i-8)) by blia.
         Z.bitblast_core. }
       { rewrite <-IHn.
         rewrite combine_split.

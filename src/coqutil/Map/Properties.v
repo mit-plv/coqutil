@@ -1,4 +1,5 @@
 Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidable coqutil.Map.Interface.
+Require Import coqutil.Z.Lia.
 Import map.
 Require Import coqutil.Datatypes.Option.
 Require Import Coq.Sorting.Permutation.
@@ -1282,19 +1283,19 @@ Module map.
       pose proof (getmany_of_list_length _ _ _ H1) as P.
       destr (List.nth_error ks i); cycle 1. {
         exfalso. apply (proj2 (List.nth_error_Some ks i)).
-        - Lia.blia.
+        - blia.
         - assumption.
       }
       pose proof (getmany_of_list_get _ _ _ _ _ _ H1 E0 E) as Q.
       destr (List.nth_error ks j); cycle 1. {
-        apply (proj1 (List.nth_error_None ks j)) in E1. Lia.blia.
+        apply (proj1 (List.nth_error_None ks j)) in E1. blia.
       }
       symmetry in H3.
       pose proof (getmany_of_list_get _ _ _ _ _ _ H1 E1 H3) as T.
       unfold map.injective in H.
       specialize (H _ _ _ Q T). subst k0.
       eapply H0.
-      - Lia.blia.
+      - blia.
       - congruence.
     Qed.
 
