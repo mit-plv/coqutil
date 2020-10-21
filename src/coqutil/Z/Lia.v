@@ -66,5 +66,18 @@ Goal True. compare_tacs ltac:(wait 10%Z; exact I) ltac:(loop_forever). Abort.
 
 *)
 
+Global Unset Lia Cache.
+
+Require Import Cdcl.Itauto.
+
+Ltac lia_core := xlia zchecker.
+
+Ltac enhanced_lia := Zify.zify; itauto lia_core.
+
+Ltac compare_lia_itauto_timed :=
+  compare_tacs
+    ltac:(time "original_lia" lia)
+    ltac:(time "enhanced_lia" enhanced_lia).
+
 (* bench-lia to be used by all code, unless lia doesn't work *)
-Ltac blia := lia.
+Ltac blia := compare_lia_itauto_timed.
