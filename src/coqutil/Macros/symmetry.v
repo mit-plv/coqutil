@@ -12,14 +12,20 @@ Ltac exact_sym_under_binders pf :=
 Notation "symmetry! pf" := (ltac:(exact_sym_under_binders pf))
                              (at level 10, only parsing).
 
-Goal forall y, exists x, 1 + S y = x.
-  assert (forall y z, z = y+y -> y+y=z) as H by admit.
+From Coq Require Import Lia.
+
+Goal forall (add_assoc: forall x y z, x + (y + z) = x + y + z),
+  forall y, exists x, 1 + S y = x.
+Proof.
+  intros add_assoc.
+  assert (forall y z, z = y+y -> y+y=z) as H by firstorder.
   pose proof (symmetry! H).
 
-  assert (forall y, let z := y+y in y+y=z) as HH by admit.
+  assert (forall y, let z := y+y in y+y=z) as HH by firstorder.
   pose proof (symmetry! HH).
 
-  assert (forall y, let z := y+y in forall t, t+y+y=t+z) as HHH by admit.
+  assert (forall y, let z := y+y in forall t, t+y+y=t+z) as HHH.
+  { intros; rewrite <- add_assoc; auto. }
   pose proof (symmetry! HHH).
 
   pose proof (symmetry! (fun pf : 1 = 2 => pf)).
