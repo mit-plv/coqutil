@@ -9,6 +9,7 @@ Require Import Coq.Sorting.Permutation.
 
 Section WithA.
   Context {A : Type}.
+
   Definition Znth_error {A} (xs : list A) z :=
     if BinInt.Z.ltb z BinInt.Z0 then None
     else List.nth_error xs (BinInt.Z.to_nat z).
@@ -76,10 +77,32 @@ Section WithA.
         * reflexivity.
   Qed.
 
+  Lemma option_all_None l : option_all l = None ->
+    exists i, nth_error l i = Some None.
+  Proof.
+    induction l; cbn; intuition try congruence.
+    case a in *; cycle 1.
+    { exists O; cbn; trivial. }
+    case (option_all l) in *; try discriminate.
+    case (IHl H) as (i&Hi). exists (S i); cbn; eauto.
+  Qed.
+
+  Lemma length_option_all: forall {l1: list (option A)} {l2: list A},
+    option_all l1 = Some l2 ->
+    length l2 = length l1.
+  Proof.
+    induction l1; cbn; intros.
+    { inversion H. trivial. }
+    { case a in *; try inversion H.
+      case (option_all l1) in *; try inversion H.
+      subst. cbn. eapply f_equal, IHl1; trivial. }
+  Qed.
+
   Lemma nth_error_option_all: forall {l1: list (option A)} {l2: list A} (i: nat),
     option_all l1 = Some l2 ->
     (i < List.length l1)%nat ->
-    exists v, nth_error l2 i = Some v.
+    exists v, nth_error l1 i = Some (Some v)
+           /\ nth_error l2 i = Some v.
   Proof.
     induction l1; intros.
     - simpl in *. exfalso. inversion H0.
@@ -271,6 +294,42 @@ Section WithA.
     destr (Nat.ltb i (length l1)).
     - left. rewrite nth_error_app1 in H; assumption.
     - right. rewrite nth_error_app2 in H; assumption.
+  Qed.
+
+  Lemma nth_error_map_Some {B} (f : A -> B) (l : list A) i y
+    (H : nth_error (map f l) i = Some y)
+    : exists x, nth_error l i = Some x /\ f x = y.
+  Proof.
+    pose proof map_nth_error f i l as Hi.
+    case (nth_error l i) eqn:Heqo in Hi.
+    { specialize (Hi _ eq_refl). eexists a; split; congruence. }
+    { eapply nth_error_None in Heqo.
+      pose proof proj1 (nth_error_Some (map f l) i) as HX.
+      destruct (nth_error (map f l) i); try discriminate.
+      specialize (HX ltac:(discriminate)).
+      rewrite map_length in HX. blia. }
+  Qed.
+
+  Lemma nth_error_ext (xs ys : list A)
+    (H : forall i, nth_error xs i = nth_error ys i)
+    : xs = ys.
+  Proof.
+    revert dependent ys; induction xs; intros;
+      pose proof H O as HO;
+      destruct ys; cbn in HO; inversion HO; trivial.
+    f_equal; eapply IHxs; exact (fun i => H (S i)).
+  Qed.
+
+  Lemma nth_error_ext_samelength (xs ys : list A)
+    (Hl : length xs = length ys)
+    (H : forall i, i < length xs -> nth_error xs i = nth_error ys i)
+    : xs = ys.
+  Proof.
+    eapply nth_error_ext; intros i.
+    case (Compare_dec.le_lt_dec (length xs) i)as[|Hi]; eauto.
+    pose proof proj2 (nth_error_None xs i) ltac:(blia).
+    pose proof proj2 (nth_error_None ys i) ltac:(blia).
+    congruence.
   Qed.
 
   Definition endswith (xs : list A) (suffix : list A) :=
