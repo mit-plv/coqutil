@@ -105,5 +105,31 @@ Module map.
       rewrite <-(Z_mod_plus _ 1), Z.mul_1_l in Hy0 by blia.
       rewrite Z.mod_small in Hy0; blia.
     Qed.
+
+    Lemma of_list_word_at_app_n
+      (a : word) (xs ys : list value)
+      lxs (Hlxs : Z.of_nat (length xs) = lxs)
+      : of_list_word_at a (xs ++ ys)
+      = putmany (of_list_word_at (word.add a (word.of_Z lxs)) ys) (of_list_word_at a xs).
+    Proof. subst lxs; eapply of_list_word_at_app. Qed.
+
+    Lemma adjacent_arrays_disjoint_n
+      (a : word) (xs ys : list value)
+      lxs (Hlxs : Z.of_nat (length xs) = lxs)
+      (H : (Z.of_nat (length xs) + Z.of_nat (length ys) <= 2 ^ width)%Z)
+      : disjoint (of_list_word_at (word.add a (word.of_Z lxs)) ys) (of_list_word_at a xs).
+    Proof. subst lxs. auto using adjacent_arrays_disjoint. Qed.
+
+    Lemma of_list_word_nil k : of_list_word_at k nil = empty.
+    Proof. apply Properties.map.fold_empty. Qed.
+
+    Lemma of_list_word_singleton k v : of_list_word_at k (cons v nil) = put empty k v.
+    Proof.
+      cbv [of_list_word_at of_list_word seq length List.map of_func update].
+      rewrite word.unsigned_of_Z_0, Znat.Z2Nat.inj_0; cbv [MapKeys.map.map_keys nth_error].
+      rewrite Properties.map.fold_singleton.
+      f_equal; cbn [Z.of_nat].
+      eapply word.unsigned_inj; rewrite word.unsigned_add; cbv [word.wrap]; rewrite word.unsigned_of_Z_0, Z.add_0_r, Z.mod_small; trivial; eapply word.unsigned_range.
+    Qed.
   End __.
 End map.
