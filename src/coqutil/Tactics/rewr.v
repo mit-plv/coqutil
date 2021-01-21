@@ -39,7 +39,7 @@ Ltac rewr_hyp_step getEq sidecond :=
                    match EQ with
                    | ?LHS = _ => progress (pattern LHS in H;
                                            eapply rew_zoom_fw in H;
-                                           [ | apply E; sidecond ])
+                                           [ | apply E; solve [sidecond] ])
                    end
   end.
 
@@ -51,7 +51,7 @@ Ltac rewr_goal_step getEq sidecond :=
              match EQ with
              | ?LHS = _ => progress (pattern LHS;
                                      eapply rew_zoom_bw;
-                                     [ apply E; sidecond | ])
+                                     [ apply E; solve [sidecond] | ])
              end
   end.
 
