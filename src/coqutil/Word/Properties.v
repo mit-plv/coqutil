@@ -1,4 +1,5 @@
 From Coq Require Import ZArith.
+Require Import Coq.ZArith.Zpow_facts.
 Require Import coqutil.Z.div_mod_to_equations.
 Require Import coqutil.Z.Lia Btauto.
 Require Import coqutil.Z.PushPullMod.
@@ -35,6 +36,19 @@ Module word.
 
     Lemma unsigned_inj x y (H : unsigned x = unsigned y) : x = y.
     Proof. rewrite <-(of_Z_unsigned x), <-(of_Z_unsigned y). apply f_equal, H. Qed.
+
+    Lemma unsigned_of_Z_nowrap x:
+      0 <= x < 2 ^ width -> word.unsigned (word.of_Z x) = x.
+    Proof.
+      intros. rewrite word.unsigned_of_Z. unfold word.wrap. rewrite Z.mod_small; trivial.
+    Qed.
+
+    Lemma of_Z_inj_small{x y}:
+      word.of_Z x = word.of_Z y -> 0 <= x < 2 ^ width -> 0 <= y < 2 ^ width -> x = y.
+    Proof.
+      intros. apply (f_equal word.unsigned) in H. rewrite ?word.unsigned_of_Z in H.
+      unfold word.wrap in H. rewrite ?Z.mod_small in H by assumption. assumption.
+    Qed.
 
     Lemma signed_eq_swrap_unsigned x : signed x = swrap (unsigned x).
     Proof. cbv [wrap]; rewrite <-signed_of_Z, of_Z_unsigned; trivial. Qed.
@@ -365,10 +379,80 @@ Module word.
       enough (0 <= q); Lia.nia.
     Qed.
 
+    Lemma well_founded_lt_unsigned : well_founded (fun a b : word => word.unsigned a < word.unsigned b).
+    Proof.
+      simple refine (Wf_nat.well_founded_lt_compat _ (fun x => Z.to_nat (word.unsigned x)) _ _).
+      cbv beta; intros a b H.
+      epose proof proj1 (Properties.word.unsigned_range a); epose proof proj1 (Properties.word.unsigned_range b).
+      eapply Znat.Z2Nat.inj_lt; trivial.
+      Unshelve.
+      all: unfold word; typeclasses eauto.
+    Qed.
+
     Lemma if_zero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) = 0) : t = false.
     Proof. destruct t; trivial; []. rewrite unsigned_of_Z_1 in H; inversion H. Qed.
     Lemma if_nonzero (t:bool) (H : unsigned (if t then of_Z 1 else of_Z 0) <> 0) : t = true.
     Proof. destruct t; trivial; []. rewrite unsigned_of_Z_0 in H. case (H eq_refl). Qed.
+
+    Lemma unsigned_if: forall (b: bool) thn els,
+        word.unsigned (if b then thn else els) = if b then word.unsigned thn else word.unsigned els.
+    Proof. intros. destruct b; reflexivity. Qed.
+
+    Lemma and_bool_to_word: forall (b1 b2: bool),
+        word.and (if b1 then word.of_Z 1 else word.of_Z 0)
+                 (if b2 then word.of_Z 1 else word.of_Z 0) =
+        if (andb b1 b2) then word.of_Z 1 else word.of_Z 0.
+    Proof.
+      assert (1 < 2 ^ width). {
+        pose proof word.width_pos.
+        change 1 with (2 ^ 0). apply Z.pow_lt_mono_r; blia.
+      }
+      destruct b1; destruct b2; simpl; apply word.unsigned_inj; rewrite word.unsigned_and;
+      unfold word.wrap; rewrite ?unsigned_of_Z_nowrap by blia;
+        rewrite ?Z.land_diag, ?Z.land_0_r, ?Z.land_0_l;
+        apply Z.mod_small; blia.
+    Qed.
+
+    Lemma or_bool_to_word: forall (b1 b2: bool),
+        word.or (if b1 then word.of_Z 1 else word.of_Z 0)
+                (if b2 then word.of_Z 1 else word.of_Z 0) =
+        if (orb b1 b2) then word.of_Z 1 else word.of_Z 0.
+    Proof.
+      assert (1 < 2 ^ width). {
+        pose proof word.width_pos.
+        change 1 with (2 ^ 0). apply Z.pow_lt_mono_r; blia.
+      }
+      destruct b1; destruct b2; simpl; apply word.unsigned_inj; rewrite word.unsigned_or;
+      unfold word.wrap; rewrite ?unsigned_of_Z_nowrap by blia;
+        rewrite ?Z.land_diag, ?Z.land_0_r, ?Z.land_0_l;
+        apply Z.mod_small; blia.
+    Qed.
+
+    Lemma unsigned_slu_shamtZ: forall (x: word) (a: Z),
+        0 <= a < width ->
+        word.unsigned (word.slu x (word.of_Z a)) = word.wrap (Z.shiftl (word.unsigned x) a).
+    Proof.
+      intros. assert (width <= 2 ^ width) by (apply Zpow_facts.Zpower2_le_lin; blia).
+      rewrite word.unsigned_slu; rewrite word.unsigned_of_Z; unfold word.wrap; rewrite (Z.mod_small a); blia.
+    Qed.
+
+    Lemma unsigned_sru_shamtZ: forall (x: word) (a: Z),
+        0 <= a < width ->
+        word.unsigned (word.sru x (word.of_Z a)) = Z.shiftr (word.unsigned x) a.
+    Proof.
+      intros. assert (width <= 2 ^ width) by (apply Zpow_facts.Zpower2_le_lin; blia).
+      rewrite word.unsigned_sru_nowrap; rewrite word.unsigned_of_Z;
+        unfold word.wrap; rewrite (Z.mod_small a); blia.
+    Qed.
+
+    Lemma signed_srs_shamtZ: forall (x: word) (a: Z),
+        0 <= a < width ->
+        word.signed (word.srs x (word.of_Z a)) = Z.shiftr (word.signed x) a.
+    Proof.
+      intros. assert (width <= 2 ^ width) by (apply Zpow_facts.Zpower2_le_lin; blia).
+      rewrite word.signed_srs_nowrap; rewrite word.unsigned_of_Z;
+        unfold word.wrap; rewrite (Z.mod_small a); blia.
+    Qed.
 
     Add Ring wring: (@word.ring_theory width word word_ok).
 
