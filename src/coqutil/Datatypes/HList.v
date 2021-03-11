@@ -31,7 +31,7 @@ Fixpoint arrows (argts : list Type) : Type -> Type :=
   | cons T argts' => fun ret => T -> arrows argts' ret
   end.
 
-Fixpoint hlist@{i j} (argts : list@{j} Type@{i}) : Type@{j} :=
+Fixpoint hlist@{i j k} (argts : list@{j} Type@{i}) : Type@{k} :=
   match argts with
   | nil => unit
   | cons T argts' => T * hlist argts'
