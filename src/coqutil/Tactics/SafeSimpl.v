@@ -53,12 +53,23 @@ Ltac2 eval_change_x_with_y_in_z x y z :=
   | @eq_refl _ ?c => c
   end.
 
+(* TODO use array literals once https://github.com/coq/coq/issues/13976 is implemented *)
+Ltac2 singleton(x: 'a) :=
+  Array.make 1 x.
+
+(* TODO replace by uconstr:() once https://github.com/coq/coq/issues/13977 is implemented *)
+Ltac2 mk_app(a: constr)(b: constr) :=
+  Constr.Unsafe.make (Constr.Unsafe.App a (singleton b)).
+
+Ltac2 try_or_else(f: unit -> 'a)(e: exn -> 'a) :=
+  Control.once (fun _ => Control.plus f e).
+
 Ltac2 rec safe_simpl_term(t: constr) :=
   let (h, a) := head_and_arity t in
   let n := if Constr.is_const h then
-             Control.plus (fun _ => let sa := simpl_arity h in
-                                    if Int.le sa a then Int.sub a sa else a)
-                          (fun _ => a)
+             try_or_else (fun _ => let sa := simpl_arity h in
+                                   if Int.le sa a then Int.sub a sa else a)
+                         (fun _ => a)
            else a in
   safe_simpl_n_args n t
 (* safe_simpl the n right-most arguments of term t, and then if the remaining term
@@ -83,7 +94,7 @@ with safe_simpl_n_args(n: int)(t: constr) :=
     lazy_match! t with
     | ?a ?b => let b' := safe_simpl_term b in
                let a' := safe_simpl_n_args (Int.sub n 1) a in
-               constr:($a' $b')
+               mk_app a' b'
     | _ => Control.throw Assertion_failure
     end.
 
