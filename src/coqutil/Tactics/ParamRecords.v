@@ -3,8 +3,10 @@ Require Ltac2.Option coqutil.Ltac2Lib.Msg.
 
 Ltac2 constructor_of_record(r: Std.reference) :=
   match r with
-  | Std.IndRef ind => Std.ConstructRef (Constr.Unsafe.constructor ind 0)
-  | _ => Control.throw (Invalid_argument (Some (Message.of_constr (Env.instantiate r))))
+  | Std.IndRef ind =>
+    (* TODO check that it's a record (that there's only one constructor) *)
+    Some (Std.ConstructRef (Constr.Unsafe.constructor ind 0))
+  | _ => None
   end.
 
 Ltac2 rec count_foralls(t: constr) :=
@@ -43,18 +45,20 @@ Ltac2 field_names(ctor_ref: Std.reference) :=
 
 Ltac2 simpl_param_projections () := Control.enter (fun () =>
   List.iter (fun r =>
-    List.iter (fun getterRef =>
-      let getter := Ltac1.of_constr (Env.instantiate getterRef) in
-      let n := count_params_of_record r in
-      (* Note: one _ more than n because that's the record value itself, while n are the parameters *)
-      if Int.equal n 0 then ltac1:( g |- simpl (g _) in * ) getter
-      else if Int.equal n 1 then ltac1:( g |- simpl (g _ _) in * ) getter
-      else if Int.equal n 2 then ltac1:( g |- simpl (g _ _ _) in * ) getter
-      else Control.throw (Invalid_argument (Some (Msg.concat
-               [Message.of_string "Records with ";
-                Message.of_int n;
-                Message.of_string " parameters are not supported"])))
-    ) (field_names (constructor_of_record r))
-  ) (Env.expand [@parameters])).
+    match constructor_of_record r with
+    | Some ctor => List.iter (fun getterRef =>
+        let getter := Ltac1.of_constr (Env.instantiate getterRef) in
+        let n := count_params_of_record r in
+        (* Note: one _ more than n because that's the record value itself, while n are the parameters *)
+        if Int.equal n 0 then ltac1:( g |- simpl (g _) in * ) getter
+        else if Int.equal n 1 then ltac1:( g |- simpl (g _ _) in * ) getter
+        else if Int.equal n 2 then ltac1:( g |- simpl (g _ _ _) in * ) getter
+        else Control.throw (Invalid_argument (Some (Msg.concat
+                 [Message.of_string "Records with ";
+                  Message.of_int n;
+                  Message.of_string " parameters are not supported"])))
+      ) (field_names ctor)
+    | None => ()
+    end) (Env.expand [@parameters])).
 
 Ltac simpl_param_projections := ltac2:(simpl_param_projections ()).
