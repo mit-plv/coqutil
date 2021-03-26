@@ -38,8 +38,6 @@ Ltac2 rec head_and_arity_rec(e: constr)(arity_so_far: int) :=
 
 Ltac2 head_and_arity(e: constr) := head_and_arity_rec e 0.
 
-Ltac2 Type exn ::= [ Assertion_failure ].
-
 (* ltac1 needed because of COQBUG https://github.com/coq/coq/issues/11641 *)
 Ltac2 change_x_with_y(x : constr)(y : constr) :=
   ltac1:(a b |- change a with b) (Ltac1.of_constr x) (Ltac1.of_constr y).
@@ -95,7 +93,7 @@ with safe_simpl_n_args(n: int)(t: constr) :=
     | ?a ?b => let b' := safe_simpl_term b in
                let a' := safe_simpl_n_args (Int.sub n 1) a in
                mk_app a' b'
-    | _ => Control.throw Assertion_failure
+    | _ => Control.throw Match_failure
     end.
 
 (*
