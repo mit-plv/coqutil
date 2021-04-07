@@ -84,6 +84,22 @@ Section LittleEndian.
       prove_Zeq_bitwise.
   Qed.
 
+  Lemma combine_inj: forall (n: nat) (b1 b2: tuple byte n),
+      LittleEndian.combine n b1 = LittleEndian.combine n b2 ->
+      b1 = b2.
+  Proof.
+    intros.
+    apply (f_equal (LittleEndian.split n)) in H.
+    do 2 rewrite LittleEndian.split_combine in H.
+    exact H.
+  Qed.
+
+  Lemma combine_1_of_list: forall b, LittleEndian.combine 1 (tuple.of_list (cons b nil)) = byte.unsigned b.
+  Proof.
+    intros. change (combine 1 (tuple.of_list (b :: nil))) with (Z.lor (byte.unsigned b) 0).
+    apply Z.lor_0_r.
+  Qed.
+
 End LittleEndian.
 
 Arguments combine: simpl never.
