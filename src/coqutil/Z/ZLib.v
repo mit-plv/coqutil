@@ -27,7 +27,8 @@ Module Z.
   Qed.
 
   Lemma mod_0_r: forall (m: Z),
-      m mod 0 = 0.
+      m mod 0 = 
+      ltac:(match eval hnf in (1 mod 0) with | 0 => exact 0 | _ => exact m end).
   Proof.
     intros. destruct m; reflexivity.
   Qed.
@@ -72,7 +73,7 @@ Module Z.
 
   Lemma mod_pow2_same_cases: forall a n,
       a mod 2 ^ n = a ->
-      2 ^ n = 0 /\ a = 0 \/ 0 <= a < 2 ^ n.
+      2 ^ n = 0 \/ 0 <= a < 2 ^ n.
   Proof.
     intros.
     assert (n < 0 \/ 0 <= n) as C by blia. destruct C as [C | C].
