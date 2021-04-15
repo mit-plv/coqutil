@@ -8,6 +8,7 @@ Module map.
   Section WithMap.
     Context {key value} {map : map key value} {ok : map.ok map}.
     Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+    Local Hint Mode map.map - - : typeclass_instances.
     Hint Resolve
          get_empty
          get_remove_same

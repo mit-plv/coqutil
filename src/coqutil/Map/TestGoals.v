@@ -12,6 +12,7 @@ Section TestGoals.
   Context {mapspecs: map.ok locals}.
   Context {keq: K -> K -> bool}.
   Context {K_eq_dec: EqDecider keq}.
+  Local Hint Mode map.map - - : typeclass_instances.
 
   Import Map.Interface.map.
 
