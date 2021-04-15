@@ -15,6 +15,7 @@ Section Tests.
   Context {stateMap: map.map var val}.
   Context {stateMapSpecs: map.ok stateMap}.
   Notation state := (@map.rep var val).
+  Local Hint Mode map.map - - : typeclass_instances.
 
   Ltac t := map_solver stateMapSpecs.
 

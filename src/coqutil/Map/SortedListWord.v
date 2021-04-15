@@ -5,7 +5,7 @@ Require coqutil.Map.SortedList.
 Section __.
   Context {width} (word : word width) {word_ok : @word.ok width word}.
   Global Instance strict_order_word
-    : SortedList.parameters.strict_order word.ltu.
+    : SortedList.parameters.strict_order (T:=word) word.ltu.
   Proof.
     split; try setoid_rewrite word.unsigned_ltu; intros;
       repeat match goal with
@@ -18,7 +18,9 @@ Section __.
 
   Context (value : Type).
   Definition SortedList_parameters : SortedList.parameters :=
-    {| SortedList.parameters.value := value; SortedList.parameters.ltb := word.ltu |}.
+    {| SortedList.parameters.value := value;
+       SortedList.parameters.key := word;
+       SortedList.parameters.ltb := word.ltu |}.
   Definition map : map.map word value := SortedList.map SortedList_parameters strict_order_word.
   Global Instance ok : map.ok map := @SortedList.map_ok SortedList_parameters strict_order_word.
 End __.

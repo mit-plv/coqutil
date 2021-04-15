@@ -14,6 +14,7 @@ Local Ltac mia := Z.div_mod_to_equations; Lia.nia.
 Module word.
   Section WithWord.
     Context {width} {word : word width} {word_ok : word.ok word}.
+    Local Hint Mode word.word - : typeclass_instances.
 
     (* Create HintDb word_laws discriminated. *) (* DON'T do this, COQBUG(5381) *)
     Hint Rewrite
@@ -357,6 +358,7 @@ Module word.
 
   Section WordConvenienceKitchenSink.
     Context {width} {word : word width} {word_ok : word.ok word}.
+    Local Hint Mode word.word - : typeclass_instances.
     Lemma word_sub_add_l_same_l x y : word.sub (word.add x y) x = y.
     Proof.
       eapply word.unsigned_inj.
@@ -523,6 +525,7 @@ Hint Rewrite
 Section RingDemoAndTest.
 
   Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
+    Local Hint Mode word.word - : typeclass_instances.
 
   Add Ring wring : (word.ring_theory (word := word))
       (preprocess [autorewrite with rew_word_morphism],

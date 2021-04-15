@@ -8,6 +8,7 @@ Require Import coqutil.Z.Lia.
 
 Section Lemmas.
   Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
+  Local Hint Mode word.word - : typeclass_instances.
 
   Add Ring wring: (@word.ring_theory width word word_ok).
 

@@ -17,6 +17,8 @@ Module map.
   }.
   Arguments map : clear implicits.
   Global Coercion rep : map >-> Sortclass.
+  Global Hint Mode map + + : typeclass_instances.
+  Local Hint Mode map - - : typeclass_instances.
 
   Class ok {key value : Type} {map : map key value}: Prop := {
     map_ext : forall m1 m2, (forall k, get m1 k = get m2 k) -> m1 = m2;
