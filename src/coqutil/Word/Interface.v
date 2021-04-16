@@ -49,8 +49,6 @@ Module word.
     sextend: Z -> rep -> rep; (* Z is bitwidth of input *)
   }.
   Arguments word : clear implicits.
-  Global Hint Mode word + : typeclass_instances.
-  Local Hint Mode word - : typeclass_instances.
 
   Class ok {width} {word : word width}: Prop := {
     wrap z := z mod 2^width;
