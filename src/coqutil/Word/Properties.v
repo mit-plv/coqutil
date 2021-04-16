@@ -347,6 +347,12 @@ Module word.
       apply swrap_signed.
     Qed.
 
+    Lemma signed_of_Z_nowrap x :
+      - 2^(width-1) <= x < 2 ^ (width-1) -> word.signed (word.of_Z x) = x.
+    Proof.
+      intros; rewrite signed_of_Z. cbv [swrap]; rewrite Z.mod_small; Lia.lia.
+    Qed.
+
     Lemma signed_eqb x y : eqb x y = Z.eqb (signed x) (signed y).
     Proof.
       rewrite unsigned_eqb.
