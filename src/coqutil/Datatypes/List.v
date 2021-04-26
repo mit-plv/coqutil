@@ -538,6 +538,24 @@ Proof.
     rewrite <- IHi; [reflexivity|]. simpl in *. blia.
 Qed.
 
+Lemma firstn_nth: forall (T: Type) (i: nat) (L: list T) (d: T),
+    i < List.length L -> List.firstn i L ++ [nth i L d] = List.firstn (S i) L.
+Proof.
+  intros.
+  rewrite <-firstn_skipn_nth, firstn_skipn_comm, PeanoNat.Nat.add_comm by blia.
+  replace (firstn i L) with (firstn i (firstn (1 + i) L)) by (rewrite firstn_firstn, min_l by blia; auto).
+  rewrite firstn_skipn.
+  reflexivity.
+Qed.
+
+Lemma firstn_nth_skipn: forall (T: Type) (i: nat) (L: list T) (d: T),
+    (i < length L)%nat ->
+    List.firstn i L ++ [nth i L d] ++ List.skipn (S i) L = L.
+Proof.
+  intros.
+  rewrite <-PeanoNat.Nat.add_1_l, <-skipn_skipn, <-firstn_skipn_nth, ?firstn_skipn; auto.
+Qed.
+  
 Definition listUpdate{E: Type}(l: list E)(i: nat)(e: E): list E :=
   firstn i l ++ [e] ++ skipn (S i) l.
 
@@ -644,6 +662,223 @@ Proof.
     rewrite listUpdate_length; assumption.
 Qed.
 
+Definition upds {E: Type}(l: list E)(i: nat)(xs: list E): list E :=
+  (firstn i l) ++ (firstn (length l - i) xs) ++ (skipn (length xs + i) l).
+
+Lemma upds_nil: forall E i (xs: list E),
+    upds [] i xs = [].
+Proof.
+  intros; unfold upds.
+  rewrite firstn_nil, skipn_nil.
+  reflexivity.
+Qed.
+
+Lemma upds_nil': forall E i (l: list E),
+    upds l i [] = l.
+Proof.
+  intros; unfold upds.
+  rewrite firstn_nil; simpl.
+  apply firstn_skipn.
+Qed.
+
+Lemma upds_length: forall E i (l xs: list E),
+    length (upds l i xs) = length l.
+Proof.
+  intros; unfold upds.
+  rewrite ?app_length, ?firstn_length, skipn_length.
+  blia.
+Qed.
+
+Lemma upds_cons_S: forall E i h (t xs: list E),
+    upds (h::t) (S i) xs = h::upds t i xs.
+Proof.
+  intros; unfold upds; simpl.
+  rewrite PeanoNat.Nat.add_succ_r.
+  reflexivity.
+Qed.
+
+Lemma upds_same: forall E i l (xs : list E),
+    length l <= i -> upds l i xs = l.
+Proof.
+  intros.
+  unfold upds.
+  replace (length l - i) with 0 by blia.
+  rewrite firstn_all2, skipn_all, app_nil_r by blia.
+  reflexivity.
+Qed.
+
+Lemma upds_app: forall E i l (xs1 xs2: list E),
+    upds l i (xs1 ++ xs2) = upds (upds l i xs1) (length xs1 + i) xs2.
+Proof.
+  intros; unfold upds.  
+  rewrite ?firstn_app, ?skipn_app.
+  rewrite <-?app_assoc.
+  f_equal.
+  { rewrite firstn_firstn, min_r by blia.
+    reflexivity. }
+  f_equal.
+  { symmetry.
+    apply firstn_all2.
+    rewrite ?firstn_length; blia. }
+  rewrite (proj1 (length_zero_iff_nil (firstn _ (skipn _ _)))), app_nil_l.
+  2:{ rewrite ?firstn_length, skipn_length; blia. }
+  f_equal.
+  { rewrite ?app_length, ?firstn_length, ?skipn_length.
+    f_equal; blia. }
+  rewrite ?(proj1 (length_zero_iff_nil (skipn _ (firstn _ _)))), ?app_nil_l.
+  2, 3: rewrite ?skipn_length, ?firstn_length; blia.
+  rewrite skipn_skipn, ?firstn_length, app_length.
+  match goal with
+  | |- skipn ?n _ = skipn ?m _ => rewrite <-(skipn_length_firstn n), <-(skipn_length_firstn m), ?firstn_length
+  end.
+  f_equal; blia.
+Qed.
+
+Lemma upds_app': forall E i j l (xs1 xs2: list E),
+    j = length xs1 + i -> upds l i (xs1 ++ xs2) = upds (upds l i xs1) j xs2.
+Proof.
+  intros.
+  subst.
+  apply upds_app.
+Qed.
+
+Lemma upds_app1: forall E i l1 l2 (xs :list E),
+    i + length xs <= length l1 -> upds (l1 ++ l2) i xs = upds l1 i xs ++ l2.
+Proof.
+  intros.
+  unfold upds.
+  rewrite firstn_app, skipn_app, app_length.
+  replace (i - length l1) with 0 by blia.
+  replace (length xs + i - length l1) with 0 by blia.
+  rewrite firstn_O, skipn_O, app_nil_r, ?(firstn_all2 xs), <-?app_assoc by blia.
+  reflexivity.
+Qed.
+
+Lemma upds_app12: forall E i l1 l2 (xs :list E),
+    i <= length l1 <= i + length xs ->
+    upds (l1 ++ l2) i xs = upds l1 i xs ++ upds l2 0 (skipn (length l1 - i) xs).
+Proof.
+  intros.
+  unfold upds.
+  rewrite ?firstn_app, ?skipn_app, PeanoNat.Nat.sub_0_r, firstn_O, app_nil_l, app_length.
+  replace (i - length l1) with 0 by blia.
+  rewrite firstn_O, skipn_length, PeanoNat.Nat.add_0_r, skipn_all2, ?app_nil_l, ?app_nil_r by blia.
+  rewrite <-(firstn_skipn (length l1 - i)(firstn (length l1 + length l2 - i) xs)) at 1.
+  rewrite <-?app_assoc, firstn_firstn, min_l, firstn_skipn_comm by blia.
+  f_equal; f_equal; f_equal; f_equal.
+  { f_equal; blia. }
+  blia.
+Qed.
+
+Lemma upds_app2: forall E i l1 l2 (xs :list E),
+    length l1 <= i -> upds (l1 ++ l2) i xs = l1 ++ upds l2 (i - length l1) xs.
+Proof.
+  intros.
+  unfold upds.
+  rewrite firstn_app, skipn_app, app_length, firstn_all2, skipn_all, app_nil_l, <-?app_assoc by blia.
+  f_equal; f_equal; f_equal; f_equal; blia.
+Qed.
+
+Lemma upds_comm': forall E i j l (xs1 xs2 : list E),
+    i + length xs1 <= j ->
+    upds (upds l i xs1) j xs2 = upds (upds l j xs2) i xs1.
+Proof.
+  intros.
+  destruct (PeanoNat.Nat.leb_spec j (length l)).
+  { unfold upds.
+    rewrite ?firstn_app, ?firstn_firstn, (min_r j), (min_l i), ?skipn_app, ?firstn_length,
+    skipn_skipn, firstn_skipn_comm, ?app_length, ?firstn_length, ?skipn_length, <-?app_assoc by blia.
+    f_equal.
+    rewrite (min_l i), min_l, min_r, (min_l j), min_l by blia.
+    replace (i - j) with 0 by blia.
+    simpl.
+    f_equal.
+    { rewrite ?firstn_all2 by blia.
+      reflexivity. }
+    f_equal; f_equal.
+    { f_equal; blia. }
+    { rewrite <-skipn_O at 1.
+      f_equal; [blia|f_equal].
+      blia. }
+    rewrite 2skipn_all by (rewrite firstn_length; blia).
+    simpl.
+    rewrite skipn_skipn.
+    f_equal.
+    blia. }
+  rewrite ?(List.upds_same _ j) by (rewrite ?List.upds_length; blia).
+  reflexivity.
+Qed.
+
+Lemma upds_comm: forall E i j l (xs1 xs2 : list E),
+    i + length xs1 <= j \/ j + length xs2 <= i ->
+    upds (upds l i xs1) j xs2 = upds (upds l j xs2) i xs1.
+Proof.
+  intros.
+  destruct H; [|symmetry]; apply upds_comm'; auto.
+Qed.
+
+Lemma upds_0_skipn: forall E (l xs: list E),
+    length xs <= length l -> upds l 0 xs = xs ++ (skipn (length xs) l).
+Proof.
+  intros.
+  unfold upds; simpl.
+  rewrite PeanoNat.Nat.sub_0_r, PeanoNat.Nat.add_0_r, firstn_all2 by auto.
+  reflexivity.
+Qed.
+
+Lemma upds_replace: forall E (l xs: list E),
+    length l = length xs -> upds l 0 xs = xs.
+Proof.
+  intros.
+  rewrite upds_0_skipn, <-H, skipn_all_exact, app_nil_r by blia.
+  reflexivity.
+Qed.
+
+Definition upd {E: Type}(l: list E)(i: nat)(x: E): list E := upds l i [x].
+
+Lemma upd_nil: forall E i (x : E),
+    upd [] i x = [].
+Proof. intros; apply upds_nil. Qed.
+
+Lemma upd_length: forall E i (l: list E) x,
+    length (upd l i x) = length l.
+Proof. intros; apply upds_length. Qed.
+
+Lemma upd_cons_S: forall E i h (t: list E) x,
+    upd (h::t) (S i) x = h::upd t i x.
+Proof. intros; apply upds_cons_S. Qed.
+
+Lemma upd_firstn_skipn : forall E i (l: list E) x,
+    i < length l -> upd l i x = firstn i l ++ [x] ++ skipn (S i) l.
+Proof.
+  intros.
+  unfold upd, upds.
+  f_equal; f_equal.
+  rewrite firstn_all2; [auto|simpl; blia].
+Qed.
+
+Lemma upd_0_skipn : forall E (l: list E) x,
+    0 < length l -> upd l 0 x = [x]++(skipn 1 l).
+Proof.
+  intros; unfold upd.
+  apply upds_0_skipn.
+  simpl; blia.
+Qed.
+
+Lemma upd_S_skipn : forall E i (pre l: list E) x,
+    i = length pre ->
+    i < length l ->
+    upd (pre ++ (skipn i l)) i x = (pre ++ [x]) ++ (skipn (S (length pre)) l).
+Proof.
+  intros.
+  subst i.
+  rewrite upd_firstn_skipn, firstn_app, firstn_all, PeanoNat.Nat.sub_diag, firstn_O, skipn_app, skipn_all, skipn_skipn, app_nil_r, app_nil_l, ?app_assoc.
+  2:{ blia. }
+  2:{ rewrite app_length, skipn_length; blia. }
+  repeat f_equal.
+  blia.
+Qed.
+
 Section WithZ.
   Import Coq.ZArith.BinInt.
   Local Open Scope Z_scope.
@@ -671,4 +906,6 @@ Section WithZ.
     split; trivial.
     rewrite length_firstn_inbounds, length_skipn; blia.
   Qed.
+
+  
 End WithZ.
