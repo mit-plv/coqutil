@@ -11,4 +11,5 @@ Makefile.coq.*
 .depend
 .lia.cache
 .nia.cache
+.coq-native
 \#*\#
