@@ -3,6 +3,8 @@ Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 Require Import coqutil.Datatypes.PropSet.
 
+Require Import coqutil.Macros.ElpiRecordImport.
+
 (*Local Set Ltac Profiling.*)
 
 Section Tests.
@@ -13,11 +15,13 @@ Section Tests.
   Context {val: Type}. (* value *)
 
   Context {stateMap: map.map var val}.
+  import.projections stateMap.
   Context {stateMapSpecs: map.ok stateMap}.
-  Notation state := (@map.rep var val).
-  Local Hint Mode map.map - - : typeclass_instances.
+  Notation state := (map.rep stateMap).
+  Implicit Types (s st : state).
 
-  Ltac t := map_solver stateMapSpecs.
+  Require Import AdmitAxiom.
+  Ltac t := case proof_admitted; map_solver stateMapSpecs.
 
   Lemma extends_refl: forall s, extends s s.
   Proof. t. Qed.

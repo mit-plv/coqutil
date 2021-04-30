@@ -1,7 +1,7 @@
 Local Unset Universe Minimization ToSet.
 Require Import coqutil.Map.Interface.
 
-Instance map(V: Type): map.map Empty_set V := {|
+Definition map(V: Type): map.map Empty_set V := {|
   map.rep := unit;
   map.get m := Empty_set_rect _;
   map.empty := tt;
@@ -17,7 +17,7 @@ Proof.
   constructor.
   intros.
   repeat match goal with
-         | m: map.rep |- _ => destruct m
+         | m: map.rep _ |- _ => destruct m
          | x: Empty_set |- _ => destruct x
          end.
   reflexivity || assumption.

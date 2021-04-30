@@ -4,10 +4,13 @@ Require coqutil.Decidable coqutil.Map.Properties.
 Require Coq.Lists.List.
 Import MapKeys.map Interface.map.
 
+Require Import coqutil.Macros.ElpiRecordImport.
+
 Module map.
   Section OfFunc.
     Context {key value} {map : map key value} {ok : map.ok map}.
     Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+    import.projections map.
 
     Context (f : key -> option value).
     Fixpoint of_func (support : list key) : map :=
@@ -79,6 +82,7 @@ Module map.
   Import Coq.Lists.List coqutil.Datatypes.List Interface.map.
   Section OfListNatAt.
     Context {value : Type} {map : map nat value} {ok : map.ok map}.
+    import.projections map.
     Definition of_list_nat (xs : list value) : map :=
       of_func (nth_error xs) (seq 0 (length xs)).
     Definition of_list_nat_at (a : nat) (xs : list value) : map :=
@@ -103,6 +107,7 @@ Module map.
   Section OfListZAt.
     Import BinInt. Local Open Scope Z_scope.
     Context {value : Type} {map : map Z value} {ok : map.ok map}.
+    import.projections map.
     Definition of_list_Z (xs : list value) : map :=
       of_func (Znth_error xs) (List.map Z.of_nat (seq 0 (length xs))).
     Definition of_list_Z_at (a : Z) (xs : list value) : map :=

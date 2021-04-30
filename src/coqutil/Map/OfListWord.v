@@ -5,11 +5,14 @@ Require Import coqutil.Map.Interface coqutil.Map.OfFunc.
 Import Interface.map MapKeys.map OfFunc.map.
 Require Import coqutil.Word.Interface coqutil.Word.Properties.
 
+Require Import coqutil.Macros.ElpiRecordImport.
+
 Module map.
   Section __.
     Context {width} {word : word width} {word_ok : word.ok word}.
     Add Ring __wring: (@word.ring_theory width word word_ok).
     Context {value : Type} {map : map word value} {ok : map.ok map}.
+    Remove Hints map : typeclass_instances. import.projections map.
 
     Definition of_list_word (xs : list value) : map :=
       map.of_func

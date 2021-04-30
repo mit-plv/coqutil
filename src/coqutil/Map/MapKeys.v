@@ -2,23 +2,26 @@ Require Import coqutil.Decidable coqutil.Map.Interface.
 Require coqutil.Decidable coqutil.Map.Properties.
 Import Interface.map.
 
+Require Import coqutil.Macros.ElpiRecordImport.
+
 Module map.
   Section MapKeys.
+    Import Interface.map.
     Context {key value} {map : map key value} {ok : map.ok map}.
     Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
     Context {key'} {map' : Interface.map.map key' value} {ok' : map.ok map'}.
     Context {key'_eqb: key' -> key' -> bool} {key'_eq_dec: EqDecider key'_eqb}.
 
-    Definition map_keys f (m:map) : map' := fold (fun m k v => put m (f k) v) empty m.
+    Definition map_keys f (m:map) : map' := map.(fold) (fun m k v => map'.(put) m (f k) v) map'.(empty) m.
     Lemma get_map_keys_invertible (f : key -> key') m k
-      (H:forall k' v', get m k' = Some v' -> f k = f k' -> get m k = get m k')
-      : get (map_keys f m) (f k) = get m k.
+      (H:forall k' v', map.(get) m k' = Some v' -> f k = f k' -> map.(get) m k = map.(get) m k')
+      : map'.(get) (map_keys f m) (f k) = map.(get) m k.
     Proof.
       revert dependent k.
       cbv [map_keys].
       refine (fold_spec (fun m r => forall k,
-        (forall k' v', get m k' = Some v' -> f k = f k' -> get m k = get m k') ->
-        get r (f k) = get m k) _ empty _ _ m).
+        (forall k' v', map.(get) m k' = Some v' -> f k = f k' -> map.(get) m k = map.(get) m k') ->
+        map'.(get) r (f k) = map.(get) m k) _ map'.(empty) _ _ m).
       { intros; rewrite ?get_empty; trivial. }
       clear m.
       intros knew vnew m r Hknew HI k Hk.
@@ -41,7 +44,7 @@ Module map.
 
     Lemma get_map_keys_always_invertible (f : key -> key')
       (H : forall k k', f k = f k' -> k = k')
-      : forall m k, get (map_keys f m) (f k) = get m k.
+      : forall m k, map'.(get) (map_keys f m) (f k) = map.(get) m k.
     Proof.
       intros. eapply get_map_keys_invertible. intros ? ? HA HB.
       rewrite (H _ _ HB); trivial.

@@ -3,8 +3,10 @@ From coqutil Require Import HList.
 From coqutil Require List.
 From coqutil Require Import Datatypes.PropSet.
 
+Require Import coqutil.Macros.ElpiRecordImport.
+
 Module map.
-  Class map {key value} := mk {
+  Record map {key value} := mk {
     rep : Type;
 
     (* fundamental operation, all others are axiomatized in terms of this one *)
@@ -17,10 +19,11 @@ Module map.
   }.
   Arguments map : clear implicits.
   Global Coercion rep : map >-> Sortclass.
-  Global Hint Mode map + + : typeclass_instances.
-  Local Hint Mode map - - : typeclass_instances.
 
-  Class ok {key value : Type} {map : map key value}: Prop := {
+  Section WithMap.
+    Context {key value : Type} {map : map key value}.
+    import.projections map.
+    Class ok : Prop := {
     map_ext : forall m1 m2, (forall k, get m1 k = get m2 k) -> m1 = m2;
     get_empty : forall k, get empty k = None;
     get_put_same : forall m k v, get (put m k v) k = Some v;
@@ -36,12 +39,14 @@ Module map.
                                (fa: A -> key -> value -> A) (fb: B -> key -> value -> B),
         (forall a b k v, R a b -> R (fa a k v) (fb b k v)) ->
         forall a0 b0, R a0 b0 -> forall m, R (fold fa a0 m) (fold fb b0 m);
-
   }.
+  End WithMap.
   Arguments ok {_ _} _.
+  Global Hint Mode ok + + + : ok.
 
   Section WithMap.
     Context {key value : Type} {map : map key value} {map_ok : ok map}.
+    import.projections map.
 
     Definition update (m : map) (k : key) (ov : option value) :=
       match ov with
@@ -56,13 +61,13 @@ Module map.
     Definition undef_on m P := agree_on P m empty.
     Definition injective(m: map): Prop :=
       forall k1 k2 v,
-        map.get m k1 = Some v -> map.get m k2 = Some v -> k1 = k2.
+        get m k1 = Some v -> get m k2 = Some v -> k1 = k2.
     Definition not_in_range(m: map)(l: list value): Prop :=
-      List.Forall (fun v => forall k, map.get m k <> Some v) l.
+      List.Forall (fun v => forall k, get m k <> Some v) l.
     Definition disjoint (a b : map) :=
       forall k v1 v2, get a k = Some v1 -> get b k = Some v2 -> False.
     Definition sub_domain(m1 m2: map): Prop :=
-      forall k v1, map.get m1 k = Some v1 -> exists v2, map.get m2 k = Some v2.
+      forall k v1, get m1 k = Some v1 -> exists v2, get m2 k = Some v2.
     Definition same_domain(m1 m2: map): Prop := sub_domain m1 m2 /\ sub_domain m2 m1.
     Definition split m m1 m2 := m = (putmany m1 m2) /\ disjoint m1 m2.
 
@@ -77,7 +82,7 @@ Module map.
       end.
     Fixpoint of_list (l : list (key * value)) : rep :=
       match l with
-      | nil => map.empty
+      | nil => empty
       | cons (k,v) l => put (of_list l) k v
       end.
 

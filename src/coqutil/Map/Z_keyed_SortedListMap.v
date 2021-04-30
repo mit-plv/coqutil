@@ -17,7 +17,7 @@ Instance Zkeyed_map_params(V: Type): SortedList.parameters := {|
   parameters.ltb := Z.ltb;
 |}.
 
-Instance Zkeyed_map(V: Type): map.map Z V :=
+Definition Zkeyed_map(V: Type): map.map Z V :=
   SortedList.map (Zkeyed_map_params V) Zltb_strictorder.
 
 Instance Zkeyed_map_ok(V: Type): map.ok (Zkeyed_map V).
