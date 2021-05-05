@@ -10,12 +10,22 @@ Ltac is_lia P :=
   | not (@eq Z _ _) => idtac
   | (_ < _)%Z => idtac
   | (_ <= _)%Z => idtac
+  | (_ > _)%Z => idtac
+  | (_ >= _)%Z => idtac
+  | (_ < _ < _)%Z => idtac
+  | (_ <= _ <= _)%Z => idtac
   | (_ <= _ < _)%Z => idtac
+  | (_ < _ <= _)%Z => idtac
   | @eq nat _ _ => idtac
   | not (@eq nat _ _) => idtac
   | (_ < _)%nat => idtac
   | (_ <= _)%nat => idtac
+  | (_ > _)%nat => idtac
+  | (_ >= _)%nat => idtac
+  | (_ < _ < _)%nat => idtac
+  | (_ <= _ <= _)%nat => idtac
   | (_ <= _ < _)%nat => idtac
+  | (_ < _ <= _)%nat => idtac
   | _ => fail "The term" P "is not LIA"
   end.
 
