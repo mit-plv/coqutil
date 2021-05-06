@@ -194,14 +194,15 @@ Section ListSetProofs.
   Lemma In_list_union_l: forall (l1 l2: list E) (x: E),
       In x l1 ->
       In x (list_union eeq l1 l2).
-  Proof.
-    induction l1; intros.
-    - simpl in H. contradiction.
-    - simpl in *. destruct H.
-      + subst. destruct_one_match.
-        * eapply find_some in E0. destruct E0. destr (eeq x e); congruence.
-        * simpl. auto.
-      + destruct_one_match; simpl; eauto.
-  Qed.
+  Proof. intros. eapply In_list_union_spec. left. assumption. Qed.
+
+  Lemma In_list_union_r: forall (l1 l2: list E) (x: E),
+      In x l2 ->
+      In x (list_union eeq l1 l2).
+  Proof. intros. eapply In_list_union_spec. right. assumption. Qed.
+
+  Lemma In_list_union_invert: forall (l1 l2 : list E) (x: E),
+      In x (list_union eeq l1 l2) -> In x l1 \/ In x l2.
+  Proof. intros. eapply In_list_union_spec. assumption. Qed.
 
 End ListSetProofs.
