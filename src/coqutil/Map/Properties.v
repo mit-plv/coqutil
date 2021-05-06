@@ -1403,5 +1403,24 @@ Module map.
         + eauto.
     Qed.
 
+    Definition map_values(f: V1 -> V2): M1 -> M2 :=
+      map.fold (fun acc k v1 => map.put acc k (f v1)) map.empty.
+
+    Lemma map_values_fw(f: V1 -> V2)(m1: M1)(m2: M2):
+      map_values f m1 = m2 ->
+      forall (k: K) (v1: V1),
+        get m1 k = Some v1 ->
+        exists v2, f v1 = v2 /\ get m2 k = Some v2.
+    Proof.
+      unfold map_values. revert m2.
+      eapply fold_spec; intros.
+      - rewrite get_empty in H0. discriminate.
+      - subst.
+        rewrite get_put_dec. rewrite get_put_dec in H2.
+        destr (keqb k k0).
+        + subst. apply Option.eq_of_eq_Some in H2. subst. eauto.
+        + eauto.
+    Qed.
+
   End WithTwoMaps.
 End map.
