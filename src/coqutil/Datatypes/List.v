@@ -501,6 +501,22 @@ Section WithA.
       constructor; auto.
   Qed.
 
+  Lemma forallb_to_Forall(p: A -> bool)(P: A -> Prop):
+    (forall x, p x = true -> P x) ->
+    forall l, forallb p l = true -> Forall P l.
+  Proof.
+    induction l; simpl; intros. 1: constructor.
+    apply Bool.andb_true_iff in H0. destruct H0. constructor; eauto.
+  Qed.
+
+  Lemma Forall_to_forallb(p: A -> bool)(P: A -> Prop):
+    (forall x, P x -> p x = true) ->
+    forall l, Forall P l -> forallb p l = true.
+  Proof.
+    induction 2; simpl; intros. 1: constructor.
+    apply Bool.andb_true_iff. eauto.
+  Qed.
+
 End WithA.
 
 
@@ -555,7 +571,7 @@ Proof.
   intros.
   rewrite <-PeanoNat.Nat.add_1_l, <-skipn_skipn, <-firstn_skipn_nth, ?firstn_skipn; auto.
 Qed.
-  
+
 Definition listUpdate{E: Type}(l: list E)(i: nat)(e: E): list E :=
   firstn i l ++ [e] ++ skipn (S i) l.
 
@@ -710,7 +726,7 @@ Qed.
 Lemma upds_app: forall E i l (xs1 xs2: list E),
     upds l i (xs1 ++ xs2) = upds (upds l i xs1) (length xs1 + i) xs2.
 Proof.
-  intros; unfold upds.  
+  intros; unfold upds.
   rewrite ?firstn_app, ?skipn_app.
   rewrite <-?app_assoc.
   f_equal.
@@ -907,5 +923,5 @@ Section WithZ.
     rewrite length_firstn_inbounds, length_skipn; blia.
   Qed.
 
-  
+
 End WithZ.
