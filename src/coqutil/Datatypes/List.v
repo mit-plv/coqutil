@@ -519,6 +519,14 @@ Section WithA.
 
 End WithA.
 
+Lemma length_flat_map: forall {A B: Type} (f: A -> list B) n (l: list A),
+    (forall (a: A), length (f a) = n) ->
+    length (flat_map f l) = (n * length l)%nat.
+Proof.
+  induction l; intros.
+  - simpl. blia.
+  - simpl. rewrite app_length. rewrite H. rewrite IHl; assumption || blia.
+Qed.
 
 Lemma remove_In_ne{A: Type}{aeqb: A -> A -> bool}{aeqb_spec: EqDecider aeqb}:
   forall (l: list A) (f1 f2: A),
