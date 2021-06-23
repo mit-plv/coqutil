@@ -50,9 +50,12 @@ Ltac2 simpl_param_projections () := Control.enter (fun () =>
         let getter := Ltac1.of_constr (Env.instantiate getterRef) in
         let n := count_params_of_record r in
         (* Note: one _ more than n because that's the record value itself, while n are the parameters *)
-        if Int.equal n 0 then ltac1:( g |- simpl (g _) in * ) getter
-        else if Int.equal n 1 then ltac1:( g |- simpl (g _ _) in * ) getter
-        else if Int.equal n 2 then ltac1:( g |- simpl (g _ _ _) in * ) getter
+        if      Int.equal n 0 then ltac1:( g |- simpl (g           _) in * ) getter
+        else if Int.equal n 1 then ltac1:( g |- simpl (g         _ _) in * ) getter
+        else if Int.equal n 2 then ltac1:( g |- simpl (g       _ _ _) in * ) getter
+        else if Int.equal n 3 then ltac1:( g |- simpl (g     _ _ _ _) in * ) getter
+        else if Int.equal n 4 then ltac1:( g |- simpl (g   _ _ _ _ _) in * ) getter
+        else if Int.equal n 5 then ltac1:( g |- simpl (g _ _ _ _ _ _) in * ) getter
         else Control.throw (Invalid_argument (Some (Msg.concat
                  [Message.of_string "Records with ";
                   Message.of_int n;
