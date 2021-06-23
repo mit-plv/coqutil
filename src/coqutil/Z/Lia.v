@@ -2,8 +2,7 @@ Require Import Coq.ZArith.ZArith.
 Require Import Coq.micromega.Lia.
 
 (* Note: running is_lia before lia is not always what you want, because lia can also
-   solve contradictory goals where the conclusion is not LIA,
-   and it can also deal with conjunctions and disjunctions *)
+   solve contradictory goals where the conclusion is not LIA *)
 Ltac is_lia P :=
   lazymatch P with
   | @eq Z _ _ => idtac
@@ -12,20 +11,23 @@ Ltac is_lia P :=
   | (_ <= _)%Z => idtac
   | (_ > _)%Z => idtac
   | (_ >= _)%Z => idtac
-  | (_ < _ < _)%Z => idtac
-  | (_ <= _ <= _)%Z => idtac
-  | (_ <= _ < _)%Z => idtac
-  | (_ < _ <= _)%Z => idtac
+  | ?A /\ ?B => is_lia A; is_lia B
+  | ?A \/ ?B => is_lia A; is_lia B
+  | ?A -> ?B => is_lia A; is_lia B
+  | False => idtac
   | @eq nat _ _ => idtac
   | not (@eq nat _ _) => idtac
   | (_ < _)%nat => idtac
   | (_ <= _)%nat => idtac
   | (_ > _)%nat => idtac
   | (_ >= _)%nat => idtac
-  | (_ < _ < _)%nat => idtac
-  | (_ <= _ <= _)%nat => idtac
-  | (_ <= _ < _)%nat => idtac
-  | (_ < _ <= _)%nat => idtac
+  | @eq N _ _ => idtac
+  | not (@eq N _ _) => idtac
+  | (_ < _)%N => idtac
+  | (_ <= _)%N => idtac
+  | (_ > _)%N => idtac
+  | (_ >= _)%N => idtac
+  | True => idtac
   | _ => fail "The term" P "is not LIA"
   end.
 
