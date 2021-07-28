@@ -130,7 +130,12 @@ Ltac solve_word_eq OK :=
   end;
   subst;
   try reflexivity;
-  clear;
+  repeat match goal with
+         | x: ?T |- _ => lazymatch T with
+                         | word.ok _ => fail
+                         | _ => clear x
+                         end
+         end;
   simpl;
   simpl_word_exprs OK;
   (ring || (try reflexivity)).
