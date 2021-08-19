@@ -3,6 +3,7 @@ Require Import coqutil.Decidable.
 Require Import coqutil.Tactics.destr coqutil.Tactics.Tactics.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Datatypes.Option.
+Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Lists.List. Import ListNotations.
 Require Import Coq.Sorting.Permutation.
 
@@ -517,7 +518,47 @@ Section WithA.
     apply Bool.andb_true_iff. eauto.
   Qed.
 
+  Definition list_eqb (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} (x y : list A) : bool :=
+    ((length x =? length y)%nat && forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y))%bool.
+
+  Lemma list_forallb_eqb_refl (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} ls :
+    forallb (fun xy => aeqb (fst xy) (snd xy)) (combine ls ls) = true.
+  Proof.
+    induction ls as [|x ?]; [ reflexivity | ].
+    cbn [combine fst snd forallb]. rewrite IHls.
+    destr (aeqb x x); subst; congruence || reflexivity.
+  Qed.
+
+  Lemma length_eq_forallb_eqb_false (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} x y :
+    length x = length y -> x <> y ->
+    forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y) = false.
+  Proof.
+    revert y.
+    induction x as [|x0 x]; destruct y as [|y0 y];
+      cbn [length]; [ congruence .. | ].
+    intros. cbn [combine fst snd forallb].
+    destr (aeqb x0 y0); [ | reflexivity ].
+    rewrite IHx by congruence. reflexivity.
+  Qed.
+
+  Lemma list_eqb_spec (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb}
+    : EqDecider (list_eqb aeqb).
+  Proof.
+    cbv [list_eqb].
+    induction x as [|x0 x]; destruct y as [|y0 y];
+      cbn [length combine forallb Nat.eqb andb fst snd];
+      try (constructor; congruence) ; [ ].
+    destruct (IHx y); subst.
+    { rewrite Nat.eqb_refl.
+      rewrite list_forallb_eqb_refl by auto.
+      destr (aeqb x0 y0); subst; constructor; congruence. }
+    { destr (length x =? length y); cbn [andb];
+      try (constructor; congruence); [ ].
+      rewrite length_eq_forallb_eqb_false by auto.
+      rewrite Bool.andb_false_r. constructor; congruence. }
+  Qed.
 End WithA.
+#[export] Hint Resolve list_eqb_spec : typeclass_instances.
 
 Lemma length_flat_map: forall {A B: Type} (f: A -> list B) n (l: list A),
     (forall (a: A), length (f a) = n) ->
