@@ -947,7 +947,7 @@ Qed.
 Section WithZ.
   Import Coq.ZArith.BinInt.
   Local Open Scope Z_scope.
-  Lemma splitZ_spec [A] (xsys : list A) i (H : 0 <= i < Z.of_nat (length xsys)) :
+  Lemma splitZ_spec {A} (xsys : list A) i (H : 0 <= i < Z.of_nat (length xsys)) :
     let xs := firstn (Z.to_nat i) xsys in
     let ys := skipn (Z.to_nat i) xsys in
     xsys = xs ++ ys /\
@@ -959,7 +959,7 @@ Section WithZ.
     rewrite length_firstn_inbounds, length_skipn; blia.
   Qed.
 
-  Lemma splitZ_spec_n [A] (xsys : list A) i n
+  Lemma splitZ_spec_n {A} (xsys : list A) i n
     (Hn : Z.of_nat (length xsys) = n) (H : 0 <= i < n) :
     let xs := firstn (Z.to_nat i) xsys in
     let ys := skipn (Z.to_nat i) xsys in
