@@ -116,8 +116,8 @@ Module map.
         destruct (putmany_spec m1 m2 k); firstorder congruence.
     Qed.
 
-    Lemma disjoint_empty_l x : disjoint empty x. intros k **; pose proof using ok get_empty k; congruence. Qed.
-    Lemma disjoint_empty_r x : disjoint x empty. intros k **; pose proof using ok get_empty k; congruence. Qed.
+    Lemma disjoint_empty_l x : disjoint empty x. Proof using ok. intros k **; pose proof get_empty k; congruence. Qed.
+    Lemma disjoint_empty_r x : disjoint x empty. Proof using ok. intros k **; pose proof get_empty k; congruence. Qed.
     Lemma disjoint_comm m1 m2 : disjoint m1 m2 <-> disjoint m2 m1.
     Proof using ok. cbv [disjoint]. firstorder idtac. Qed.
     Lemma disjoint_putmany_r x y z : disjoint x (putmany y z) <-> (disjoint x y /\ disjoint x z).

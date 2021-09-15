@@ -54,7 +54,7 @@ Module word.
     Lemma signed_eq_swrap_unsigned x : signed x = swrap (unsigned x).
     Proof using word_ok. cbv [wrap]; rewrite <-signed_of_Z, of_Z_unsigned; trivial. Qed.
 
-    Lemma width_nonneg : 0 <= width. pose proof using word_ok width_pos. blia. Qed.
+    Lemma width_nonneg : 0 <= width. Proof using word_ok. pose proof width_pos. blia. Qed.
     Let width_nonneg_context : 0 <= width. apply width_nonneg. Qed.
     Lemma modulus_pos : 0 < 2^width. apply Z.pow_pos_nonneg; firstorder idtac. Qed.
     Let modulus_pos_section_context := modulus_pos.
