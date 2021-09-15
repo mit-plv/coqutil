@@ -1,6 +1,6 @@
 default_target: all
 
-.PHONY: clean force all install uninstall
+.PHONY: clean force all install uninstall validate
 
 # absolute paths so that emacs compile mode knows where to find error
 # use cygpath -m because Coq on Windows cannot handle cygwin paths
@@ -31,3 +31,6 @@ install::
 
 uninstall::
 	$(MAKE) -f Makefile.coq.all uninstall
+
+validate::
+	$(MAKE) -f Makefile.coq.all validate
