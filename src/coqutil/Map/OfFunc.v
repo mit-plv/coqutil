@@ -23,7 +23,7 @@ Module map.
       induction support.
       { firstorder idtac. }
       { destruct (key_eq_dec a k); intros [|]; subst;
-          pose proof Properties.map.get_update_same;
+          pose proof (Properties.map.get_update_same (ok:=ok));
           cbn; try congruence; [].
         rewrite Properties.map.get_update_diff by congruence.
         eauto. }
