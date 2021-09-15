@@ -30,7 +30,7 @@ Section ListSetProofs.
 
   Lemma length_list_union_nil_r: forall (l: list E),
       length (list_union eeq l []) <= length l.
-  Proof.
+  Proof using Type.
     induction l.
     - simpl. reflexivity.
     - simpl. destruct_one_match; simpl; blia.
@@ -40,7 +40,7 @@ Section ListSetProofs.
       find (eeq a) (list_union eeq l1 (a0 :: l2)) = None ->
       find (eeq a) (list_union eeq l1 l2) = Some e ->
       False.
-  Proof.
+  Proof using eeq_spec.
     induction l1; intros.
     - simpl in *. destr (eeq a a0); congruence.
     - simpl in *.
@@ -60,7 +60,7 @@ Section ListSetProofs.
       find (eeq a) (list_union eeq l1 (a0 :: l2)) = Some e ->
       find (eeq a) (list_union eeq l1 l2) = None ->
       a = a0 /\ a = e.
-  Proof.
+  Proof using eeq_spec.
     induction l1; intros.
     - simpl in *. destruct_one_match_hyp.
       + split; congruence.
@@ -83,7 +83,7 @@ Section ListSetProofs.
 
   Lemma length_list_union_cons_r: forall (l1 l2: list E) (a: E),
       length (list_union eeq l1 (a :: l2)) <= S (length (list_union eeq l1 l2)).
-  Proof.
+  Proof using eeq_spec.
     induction l1; intros.
     - simpl. reflexivity.
     - simpl. destr (find (eeq a) (list_union eeq l1 l2)).
@@ -100,7 +100,7 @@ Section ListSetProofs.
 
   Lemma length_list_union: forall (l1 l2: list E),
       (length (list_union eeq l1 l2) <= length l1 + length l2)%nat.
-  Proof.
+  Proof using eeq_spec.
     induction l2.
     - pose proof (length_list_union_nil_r l1). blia.
     - pose proof (length_list_union_cons_r l1 l2 a). simpl. blia.
@@ -108,14 +108,14 @@ Section ListSetProofs.
 
   Lemma list_union_empty_l: forall l,
       list_union eeq nil l = l.
-  Proof.
+  Proof using Type.
     intros. reflexivity.
   Qed.
 
   Lemma list_union_empty_r: forall l,
       NoDup l ->
       list_union eeq l nil = l.
-  Proof.
+  Proof using eeq_spec.
     induction l; intros.
     - reflexivity.
     - simpl. inversion H. subst.
@@ -129,14 +129,14 @@ Section ListSetProofs.
       Forall P l1 ->
       Forall P l2 ->
       Forall P (list_union eeq l1 l2).
-  Proof.
+  Proof using Type.
     induction l1; intros; simpl; [assumption|].
     inversion H. subst. clear H. destruct_one_match; eauto.
   Qed.
 
   Lemma of_list_removeb: forall x A,
       of_list (removeb eeq x A) = diff (of_list A) (singleton_set x).
-  Proof.
+  Proof using Type.
     unfold of_list, diff, singleton_set, elem_of. intros.
     extensionality e. apply propositional_extensionality. split.
     - induction A; intros.
@@ -153,7 +153,7 @@ Section ListSetProofs.
 
   Lemma In_list_union_spec: forall (l1 l2 : list E) (x: E),
       In x (list_union eeq l1 l2) <-> In x l1 \/ In x l2.
-  Proof.
+  Proof using eeq_spec.
     induction l1; intros.
     - simpl. split; intuition idtac.
     - simpl. destruct_one_match; simpl; split; intros.
@@ -169,7 +169,7 @@ Section ListSetProofs.
 
   Lemma of_list_list_union: forall (l1 l2: list E),
       of_list (list_union eeq l1 l2) = union (of_list l1) (of_list l2).
-  Proof.
+  Proof using eeq_spec.
     intros.
     extensionality e. apply propositional_extensionality.
     unfold of_list, union, elem_of.
@@ -179,7 +179,7 @@ Section ListSetProofs.
   (* Note: l1 can have duplicates, because it's going to be inserted into l2 one by one *)
   Lemma list_union_preserves_NoDup: forall (l1 l2: list E),
       NoDup l2 -> NoDup (list_union eeq l1 l2).
-  Proof.
+  Proof using eeq_spec.
     induction l1; intros.
     - simpl. assumption.
     - simpl.
@@ -194,15 +194,15 @@ Section ListSetProofs.
   Lemma In_list_union_l: forall (l1 l2: list E) (x: E),
       In x l1 ->
       In x (list_union eeq l1 l2).
-  Proof. intros. eapply In_list_union_spec. left. assumption. Qed.
+  Proof using eeq_spec. intros. eapply In_list_union_spec. left. assumption. Qed.
 
   Lemma In_list_union_r: forall (l1 l2: list E) (x: E),
       In x l2 ->
       In x (list_union eeq l1 l2).
-  Proof. intros. eapply In_list_union_spec. right. assumption. Qed.
+  Proof using eeq_spec. intros. eapply In_list_union_spec. right. assumption. Qed.
 
   Lemma In_list_union_invert: forall (l1 l2 : list E) (x: E),
       In x (list_union eeq l1 l2) -> In x l1 \/ In x l2.
-  Proof. intros. eapply In_list_union_spec. assumption. Qed.
+  Proof using eeq_spec. intros. eapply In_list_union_spec. assumption. Qed.
 
 End ListSetProofs.

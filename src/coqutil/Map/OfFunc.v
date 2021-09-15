@@ -18,7 +18,7 @@ Module map.
 
     Lemma get_of_func_In k support (Hs : List.In k support)
       : get (of_func support) k = f k.
-    Proof.
+    Proof using key_eq_dec ok.
       revert dependent support.
       induction support.
       { firstorder idtac. }
@@ -31,7 +31,7 @@ Module map.
 
     Lemma get_of_func_Some_In k support v (H:get (of_func support) k = Some v)
       : List.In k support.
-    Proof.
+    Proof using key_eq_dec ok.
       revert dependent support.
       induction support.
       { cbn. rewrite get_empty. discriminate. }
@@ -41,13 +41,13 @@ Module map.
 
     Lemma get_of_func_notIn k support (Hs : not (List.In k support))
       : get (of_func support) k = None.
-    Proof.
+    Proof using key_eq_dec ok.
       case (get (of_func support) k) eqn:H; trivial.
       eapply get_of_func_Some_In in H; intuition.
     Qed.
 
     Lemma get_of_func_None k s (H:f k = None) : get (of_func s) k = None.
-    Proof.
+    Proof using key_eq_dec ok.
       induction s.
       { firstorder idtac. }
       { destruct (key_eq_dec a k); subst.
@@ -60,12 +60,12 @@ Module map.
       support (Hs : forall k v, f k = Some v -> List.In k support)
       k v (Hk : f k = Some v)
       : get (of_func support) k = f k.
-    Proof. eauto using get_of_func_In. Qed.
+    Proof using key_eq_dec ok. eauto using get_of_func_In. Qed.
 
     Lemma get_of_func_Some_supported
       support (Hs : forall k v, f k = Some v -> List.In k support) k
       : get (of_func support) k = f k.
-    Proof.
+    Proof using key_eq_dec ok.
       case (f k) eqn:H.
       { pose proof get_of_func_Some_supported_In _ Hs _ _ H; congruence. }
       { eauto using get_of_func_None. }
@@ -73,7 +73,7 @@ Module map.
 
     Lemma get_of_func_type_supported k support (Hs : forall k, List.In k support)
       : get (of_func support) k = f k.
-    Proof. eauto using get_of_func_In. Qed.
+    Proof using key_eq_dec ok. eauto using get_of_func_In. Qed.
   End OfFunc.
 
   Import Coq.Lists.List coqutil.Datatypes.List Interface.map.
@@ -85,7 +85,7 @@ Module map.
       map_keys (Nat.add a) (of_list_nat xs).
 
     Lemma get_of_list_nat xs i : get (of_list_nat xs) i = nth_error xs i.
-    Proof.
+    Proof using ok.
       pose proof Nat.eqb_spec.
       cbv [of_list_nat].
       erewrite get_of_func_Some_supported; trivial; intros.
@@ -94,7 +94,7 @@ Module map.
     Qed.
 
     Lemma get_of_list_nat_at a xs i : get (of_list_nat_at a xs) (a+i) = nth_error xs i.
-    Proof.
+    Proof using ok.
       cbv [of_list_nat_at].
       rewrite get_map_keys_always_invertible, get_of_list_nat; trivial; intros; blia.
     Qed.
@@ -109,7 +109,7 @@ Module map.
       map_keys (Z.add a) (of_list_Z xs).
 
     Lemma get_of_list_Z xs i : get (of_list_Z xs) i = Znth_error xs i.
-    Proof.
+    Proof using ok.
       pose proof Decidable.Z.eqb_spec.
       cbv [Znth_error of_list_Z].
       erewrite get_of_func_Some_supported; trivial; intros.
@@ -120,7 +120,7 @@ Module map.
     Qed.
 
     Lemma get_of_list_Z_at a xs i : get (of_list_Z_at a xs) i = Znth_error xs (i-a)%Z.
-    Proof.
+    Proof using ok.
       cbv [of_list_Z_at].
       replace i with (a+(i-a)) by blia.
       rewrite get_map_keys_always_invertible, get_of_list_Z by (intros; blia).
@@ -130,7 +130,7 @@ Module map.
     Lemma get_of_list_Z_at_app a xs ys :
       of_list_Z_at a (xs ++ ys) =
       putmany (of_list_Z_at a xs) (of_list_Z_at (a+Z.of_nat (length xs)) ys).
-    Proof.
+    Proof using ok.
       apply map_ext; intros k.
       rewrite Properties.map.get_putmany_dec, 3get_of_list_Z_at.
       cbv [Znth_error].

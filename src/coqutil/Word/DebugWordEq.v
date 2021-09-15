@@ -11,7 +11,7 @@ Section WithWord.
        constants [word_cst]).
 
   Lemma reduce_eq_to_diff0: forall (a b: word), word.sub a b = word.of_Z 0 -> a = b.
-  Proof.
+  Proof using word_ok.
     intros a b X.
     replace a with (word.add b (word.sub a b)) by ring.
     rewrite X.
