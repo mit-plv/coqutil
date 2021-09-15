@@ -59,13 +59,13 @@ Section PropSetLemmas.
 
   Lemma of_list_cons: forall (e: E) (l: list E),
       sameset (of_list (e :: l)) (add (of_list l) e).
-  Proof.
+  Proof using Type.
     intros. repeat autounfold with unf_derived_set_defs. simpl. auto.
   Qed.
 
   Lemma of_list_app: forall (l1 l2: list E),
       sameset (of_list (l1 ++ l2)) (union (of_list l1) (of_list l2)).
-  Proof.
+  Proof using Type.
     induction l1; repeat autounfold with unf_basic_set_defs unf_derived_set_defs in *;
       intros; simpl; [intuition idtac|].
     setoid_rewrite in_app_iff in IHl1.
@@ -76,109 +76,109 @@ Section PropSetLemmas.
   Lemma disjoint_diff_l: forall (A B C: set E),
       disjoint A C ->
       disjoint (diff A B) C.
-  Proof.
+  Proof using Type.
     intros. unfold set, disjoint, diff in *. firstorder idtac.
   Qed.
 
   Lemma disjoint_diff_r: forall (A B C: set E),
       disjoint C A ->
       disjoint C (diff A B).
-  Proof.
+  Proof using Type.
     intros. unfold set, disjoint, diff in *. firstorder idtac.
   Qed.
 
   Lemma subset_empty_l (s : set E) :
     subset empty_set s.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma union_empty_l (s : set E) :
     sameset (union empty_set s) s.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma union_empty_r (s : set E) :
     sameset (union s empty_set) s.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma disjoint_empty_l (s : set E) :
     disjoint empty_set s.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma disjoint_empty_r (s : set E) :
     disjoint s empty_set.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma union_comm (s1 s2 : set E) :
     sameset (union s1 s2) (union s2 s1).
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma union_assoc (s1 s2 s3 : set E) :
     sameset (union s1 (union s2 s3)) (union (union s1 s2) s3).
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma of_list_nil : sameset (@of_list E []) empty_set.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma of_list_singleton x: sameset (@of_list E [x]) (singleton_set x).
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma sameset_iff (s1 s2 : set E) :
     sameset s1 s2 <-> (forall e, s1 e <-> s2 e).
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma add_union_singleton (x : E) s :
     add s x = union (singleton_set x) s.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma not_union_iff (s1 s2 : set E) x :
     ~ union s1 s2 x <-> ~ s1 x /\ ~ s2 x.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma disjoint_cons (s : set E) x l :
     disjoint s (of_list (x :: l)) ->
     disjoint s (of_list l) /\ disjoint s (singleton_set x).
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma disjoint_sameset (s1 s2 s3 : set E) :
     sameset s3 s1 ->
     disjoint s1 s2 ->
     disjoint s3 s2.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma disjoint_union_l_iff (s1 s2 s3 : set E) :
     disjoint (union s1 s2) s3 <-> disjoint s1 s3 /\ disjoint s2 s3.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma disjoint_union_r_iff (s1 s2 s3 : set E) :
     disjoint s1 (union s2 s3) <-> disjoint s1 s2 /\ disjoint s1 s3.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma subset_union_l (s1 s2 s3 : set E) :
     subset s1 s3 ->
     subset s2 s3 ->
     subset (union s1 s2) s3.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma subset_union_rl (s1 s2 s3 : set E) :
     subset s1 s2 ->
     subset s1 (union s2 s3).
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma subset_union_rr (s1 s2 s3 : set E) :
     subset s1 s3 ->
     subset s1 (union s2 s3).
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma subset_disjoint_r (s1 s2 s3 : set E) :
     subset s2 s3 ->
     disjoint s1 s3 ->
     disjoint s1 s2.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Lemma subset_disjoint_l (s1 s2 s3 : set E) :
     subset s1 s3 ->
     disjoint s3 s2 ->
     disjoint s1 s2.
-  Proof. firstorder idtac. Qed.
+  Proof using Type. firstorder idtac. Qed.
 
   Global Instance Proper_union :
     Proper (sameset ==> sameset ==> sameset) (@union E).
@@ -234,7 +234,7 @@ Section PropSetLemmas.
     Lemma disjoint_singleton_r_iff (x : E) (s : set E) :
       ~ s x <->
       disjoint s (singleton_set x).
-    Proof.
+    Proof using eq_dec.
       intros. split; [|firstorder idtac].
       intros. intro y.
       destruct (eq_dec x y);
@@ -244,7 +244,7 @@ Section PropSetLemmas.
     Lemma disjoint_singleton_singleton (x y : E) :
       y <> x ->
       disjoint (singleton_set x) (singleton_set y).
-    Proof.
+    Proof using eq_dec.
       intros.
       apply disjoint_singleton_r_iff;
         firstorder congruence.
@@ -253,14 +253,14 @@ Section PropSetLemmas.
     Lemma disjoint_not_in x (l : list E) :
       ~ In x l ->
       disjoint (singleton_set x) (of_list l).
-    Proof.
+    Proof using eq_dec.
       intros. symmetry. apply disjoint_singleton_r_iff; eauto.
     Qed.
 
     Lemma NoDup_disjoint (l1 l2 : list E) :
       NoDup (l1 ++ l2) ->
       disjoint (of_list l1) (of_list l2).
-    Proof.
+    Proof using eq_dec.
       revert l2; induction l1; intros *;
         rewrite ?app_nil_l, <-?app_comm_cons;
         [ solve [firstorder idtac] | ].
@@ -276,7 +276,7 @@ Section PropSetLemmas.
       NoDup l2 ->
       disjoint (of_list l1) (of_list l2) ->
       NoDup (l1 ++ l2).
-    Proof.
+    Proof using eq_dec.
       revert l2; induction l1; intros *;
         rewrite ?app_nil_l, <-?app_comm_cons;
         [ solve [firstorder idtac] | ].

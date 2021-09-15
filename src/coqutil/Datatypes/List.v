@@ -30,7 +30,7 @@ Section WithA.
 
   Lemma removeb_not_In{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
     forall (l : list A) (a: A), ~ In a l -> removeb aeqb a l = l.
-  Proof.
+  Proof using Type.
     induction l; intros; simpl; try reflexivity.
     destr (aeqb a0 a); simpl in *; subst.
     + exfalso. auto.
@@ -39,14 +39,14 @@ Section WithA.
 
   Lemma In_removeb_In{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
     forall (a1 a2: A) (l: list A), In a1 (removeb aeqb a2 l) -> In a1 l.
-  Proof.
+  Proof using Type.
     induction l; intros; simpl in *; try contradiction.
     destr (aeqb a2 a); simpl in *; intuition idtac.
   Qed.
 
   Lemma In_removeb_diff{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
     forall (a1 a2: A) (l: list A), a1 <> a2 -> In a1 l -> In a1 (removeb aeqb a2 l).
-  Proof.
+  Proof using Type.
     induction l; intros; simpl in *; try contradiction.
     destr (aeqb a2 a); simpl in *; subst; intuition congruence.
   Qed.
@@ -55,7 +55,7 @@ Section WithA.
     forall (a: A) (l: list A),
       NoDup l ->
       NoDup (removeb aeqb a l).
-  Proof.
+  Proof using Type.
     induction l; intros; simpl in *; try assumption.
     destr (aeqb a a0); simpl in *; inversion H; auto.
     constructor; auto. intro C. apply H2. eapply In_removeb_In. eassumption.
@@ -66,7 +66,7 @@ Section WithA.
       In a s ->
       NoDup s ->
       Datatypes.length (removeb aeqb a s) = pred (Datatypes.length s).
-  Proof.
+  Proof using Type.
     induction s; intros.
     - simpl in H. contradiction.
     - simpl in *. inversion H0. subst. destr (aeqb a0 a).
@@ -80,7 +80,7 @@ Section WithA.
 
   Lemma option_all_None l : option_all l = None ->
     exists i, nth_error l i = Some None.
-  Proof.
+  Proof using Type.
     induction l; cbn; intuition try congruence.
     case a in *; cycle 1.
     { exists O; cbn; trivial. }
@@ -91,7 +91,7 @@ Section WithA.
   Lemma length_option_all: forall {l1: list (option A)} {l2: list A},
     option_all l1 = Some l2 ->
     length l2 = length l1.
-  Proof.
+  Proof using Type.
     induction l1; cbn; intros.
     { inversion H. trivial. }
     { case a in *; try inversion H.
@@ -104,7 +104,7 @@ Section WithA.
     (i < List.length l1)%nat ->
     exists v, nth_error l1 i = Some (Some v)
            /\ nth_error l2 i = Some v.
-  Proof.
+  Proof using Type.
     induction l1; intros.
     - simpl in *. exfalso. inversion H0.
     - simpl in *. destr a; try discriminate. destr (option_all l1); try discriminate.
@@ -118,7 +118,7 @@ Section WithA.
     option_all l1 = Some l2 ->
     In v1o l1 ->
     exists v1, v1o = Some v1 /\ In v1 l2.
-  Proof.
+  Proof using Type.
     induction l1; intros.
     - simpl in *. contradiction.
     - simpl in *. destr a; try discriminate. destr (option_all l1); try discriminate.
@@ -138,7 +138,7 @@ Section WithA.
 
   Lemma dedup_preserves_In(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}(l: list A) a:
     In a l <-> In a (dedup aeqb l).
-  Proof.
+  Proof using Type.
     induction l.
     - simpl. firstorder idtac.
     - simpl. split; intro H.
@@ -161,7 +161,7 @@ Section WithA.
 
   Lemma NoDup_dedup(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}: forall (l: list A),
       NoDup (dedup aeqb l).
-  Proof.
+  Proof using Type.
     induction l.
     - simpl. constructor.
     - simpl. destruct_one_match.
@@ -182,46 +182,46 @@ Section WithA.
       end.
 
     Lemma length_unfoldn: forall n start, length (unfoldn n start) = n.
-    Proof.
+    Proof using Type.
       induction n; intros.
       - reflexivity.
       - simpl. f_equal. apply IHn.
     Qed.
   End WithStep.
 
-  Lemma length_nil : length (@nil A) = 0. Proof. reflexivity. Qed.
+  Lemma length_nil : length (@nil A) = 0. Proof using Type. reflexivity. Qed.
   Lemma length_cons x xs : length (@cons A x xs) = S (length xs).
-  Proof. exact eq_refl. Qed.
+  Proof using Type. exact eq_refl. Qed.
 
   Lemma tl_skipn n (xs : list A) : tl (skipn n xs) = skipn (S n) xs.
-  Proof. revert xs; induction n, xs; auto; []; eapply IHn. Qed.
+  Proof using Type. revert xs; induction n, xs; auto; []; eapply IHn. Qed.
   Lemma tl_is_skipn1 (xs : list A) : tl xs = skipn 1 xs.
-  Proof. destruct xs; reflexivity. Qed.
+  Proof using Type. destruct xs; reflexivity. Qed.
   Lemma skipn_all_exact (xs : list A) : skipn (length xs) xs = nil.
-  Proof. induction xs; eauto. Qed.
+  Proof using Type. induction xs; eauto. Qed.
   Lemma skipn_0_l (xs : list A) : skipn 0 xs = xs.
-  Proof. exact eq_refl. Qed.
+  Proof using Type. exact eq_refl. Qed.
   Lemma skipn_nil_r n : @skipn A n nil = nil.
-  Proof. induction n; auto. Qed.
+  Proof using Type. induction n; auto. Qed.
   Lemma skipn_all n (xs : list A) (H : le (length xs) n) : skipn n xs = nil.
-  Proof.
+  Proof using Type.
     revert dependent xs; induction n, xs; cbn; auto; try blia; [].
     intros; rewrite IHn; trivial; blia.
   Qed.
 
   Lemma length_firstn_inbounds n (xs : list A) (H : le n (length xs))
     : length (firstn n xs) = n.
-  Proof.
+  Proof using Type.
     rewrite firstn_length, PeanoNat.Nat.min_comm.
     destruct (Min.min_spec (length xs) n); blia.
   Qed.
   Lemma length_tl_inbounds (xs : list A) : length (tl xs) = (length xs - 1)%nat.
-  Proof.
+  Proof using Type.
     destruct xs; cbn [length tl]; blia.
   Qed.
   Lemma length_skipn n (xs : list A) :
     length (skipn n xs) = (length xs - n)%nat.
-  Proof.
+  Proof using Type.
     pose proof firstn_skipn n xs as HH; eapply (f_equal (@length _)) in HH; rewrite <-HH.
     destruct (Compare_dec.le_lt_dec n (length xs)).
     { rewrite app_length, length_firstn_inbounds; blia. }
@@ -229,10 +229,10 @@ Section WithA.
   Qed.
 
   Lemma skipn_nil n: skipn n (@nil A) = nil.
-  Proof. destruct n; reflexivity. Qed.
+  Proof using Type. destruct n; reflexivity. Qed.
 
   Lemma skipn_app n (xs ys : list A) : skipn n (xs ++ ys) = skipn n xs ++ skipn (n - length xs) ys.
-  Proof.
+  Proof using Type.
     revert n ys.
     induction xs; intros.
     - simpl. rewrite skipn_nil. simpl. rewrite PeanoNat.Nat.sub_0_r. reflexivity.
@@ -242,7 +242,7 @@ Section WithA.
   Qed.
 
   Lemma skipn_skipn n m (xs : list A) : skipn n (skipn m xs) = skipn (n + m) xs.
-  Proof.
+  Proof using Type.
     revert m xs.
     induction n; intros.
     - simpl. reflexivity.
@@ -266,14 +266,14 @@ Section WithA.
   Qed.
 
   Lemma nth_error_nil_Some: forall i (a: A), nth_error nil i = Some a -> False.
-  Proof.
+  Proof using Type.
     intros. destruct i; simpl in *; discriminate.
   Qed.
 
   Lemma nth_error_single_Some: forall (a1 a2: A) i,
       nth_error (a1 :: nil) i = Some a2 ->
       i = O /\ a1 = a2.
-  Proof.
+  Proof using Type.
     intros. destruct i; inversion H; auto. simpl in *.
     exfalso. eapply nth_error_nil_Some. eassumption.
   Qed.
@@ -281,7 +281,7 @@ Section WithA.
   Lemma nth_error_cons_Some: forall (a1 a2: A) (l: list A) i,
       nth_error (a1 :: l) i = Some a2 ->
       i = O /\ a1 = a2 \/ exists j, i = S j /\ nth_error l j = Some a2.
-  Proof.
+  Proof using Type.
     intros. destruct i; simpl in *.
     - inversion H. auto.
     - eauto.
@@ -290,7 +290,7 @@ Section WithA.
   Lemma nth_error_app_Some: forall (a: A) (l1 l2: list A) i,
       nth_error (l1 ++ l2) i = Some a ->
       nth_error l1 i = Some a \/ nth_error l2 (i - length l1) = Some a.
-  Proof.
+  Proof using Type.
     intros.
     destr (Nat.ltb i (length l1)).
     - left. rewrite nth_error_app1 in H; assumption.
@@ -300,7 +300,7 @@ Section WithA.
   Lemma nth_error_map_Some {B} (f : A -> B) (l : list A) i y
     (H : nth_error (map f l) i = Some y)
     : exists x, nth_error l i = Some x /\ f x = y.
-  Proof.
+  Proof using Type.
     pose proof map_nth_error f i l as Hi.
     case (nth_error l i) eqn:Heqo in Hi.
     { specialize (Hi _ eq_refl). eexists a; split; congruence. }
@@ -314,7 +314,7 @@ Section WithA.
   Lemma nth_error_ext (xs ys : list A)
     (H : forall i, nth_error xs i = nth_error ys i)
     : xs = ys.
-  Proof.
+  Proof using Type.
     revert dependent ys; induction xs; intros;
       pose proof H O as HO;
       destruct ys; cbn in HO; inversion HO; trivial.
@@ -325,7 +325,7 @@ Section WithA.
     (Hl : length xs = length ys)
     (H : forall i, i < length xs -> nth_error xs i = nth_error ys i)
     : xs = ys.
-  Proof.
+  Proof using Type.
     eapply nth_error_ext; intros i.
     case (Compare_dec.le_lt_dec (length xs) i)as[|Hi]; eauto.
     pose proof proj2 (nth_error_None xs i) ltac:(blia).
@@ -336,17 +336,17 @@ Section WithA.
   Definition endswith (xs : list A) (suffix : list A) :=
     exists prefix, xs = prefix ++ suffix.
   Lemma endswith_refl (xs : list A) : endswith xs xs.
-  Proof. exists nil; trivial. Qed.
+  Proof using Type. exists nil; trivial. Qed.
   Lemma endswith_cons_l (x : A) xs ys :
     endswith ys xs -> endswith (cons x ys) xs.
-  Proof. inversion 1; subst. eexists (cons x _). exact eq_refl. Qed.
+  Proof using Type. inversion 1; subst. eexists (cons x _). exact eq_refl. Qed.
 
   Lemma fold_right_change_order{R: Type}(f: A -> R -> R)
         (f_comm: forall a1 a2 r, f a1 (f a2 r) = f a2 (f a1 r)):
     forall l1 l2: list A,
       Permutation l1 l2 ->
       forall r0, fold_right f r0 l1 = fold_right f r0 l2.
-  Proof.
+  Proof using Type.
     induction 1; intros.
     - reflexivity.
     - simpl. f_equal. auto.
@@ -356,11 +356,11 @@ Section WithA.
 
   Lemma hd_map {B} (f : A -> B) x l :
     hd (f x) (map f l) = f (hd x l).
-  Proof. destruct l; reflexivity. Qed.
+  Proof using Type. destruct l; reflexivity. Qed.
 
   Lemma hd_skipn_nth_default (d:A) l i :
     nth_default d l i = hd d (skipn i l).
-  Proof.
+  Proof using Type.
     rewrite nth_default_eq.
     revert i; induction l; destruct i; try reflexivity.
     rewrite skipn_cons. eauto.
@@ -368,21 +368,21 @@ Section WithA.
 
   Lemma firstn_length_firstn n (l : list A) :
     firstn (length (firstn n l)) l = firstn n l.
-  Proof.
+  Proof using Type.
     revert l; induction n; destruct l;
       cbn [firstn length]; rewrite ?IHn; reflexivity.
   Qed.
 
   Lemma skipn_length_firstn n (l : list A) :
     skipn (length (firstn n l)) l = skipn n l.
-  Proof.
+  Proof using Type.
     revert l; induction n; destruct l;
       cbn [skipn firstn length]; rewrite ?IHn; reflexivity.
   Qed.
 
   Lemma firstn_map{B: Type}: forall (f: A -> B) (n: nat) (l: list A),
       firstn n (map f l) = map f (firstn n l).
-  Proof.
+  Proof using Type.
     induction n; intros.
     - reflexivity.
     - simpl. destruct l; simpl; congruence.
@@ -390,7 +390,7 @@ Section WithA.
 
   Lemma firstn_seq: forall (n from len: nat),
       firstn n (seq from len) = seq from (min n len).
-  Proof.
+  Proof using Type.
     induction n; intros.
     - reflexivity.
     - simpl. destruct len; simpl; f_equal; auto.
@@ -400,7 +400,7 @@ Section WithA.
     NoDup (l1 ++ l2) <-> (NoDup l1 /\ NoDup l2
                           /\ (forall x, In x l1 -> ~ In x l2)
                           /\ (forall x, In x l2 -> ~ In x l1)).
-  Proof.
+  Proof using Type.
     revert l2; induction l1;
       repeat match goal with
              | _ => progress (intros; subst)
@@ -435,7 +435,7 @@ Section WithA.
   Lemma Forall2_impl_strong {B} (R1 R2 : A -> B -> Prop) xs ys :
     (forall x y, R1 x y -> In x xs -> In y ys -> R2 x y) ->
     Forall2 R1 xs ys -> Forall2 R2 xs ys.
-  Proof.
+  Proof using Type.
     revert ys; induction xs; destruct ys; intros;
       match goal with H : Forall2 _ _ _ |- _ =>
                       inversion H; subst; clear H end;
@@ -447,7 +447,7 @@ Section WithA.
     length xs1 = length ys1 ->
     Forall2 R (xs1 ++ xs2) (ys1 ++ ys2) ->
     Forall2 R xs1 ys1 /\ Forall2 R xs2 ys2.
-  Proof.
+  Proof using Type.
     revert xs2 ys1 ys2; induction xs1;
       destruct ys1; cbn [length]; intros; try congruence.
     all:repeat match goal with
@@ -466,7 +466,7 @@ Section WithA.
 
   Lemma NoDup_combine_l {B} xs ys :
     NoDup xs -> NoDup (@combine A B xs ys).
-  Proof.
+  Proof using Type.
     revert ys; induction xs; destruct ys; inversion 1;
       intros; subst; cbn [combine]; constructor; auto; [ ].
     let H := fresh in intro H; apply in_combine_l in H.
@@ -475,7 +475,7 @@ Section WithA.
 
   Lemma nth_default_preserves_properties (P : A -> Prop) l n d :
     (forall x, In x l -> P x) -> P d -> P (nth_default d l n).
-  Proof.
+  Proof using Type.
     rewrite nth_default_eq.
     destruct (nth_in_or_default n l d); auto.
     congruence.
@@ -484,7 +484,7 @@ Section WithA.
   Lemma Forall_nth_default (R : A -> Prop) d xs i :
     Forall R xs -> R d ->
     R (nth_default d xs i).
-  Proof.
+  Proof using Type.
     apply nth_default_preserves_properties; intros;
       try match goal with H : _ |- _ =>
                           rewrite Forall_forall in H end;
@@ -494,7 +494,7 @@ Section WithA.
   Lemma Forall_snoc (R : A -> Prop) xs x :
     Forall R xs -> R x ->
     Forall R (xs ++ [x]).
-  Proof.
+  Proof using Type.
     induction xs; intros;
       rewrite ?app_nil_l, <-?app_comm_cons;
       try match goal with H : Forall _ (_ :: _) |- _ =>
@@ -505,7 +505,7 @@ Section WithA.
   Lemma forallb_to_Forall(p: A -> bool)(P: A -> Prop):
     (forall x, p x = true -> P x) ->
     forall l, forallb p l = true -> Forall P l.
-  Proof.
+  Proof using Type.
     induction l; simpl; intros. 1: constructor.
     apply Bool.andb_true_iff in H0. destruct H0. constructor; eauto.
   Qed.
@@ -513,7 +513,7 @@ Section WithA.
   Lemma Forall_to_forallb(p: A -> bool)(P: A -> Prop):
     (forall x, P x -> p x = true) ->
     forall l, Forall P l -> forallb p l = true.
-  Proof.
+  Proof using Type.
     induction 2; simpl; intros. 1: constructor.
     apply Bool.andb_true_iff. eauto.
   Qed.
@@ -523,7 +523,7 @@ Section WithA.
 
   Lemma list_forallb_eqb_refl (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} ls :
     forallb (fun xy => aeqb (fst xy) (snd xy)) (combine ls ls) = true.
-  Proof.
+  Proof using Type.
     induction ls as [|x ?]; [ reflexivity | ].
     cbn [combine fst snd forallb]. rewrite IHls.
     destr (aeqb x x); subst; congruence || reflexivity.
@@ -532,7 +532,7 @@ Section WithA.
   Lemma length_eq_forallb_eqb_false (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} x y :
     length x = length y -> x <> y ->
     forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y) = false.
-  Proof.
+  Proof using Type.
     revert y.
     induction x as [|x0 x]; destruct y as [|y0 y];
       cbn [length]; [ congruence .. | ].
@@ -543,7 +543,7 @@ Section WithA.
 
   Lemma list_eqb_spec (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb}
     : EqDecider (list_eqb aeqb).
-  Proof.
+  Proof using Type.
     cbv [list_eqb].
     induction x as [|x0 x]; destruct y as [|y0 y];
       cbn [length combine forallb Nat.eqb andb fst snd];

@@ -20,7 +20,7 @@ Section TestGoals.
 
   Lemma only_differ_of_singleton_list: forall r x v,
       map.only_differ r (PropSet.of_list [x]) (map.put r x v).
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -28,7 +28,7 @@ Section TestGoals.
       only_differ st2 mv2 finalS ->
       only_differ initialS mv1 st2 ->
       only_differ initialS (union mv1 mv2) finalS.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -40,7 +40,7 @@ Section TestGoals.
     forall (resVar : K) (initialH initialL : locals) (fvngs1 : K -> Prop) (v0 : V),
       extends initialL initialH ->
       undef_on initialH fvngs1 -> get (put initialL resVar v0) resVar = Some v0.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -49,7 +49,7 @@ Section TestGoals.
       extends initialL initialH ->
       undef_on initialH fvngs1 ->
       get initialH x = Some res -> get (put initialL resVar res) resVar = get initialH x.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -63,7 +63,7 @@ Section TestGoals.
       v0 \in mvs1 ->
       v \in mvs0 ->
       subset mvs1 (diff fvn fvn0) -> subset mvs0 (diff fvngs1 fvn) -> undef_on initialH fvngs1.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -79,7 +79,7 @@ Section TestGoals.
       subset mvs1 (diff fvn fvn0) ->
       subset mvs0 (diff fvngs1 fvn) ->
       get midL v = Some w -> only_differ initialL mvs0 midL -> extends midL initialH.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -95,7 +95,7 @@ Section TestGoals.
       subset mvs1 (diff fvn fvn0) ->
       subset mvs0 (diff fvngs1 fvn) ->
       get midL v = Some w -> only_differ initialL mvs0 midL -> undef_on initialH fvn.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -113,7 +113,7 @@ Section TestGoals.
       get midL v = Some w ->
       only_differ initialL mvs0 midL ->
       get preFinalL v0 = Some w0 -> only_differ midL mvs1 preFinalL -> get preFinalL v = Some w.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -131,7 +131,7 @@ Section TestGoals.
       subset fvn0 fvn ->
       get initial2L v = Some cv ->
       only_differ initialL mvcondL initial2L -> extends initial2L initialH.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -150,7 +150,7 @@ Section TestGoals.
       get initial2L v = Some cv ->
       only_differ initialL mvcondL initial2L ->
       undef_on initialH fvn.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -160,7 +160,7 @@ Section TestGoals.
       PropSet.disjoint emv fvngs' ->
       undef_on initialH fvngs' ->
       extends initialL (remove initialH lhs).
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -178,7 +178,7 @@ Section TestGoals.
       only_differ initialL mvs prefinalL ->
       v0 \in mvs ->
       subset mvs (diff fvngs fvngs') -> extends (put prefinalL lhs v) (put initialH lhs v).
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -197,7 +197,7 @@ Section TestGoals.
       subset mvs0 (diff fvn fvngs') ->
       subset mvs (diff fvngs fvn) ->
       extends prefinalL initialH.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -214,7 +214,7 @@ Section TestGoals.
       v0 \in mvs0 ->
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> undef_on initialH fvn.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -233,7 +233,7 @@ Section TestGoals.
       v0 \in mvs0 ->
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> get finalL v = Some av.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -252,7 +252,7 @@ Section TestGoals.
       v0 \in mvs0 ->
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> get finalL v = Some av.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -271,7 +271,7 @@ Section TestGoals.
       subset fvngs' fvngs ->
       subset fvngs' fvn ->
       extends middleL st2 -> only_differ initial2L mvsBody middleL -> extends middleL st2.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -293,7 +293,7 @@ Section TestGoals.
       only_differ initial2L mvsBody middleL ->
       only_differ initialH emv st2 ->
       undef_on st2 fvngs.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 
@@ -314,7 +314,7 @@ Section TestGoals.
       v0 \in mvs0 ->
       v \in mvs ->
       subset mvs0 (diff fvn fvngs') -> subset mvs (diff fvngs fvn) -> extends finalL initialH.
-  Proof.
+  Proof using K_eq_dec mapspecs.
     Time map_solver mapspecs.
   Qed.
 

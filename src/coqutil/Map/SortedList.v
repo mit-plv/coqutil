@@ -60,7 +60,7 @@ Section SortedList.
   Record rep := { value : list (key * value) ; _value_ok : sorted value = true }.
 
   Lemma ltb_antisym k1 k2 (H:eqb k1 k2 = false) : ltb k1 k2 = negb (ltb k2 k1).
-  Proof.
+  Proof using ok.
     apply Bool.andb_false_iff in H.
     destruct (ltb k1 k2) eqn:H1; destruct (ltb k2 k1) eqn:H2; cbn in *; trivial.
     { pose proof ltb_trans _ _ _ H1 H2; pose proof ltb_antirefl k1; congruence. }
@@ -68,7 +68,7 @@ Section SortedList.
   Qed.
 
   Lemma sorted_put m k v : sorted m = true -> sorted (put m k v) = true.
-  Proof.
+  Proof using ok.
     revert v; revert k; induction m as [|[k0 v0] m]; trivial; []; intros k v H.
     cbn [put]; destruct (ltb k k0) eqn:?.
     { eapply Bool.andb_true_iff; split; assumption. }
@@ -83,7 +83,7 @@ Section SortedList.
   Qed.
 
   Lemma sorted_remove m k : sorted m = true -> sorted (remove m k) = true.
-  Proof.
+  Proof using ok.
     revert k; induction m as [|[k0 v0] m]; [trivial|]; []; intros k H.
     cbn [remove].
     destruct (ltb k k0) eqn:?; trivial; [].
@@ -105,12 +105,12 @@ Section SortedList.
     end.
 
   Lemma eqb_refl: forall x: key, eqb x x = true.
-  Proof.
+  Proof using ok.
     intros. unfold eqb. rewrite (@ltb_antirefl _ _ ok). reflexivity.
   Qed.
 
   Lemma eqb_true: forall k1 k2, eqb k1 k2 = true <-> k1 = k2.
-  Proof.
+  Proof using ok.
     unfold eqb. intros.
     split; intros.
     - eapply Bool.andb_true_iff in H. destruct H as [L1 L2].
@@ -124,7 +124,7 @@ Section SortedList.
   Qed.
 
   Lemma eqb_false: forall k1 k2, eqb k1 k2 = false <-> k1 <> k2.
-  Proof.
+  Proof using ok.
     intros.
     rewrite <-Bool.not_true_iff_false.
     unfold not.
@@ -133,7 +133,7 @@ Section SortedList.
   Qed.
 
   Lemma eqb_sym: forall k1 k2, eqb k1 k2 = eqb k2 k1.
-  Proof.
+  Proof using Type.
     unfold eqb. intros.
     destruct (ltb k1 k2) eqn: E12;
     destruct (ltb k2 k1) eqn: E21;
@@ -142,14 +142,14 @@ Section SortedList.
 
   Lemma lookup_cons: forall k1 k2 v l,
       lookup ((k1, v) :: l) k2 = if eqb k2 k1 then Some v else lookup l k2.
-  Proof.
+  Proof using Type.
     unfold lookup. intros. simpl. rewrite eqb_sym. destruct (eqb k1 k2); reflexivity.
   Qed.
 
   Lemma sorted_cons: forall l k v,
       sorted ((k, v) :: l) = true ->
       sorted l = true /\ lookup l k = None /\ forall k0, ltb k0 k = true -> lookup l k0 = None.
-  Proof.
+  Proof using ok.
     induction l; intros.
     - simpl. auto.
     - simpl in *. destruct a as [k' v'].
@@ -183,14 +183,14 @@ Section SortedList.
   |}.
 
   Lemma eq_value {x y : rep} : value x = value y -> x = y.
-  Proof.
+  Proof using Type.
     cbv [value]; destruct x as [x px], y as [y py].
     intro; subst y.
     apply f_equal, Eqdep_dec.UIP_dec; decide equality.
   Qed.
 
   Global Instance map_ok : map.ok map.
-  Proof.
+  Proof using Type.
     split.
     { intros [l1 ST1] [l2 ST2] F.
       apply eq_value; unfold map.get, map in *; cbn [value] in *.

@@ -13,7 +13,7 @@ Module map.
     Lemma get_map_keys_invertible (f : key -> key') m k
       (H:forall k' v', get m k' = Some v' -> f k = f k' -> get m k = get m k')
       : get (map_keys f m) (f k) = get m k.
-    Proof.
+    Proof using key'_eq_dec key_eq_dec ok ok'.
       revert dependent k.
       cbv [map_keys].
       refine (fold_spec (fun m r => forall k,
@@ -42,7 +42,7 @@ Module map.
     Lemma get_map_keys_always_invertible (f : key -> key')
       (H : forall k k', f k = f k' -> k = k')
       : forall m k, get (map_keys f m) (f k) = get m k.
-    Proof.
+    Proof using key'_eq_dec key_eq_dec ok ok'.
       intros. eapply get_map_keys_invertible. intros ? ? HA HB.
       rewrite (H _ _ HB); trivial.
     Qed.

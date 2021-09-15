@@ -37,7 +37,7 @@ Section SortedList.
   |}.
 
   Global Instance map_ok : map.ok map.
-  Proof.
+  Proof using magic_fold_is_magic magic_fold_respects_relations ok.
     split; cbv [map.rep map.empty map.get map.put map.remove map.fold map]; intros;
       repeat match goal with
       | |- context[eqb ?a ?b] => destruct (eqb_ok a b)

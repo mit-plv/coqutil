@@ -19,7 +19,7 @@ Module map.
       map_keys (word.add a) (of_list_word xs).
     Lemma get_of_list_word xs i : get (of_list_word xs) i
       = nth_error xs (Z.to_nat (word.unsigned i)).
-    Proof.
+    Proof using ok word_ok.
       pose proof word.eqb_spec.
       cbv [of_list_word].
       erewrite get_of_func_Some_supported; trivial; intros.
@@ -31,7 +31,7 @@ Module map.
     Qed.
     Lemma get_of_list_word_at a xs i : get (of_list_word_at a xs) i
       = nth_error xs (Z.to_nat (word.unsigned (word.sub i a))).
-    Proof.
+    Proof using ok word_ok.
       cbv [of_list_word_at].
       replace i with (word.add a (word.sub i a)) by ring.
       rewrite get_map_keys_always_invertible, get_of_list_word.
@@ -46,7 +46,7 @@ Module map.
       get (of_list_word_at a xs) i <> None
       <->
       (0 <= word.unsigned (word.sub i a) < Z.of_nat (length xs))%Z.
-    Proof.
+    Proof using ok word_ok.
       pose proof word.unsigned_range (word.sub i a).
       rewrite get_of_list_word_at, nth_error_Some.
       rewrite Nat2Z.inj_lt, ?Znat.Z2Nat.id; intuition.
@@ -55,7 +55,7 @@ Module map.
     Lemma of_list_word_at_app a xs ys :
       of_list_word_at a (xs ++ ys) =
       putmany (of_list_word_at (word.add a (word.of_Z (Z.of_nat (length xs)))) ys) (of_list_word_at a xs).
-    Proof.
+    Proof using ok word_ok.
       eapply map_ext; intros k.
       rewrite get_of_list_word_at.
       pose proof word.unsigned_range (word.sub k a) as Hrange.
@@ -82,7 +82,7 @@ Module map.
 
     Lemma adjacent_arrays_disjoint a xs ys (H : (Z.of_nat (length xs) + Z.of_nat (length ys) <= 2^width)%Z) :
       disjoint (of_list_word_at (word.add a (word.of_Z (Z.of_nat (length xs)))) ys) (of_list_word_at a xs).
-    Proof.
+    Proof using ok word_ok.
       intros k y x Hy Hx.
       assert ((Z.of_nat (length xs) <= 2^width)%Z) by blia.
       assert ((Z.of_nat (length ys) <= 2^width)%Z) by blia.
@@ -111,20 +111,20 @@ Module map.
       lxs (Hlxs : Z.of_nat (length xs) = lxs)
       : of_list_word_at a (xs ++ ys)
       = putmany (of_list_word_at (word.add a (word.of_Z lxs)) ys) (of_list_word_at a xs).
-    Proof. subst lxs; eapply of_list_word_at_app. Qed.
+    Proof using ok word_ok. subst lxs; eapply of_list_word_at_app. Qed.
 
     Lemma adjacent_arrays_disjoint_n
       (a : word) (xs ys : list value)
       lxs (Hlxs : Z.of_nat (length xs) = lxs)
       (H : (Z.of_nat (length xs) + Z.of_nat (length ys) <= 2 ^ width)%Z)
       : disjoint (of_list_word_at (word.add a (word.of_Z lxs)) ys) (of_list_word_at a xs).
-    Proof. subst lxs. auto using adjacent_arrays_disjoint. Qed.
+    Proof using ok word_ok. subst lxs. auto using adjacent_arrays_disjoint. Qed.
 
     Lemma of_list_word_nil k : of_list_word_at k nil = empty.
-    Proof. apply Properties.map.fold_empty. Qed.
+    Proof using ok. apply Properties.map.fold_empty. Qed.
 
     Lemma of_list_word_singleton k v : of_list_word_at k (cons v nil) = put empty k v.
-    Proof.
+    Proof using ok word_ok.
       cbv [of_list_word_at of_list_word seq length List.map of_func update].
       rewrite word.unsigned_of_Z_0, Znat.Z2Nat.inj_0; cbv [MapKeys.map.map_keys nth_error].
       rewrite Properties.map.fold_singleton.

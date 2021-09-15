@@ -12,17 +12,17 @@ Section Lemmas.
 
   Add Ring wring: (@word.ring_theory width word word_ok).
 
-  Lemma add_0_l: forall x, word.add (word.of_Z 0) x = x. Proof. intros. ring. Qed.
-  Lemma add_0_r: forall x, word.add x (word.of_Z 0) = x. Proof. intros. ring. Qed.
-  Lemma mul_0_l: forall x, word.mul (word.of_Z 0) x = word.of_Z 0. Proof. intros. ring. Qed.
-  Lemma mul_0_r: forall x, word.mul x (word.of_Z 0) = word.of_Z 0. Proof. intros. ring. Qed.
-  Lemma mul_1_l: forall x, word.mul (word.of_Z 1) x = x. Proof. intros. ring. Qed.
-  Lemma mul_1_r: forall x, word.mul x (word.of_Z 1) = x. Proof. intros. ring. Qed.
+  Lemma add_0_l: forall x, word.add (word.of_Z 0) x = x. Proof using word_ok. intros. ring. Qed.
+  Lemma add_0_r: forall x, word.add x (word.of_Z 0) = x. Proof using word_ok. intros. ring. Qed.
+  Lemma mul_0_l: forall x, word.mul (word.of_Z 0) x = word.of_Z 0. Proof using word_ok. intros. ring. Qed.
+  Lemma mul_0_r: forall x, word.mul x (word.of_Z 0) = word.of_Z 0. Proof using word_ok. intros. ring. Qed.
+  Lemma mul_1_l: forall x, word.mul (word.of_Z 1) x = x. Proof using word_ok. intros. ring. Qed.
+  Lemma mul_1_r: forall x, word.mul x (word.of_Z 1) = x. Proof using word_ok. intros. ring. Qed.
 
   Lemma sextend_width_nop: forall (w v: Z),
     w = width ->
     word.of_Z (BitOps.signExtend w v) = word.of_Z v.
-  Proof.
+  Proof using word_ok.
     intros. subst. unfold BitOps.signExtend. apply word.unsigned_inj.
     rewrite! word.unsigned_of_Z.
     pose proof (@word.width_pos _ _ word_ok).

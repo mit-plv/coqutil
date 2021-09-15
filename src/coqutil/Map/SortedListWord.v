@@ -6,7 +6,7 @@ Section __.
   Context {width} (word : word width) {word_ok : @word.ok width word}.
   Global Instance strict_order_word
     : SortedList.parameters.strict_order (T:=word) word.ltu.
-  Proof.
+  Proof using word_ok.
     split; try setoid_rewrite word.unsigned_ltu; intros;
       repeat match goal with
              | H: context[Z.ltb ?a ?b] |- _ => destruct (Z.ltb_spec a b)
