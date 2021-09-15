@@ -20,7 +20,7 @@ Module map.
     Lemma get_of_list_word xs i : get (of_list_word xs) i
       = nth_error xs (Z.to_nat (word.unsigned i)).
     Proof.
-      pose proof word.eqb_spec.
+      pose proof (word.eqb_spec (word_ok:=word_ok)).
       cbv [of_list_word].
       erewrite get_of_func_Some_supported; trivial; intros.
       pose proof word.unsigned_range k.
