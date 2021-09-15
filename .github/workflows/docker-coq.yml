@@ -1,0 +1,21 @@
+name: CI (Coq, docker, dev)
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 1 * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: all
+      uses: coq-community/docker-coq-action@v1
+      custom_script: etc/ci/github-actions-make.sh ${EXTRA_GH_REPORTIFY} -j2 all
+      with:
+        coq_version: dev
+        ocaml_version: 4.05
