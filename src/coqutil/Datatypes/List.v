@@ -698,6 +698,16 @@ Proof.
       reflexivity.
 Qed.
 
+Lemma nth_error_0_r [A] (l : list A) : nth_error l 0 = hd_error l.
+Proof. destruct l; trivial. Qed.
+
+Lemma nth_error_as_skipn [A] (l : list A) i
+  : nth_error l i = hd_error (skipn i l).
+Proof.
+  erewrite <-nth_error_skipn, Nat.sub_diag by reflexivity.
+  eapply nth_error_0_r.
+Qed.
+
 Lemma nth_error_listUpdate_error_diff: forall E l l' i j (e: E),
   listUpdate_error l i e = Some l' ->
   j <> i ->
@@ -870,7 +880,7 @@ Proof.
     rewrite skipn_skipn.
     f_equal.
     blia. }
-  rewrite ?(List.upds_same _ j) by (rewrite ?List.upds_length; blia).
+  rewrite ?(upds_same _ j) by (rewrite ?upds_length; blia).
   reflexivity.
 Qed.
 
@@ -971,6 +981,188 @@ Section WithZ.
     split; trivial.
     rewrite length_firstn_inbounds, length_skipn; blia.
   Qed.
-
-
 End WithZ.
+
+Module Import Nat.
+  Import BinInt Zify PreOmega Lia.
+  Definition div_up a b := Nat.div (a + (b-1)) b.
+
+  Ltac t :=
+    cbv [div_up]; zify;
+    rewrite ?Zdiv.div_Zdiv in * by Lia.lia;
+    Z.div_mod_to_equations; Lia.nia.
+
+  Lemma div_up_exact a b (H : b <> 0) : div_up (a*b) b = a.
+  Proof. t. Qed.
+  Lemma div_up_brackets a b (H : b <> 0) : Nat.div a b * b <= a <= div_up a b * b.
+  Proof. t. Qed.
+  Lemma div_up_range a b (H : b <> 0) : a <= div_up a b * b < a + b.
+  Proof. t. Qed.
+  Lemma div_up_0 a b (H : b <> 0) : div_up a b = 0 -> a = 0.
+  Proof. t. Qed.
+  Lemma div_up_0_l b (H : b <> 0) : div_up 0 b = 0.
+  Proof. t. Qed.
+  Lemma div_up_small a b (H : b <> 0) (Ha : 1 <= a <= b) : div_up a b = 1.
+  Proof. t. Qed.
+  Lemma div_up_small_bound a b (H : b <> 0) (Ha : a <= b) : div_up a b <= 1.
+  Proof. t. Qed.
+  Lemma div_up_add_numerator_l a b (H : b <> 0)
+    : div_up (b + a) b = 1 + div_up a b.
+  Proof. t. Qed.
+  Lemma div_up_add_numerator_r a b (H : b <> 0)
+    : div_up (b + a) b = div_up a b + 1.
+  Proof. t. Qed.
+  Lemma div_up_add_multiple_l a b c (H : b <> 0)
+    : div_up (c * b + a) b = c + div_up a b.
+  Proof. t. Qed.
+  Lemma div_up_add_multiple_r a b c (H : b <> 0)
+    : div_up (a + c * b) b = div_up a b + c.
+  Proof. t. Qed.
+End Nat.
+
+Section Chunk.
+  Local Arguments Nat.ltb : simpl never.
+  Context [A : Type] (k : nat).
+  Implicit Types (bs ck xs ys : list A).
+  Fixpoint chunk' bs ck {struct bs} : list (list A) :=
+    match bs with
+    | [] =>
+        match ck with
+        | [] => []
+        | _ => [ck]
+        end
+    | b :: bs =>
+        let ck := ck ++ [b] in
+        if length ck <? k
+        then chunk' bs ck
+        else ck :: chunk' bs []
+    end.
+  Definition chunk bs := chunk' bs [].
+
+  Lemma concat_chunk' bs : forall ck, concat (chunk' bs ck) = ck ++ bs.
+  Proof.
+    induction bs.
+    { destruct ck; cbn; auto using app_nil_r. }
+    intros; cbn [chunk' app]; destruct_one_match; cbn [concat];
+      rewrite IHbs, <-app_assoc; trivial.
+  Qed.
+  Definition concat_chunk bs : concat (chunk bs) = bs := concat_chunk' bs [].
+
+  Lemma chunk'_small bs : forall ck, 0 < length (ck++bs) <= k ->
+    chunk' bs ck = [ck ++ bs].
+  Proof.
+    induction bs; cbn; intros.
+    { destruct ck; cbn in *; [Lia.lia|].
+      rewrite app_nil_r; trivial. }
+    destruct_one_match.
+    { rewrite IHbs; rewrite <-app_assoc; trivial; Lia.lia. }
+    destruct bs; rewrite ?app_length in *; cbn [length] in *; trivial; Lia.lia.
+  Qed.
+
+  Lemma chunk'_app_chunk ys : forall y bs xs, length (xs++y::ys) = k ->
+    chunk' (y::ys++bs) xs = (xs ++ y::ys) :: chunk' bs [].
+  Proof.
+    induction ys; cbn [chunk']; intros.
+    { destruct_one_match; trivial; Lia.lia. }
+    rewrite ?app_length, ?length_cons, ?length_nil.
+    rewrite ?app_length, ?length_cons, ?length_nil in H.
+    destruct_one_match; try Lia.lia.
+    rewrite <-app_comm_cons, IHys, <-?app_assoc
+       by (rewrite ?app_length, ?length_cons, ?length_nil; Lia.lia); trivial.
+  Qed.
+
+  Definition chunk_nil : chunk [] = [] := eq_refl.
+
+  Lemma chunk_small bs (H : 0 < length bs <= k) : chunk bs = [bs].
+  Proof. eapply chunk'_small, H. Qed.
+
+  Context (Hk : k <> 0).
+
+  Lemma chunk_app_chunk ck bs (H : length ck = k)
+    : chunk (ck++bs) = ck :: chunk bs.
+  Proof.
+    cbv [chunk]; destruct ck; cbn [length] in *; [congruence|].
+    rewrite <-app_comm_cons, chunk'_app_chunk; trivial.
+  Qed.
+
+  Lemma hd_error_chunk bs (H : bs <> [])
+    : hd_error (chunk bs) = Some (firstn k bs).
+  Proof.
+    destruct bs; [congruence|].
+    destruct (Compare_dec.le_lt_dec (length (a::bs)) k).
+    { rewrite chunk_small, firstn_all2; cbn in *; trivial; Lia.lia. }
+    rewrite <-(firstn_skipn k (a::bs)), chunk_app_chunk at 1; trivial.
+    eapply firstn_length_le; Lia.lia.
+  Qed.
+
+  Lemma hd_chunk bs : hd [] (chunk bs) = firstn k bs.
+  Proof.
+    destruct bs; rewrite ?firstn_nil; trivial.
+    pose proof hd_error_chunk (a::bs) ltac:(congruence).
+    cbv [hd_error hd] in *; destruct chunk eqn:?; inversion H; trivial.
+  Qed.
+
+  Lemma skipn_chunk n bs : skipn n (chunk bs) = chunk (skipn (n*k) bs).
+  Proof.
+    revert bs; induction n; cbn [skipn Nat.mul]; trivial; intros.
+    destruct bs; rewrite ?skipn_nil; trivial.
+    destruct (Compare_dec.le_lt_dec (length (a::bs)) k).
+    { rewrite chunk_small, ?skipn_all2; cbn in *; trivial; Lia.lia. }
+    rewrite <-(firstn_skipn k (a::bs)), chunk_app_chunk at 1
+      by (eapply firstn_length_le; Lia.lia).
+    rewrite IHn, skipn_skipn; f_equal; f_equal; Lia.lia.
+  Qed.
+
+  Lemma nth_error_chunk bs i (Hi : i < div_up (length bs) k)
+    : nth_error (chunk bs) i = Some (firstn k (skipn (i*k) bs)).
+  Proof.
+    rewrite nth_error_as_skipn, skipn_chunk, hd_error_chunk; trivial.
+    intros HX.
+    eapply (f_equal (@length A)) in HX; rewrite length_skipn, length_nil in HX.
+    pose proof div_up_range (length bs) k Hk; Lia.nia.
+  Qed.
+
+  Lemma length_chunk bs : length (chunk bs) = div_up (length bs) k.
+  Proof.
+    pose proof skipn_chunk (div_up (length bs) k) bs.
+    rewrite (@skipn_all2 _ _ bs) in H by (eapply div_up_range; trivial).
+    eapply (f_equal (@length (list A))) in H.
+    cbn in H; rewrite skipn_length in H; rename H into Hle.
+
+    pose proof proj1 (nth_error_Some (chunk bs) (pred (div_up (length bs) k))).
+    destruct bs as [|b bs']; [rewrite div_up_0_l; trivial|set(b::bs') as bs in *].
+    erewrite nth_error_chunk in H; [pose (H ltac:(discriminate)); Lia.lia|].
+    case (div_up (length bs) k) eqn:E; try Lia.lia.
+    cbn in E; eapply div_up_0 in E; trivial; inversion E.
+  Qed.
+
+  Lemma firstn_chunk n bs : firstn n (chunk bs) = chunk (firstn (n*k) bs).
+  Proof.
+    pose proof div_up_range (length bs) k Hk.
+    eapply nth_error_ext_samelength;
+      repeat rewrite ?firstn_length, ?length_chunk in *.
+    { repeat eapply Nat.min_case_strong; intros;
+        rewrite ?div_up_exact by trivial; try Lia.nia. }
+    intros i Hi.
+    rewrite nth_error_firstn, nth_error_chunk by Lia.lia.
+    rewrite nth_error_chunk; cycle 1; rewrite ?firstn_length.
+    { eapply Nat.min_case_strong; intros; rewrite ?div_up_exact; Lia.lia. }
+    rewrite skipn_firstn_comm, firstn_firstn; f_equal; f_equal; Lia.nia.
+  Qed.
+End Chunk.
+
+Goal False.
+  assert (chunk 4 (@nil nat) = []) by exact eq_refl.
+  assert (chunk 4 (seq 0 8) = [0;1;2;3]::[4;5;6;7]::nil) by exact eq_refl.
+  assert (chunk 4 (seq 0 7) = [0;1;2;3]::[4;5;6]::nil) by exact eq_refl.
+  assert (chunk 4 (seq 0 6) = [0;1;2;3]::[4;5]::nil) by exact eq_refl.
+  assert (chunk 4 (seq 0 5) = [0;1;2;3]::[4]::nil) by exact eq_refl.
+  assert (chunk 4 (seq 0 4) = [0;1;2;3]::nil) by exact eq_refl.
+  assert (chunk 1 (seq 0 4) = [0]::[1]::[2]::[3]::nil) by exact eq_refl.
+  assert (chunk 0 (seq 0 4) = [0]::[1]::[2]::[3]::nil) by exact eq_refl.
+Abort.
+
+Lemma length_concat_same_length [A] k (xs : list (list A))
+  (H : Forall (fun x => length x = k) xs)
+  : length (concat xs) = length xs * k.
+Proof. induction H; cbn; rewrite ?app_length; Lia.lia. Qed.
