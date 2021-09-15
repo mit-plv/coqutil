@@ -1,14 +1,19 @@
 (* COQBUG: https://github.com/coq/coq/issues/4494 *)
 (* COQBUG: https://github.com/coq/coq/issues/14124 *)
 
+(* Work around type inference issue in Coq <= 8.12 *)
+Ltac eplace_sym_hyp Hrw :=
+  lazymatch type of Hrw with
+  | @eq ?A ?x ?y => constr:(@eq_sym A x y Hrw)
+  end.
 Ltac eplace_with_at_by lhs rhs set_tac tac :=
   let LHS := fresh "_eplace_with_at_by_LHS" in set_tac LHS lhs;
   let Hrw := fresh "_eplace_with_at_by_Hrw" in assert (Hrw : LHS = rhs) by (subst LHS; tac);
-  clearbody LHS; induction (eq_sym Hrw); clear Hrw.
+  clearbody LHS; let Hrw' := eplace_sym_hyp Hrw in induction Hrw'; clear Hrw.
 Ltac eplace_with_at lhs rhs set_tac :=
   let LHS := fresh "_eplace_with_at_LHS" in set_tac LHS lhs;
   let Hrw := fresh "_eplace_with_at_Hrw" in assert (Hrw : LHS = rhs);
-  [subst LHS | clearbody LHS; induction (eq_sym Hrw); clear Hrw ].
+  [subst LHS | clearbody LHS; let Hrw' := eplace_sym_hyp Hrw in induction Hrw'; clear Hrw ].
 
 Tactic Notation "eplace" uconstr(x) "with" open_constr(y) :=
 eplace_with_at x y ltac:(fun x' x => set (x' := x) ).
