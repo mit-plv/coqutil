@@ -9,7 +9,7 @@ Local Set Universe Polymorphism.
 
 Local Open Scope Z_scope.
 
-Section LittleEndian.
+Section LittleEndian. Local Set Default Proof Using "All".
 
   Fixpoint combine (n : nat) : forall (bs : tuple byte n), Z :=
     match n with

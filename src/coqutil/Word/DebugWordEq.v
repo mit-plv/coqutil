@@ -2,7 +2,7 @@ From Coq Require Import ZArith.
 Require Coq.setoid_ring.Ring_theory.
 Require Import coqutil.Word.Interface coqutil.Word.Properties.
 
-Section WithWord.
+Section WithWord. Local Set Default Proof Using "All".
   Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
 
   Add Ring wring : (word.ring_theory (word := word))
@@ -25,7 +25,7 @@ Ltac debug_word_eq :=
   | |- ?x = _ => ring_simplify x
   end.
 
-Section Demo.
+Section Demo. Local Set Default Proof Using "All".
   Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
 
   Add Ring wring' : (word.ring_theory (word := word))

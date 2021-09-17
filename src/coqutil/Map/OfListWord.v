@@ -6,7 +6,7 @@ Import Interface.map MapKeys.map OfFunc.map.
 Require Import coqutil.Word.Interface coqutil.Word.Properties.
 
 Module map.
-  Section __.
+  Section __. Local Set Default Proof Using "All".
     Context {width} {word : word width} {word_ok : word.ok word}.
     Add Ring __wring: (@word.ring_theory width word word_ok).
     Context {value : Type} {map : map word value} {ok : map.ok map}.
@@ -121,7 +121,7 @@ Module map.
     Proof. subst lxs. auto using adjacent_arrays_disjoint. Qed.
 
     Lemma of_list_word_nil k : of_list_word_at k nil = empty.
-    Proof. apply Properties.map.fold_empty. Qed.
+    Proof using ok. apply Properties.map.fold_empty. Qed.
 
     Lemma of_list_word_singleton k v : of_list_word_at k (cons v nil) = put empty k v.
     Proof.

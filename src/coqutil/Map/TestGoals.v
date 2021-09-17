@@ -6,7 +6,7 @@ Require Import Coq.Lists.List. Import ListNotations.
 
 (*Local Set Ltac Profiling.*)
 
-Section TestGoals.
+Section TestGoals. Local Set Default Proof Using "All".
   Context {K V: Type}.
   Context {locals: map.map K V}.
   Context {mapspecs: map.ok locals}.

@@ -8,7 +8,7 @@ Require Import coqutil.Byte.
 
 Local Open Scope Z_scope.
 
-Section LittleEndian.
+Section LittleEndian. Local Set Default Proof Using "All".
 
   Fixpoint le_combine(l: list byte): Z :=
     match l with

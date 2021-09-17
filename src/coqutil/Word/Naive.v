@@ -9,7 +9,7 @@ Definition minimize_eq_proof{A: Type}(eq_dec: forall (x y: A), {x = y} + {x <> y
   | right n => match n pf: False with end
   end.
 
-Section WithWidth.
+Section WithWidth. Local Set Default Proof Using "All".
   Context {width : Z}.
   Let wrap_value z := z mod (2^width).
   Let swrap_value z := wrap_value (z + 2 ^ (width - 1)) - 2 ^ (width - 1).

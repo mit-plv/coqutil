@@ -5,7 +5,7 @@ Require Import coqutil.Datatypes.PropSet.
 
 (*Local Set Ltac Profiling.*)
 
-Section Tests.
+Section Tests. Local Set Default Proof Using "All".
   Import map.
   Context {var: Type}. (* variable name (key) *)
   Context {var_eqb: var -> var -> bool}.

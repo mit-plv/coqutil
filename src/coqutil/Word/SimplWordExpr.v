@@ -6,7 +6,7 @@ Require Import coqutil.Tactics.rewr.
 Require Import coqutil.Z.Lia.
 
 
-Section Lemmas.
+Section Lemmas. Local Set Default Proof Using "All".
   Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
   Local Hint Mode word.word - : typeclass_instances.
 

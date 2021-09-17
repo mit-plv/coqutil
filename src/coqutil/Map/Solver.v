@@ -34,7 +34,7 @@ Hint Unfold
      map.undef_on
   : unf_map_defs.
 
-Section Unrecogs.
+Section Unrecogs. Local Set Default Proof Using "All".
   Context (K V: Type).
   Context {M: map.map K V}.
   Record unrecogs := {
