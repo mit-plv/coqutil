@@ -13,7 +13,7 @@ Module Import parameters.
   }.
 End parameters. Notation parameters := parameters.parameters.
 
-Section SortedList.
+Section SortedList. Local Set Default Proof Using "All".
   Context {p : unique! parameters} {ok : parameters.ok p}.
   Context (magic_fold: forall R : Type, (R -> key -> value -> R) -> R -> (key -> option value) -> R).
   (* We can't fold over the elements of a set defined using a function, so we just assume fold_spec: *)

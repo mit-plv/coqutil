@@ -12,7 +12,7 @@ Local Open Scope Z_scope.
 Local Ltac mia := Z.div_mod_to_equations; Lia.nia.
 
 Module word.
-  Section WithWord.
+  Section WithWord. Local Set Default Proof Using "All".
     Context {width} {word : word width} {word_ok : word.ok word}.
     Local Hint Mode word.word - : typeclass_instances.
 
@@ -362,7 +362,7 @@ Module word.
     Qed.
   End WithWord.
 
-  Section WordConvenienceKitchenSink.
+  Section WordConvenienceKitchenSink. Local Set Default Proof Using "All".
     Context {width} {word : word width} {word_ok : word.ok word}.
     Local Hint Mode word.word - : typeclass_instances.
     Lemma word_sub_add_l_same_l x y : word.sub (word.add x y) x = y.
@@ -528,7 +528,7 @@ Hint Rewrite
   : rew_word_morphism.
 
 
-Section RingDemoAndTest.
+Section RingDemoAndTest. Local Set Default Proof Using "All".
 
   Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
     Local Hint Mode word.word - : typeclass_instances.

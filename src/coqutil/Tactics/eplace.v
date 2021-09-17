@@ -47,7 +47,7 @@ Tactic Notation "eplace" uconstr(x) "with" open_constr(y) "in" hyp_list(H) "at" 
 eplace_with_at_by x y ltac:(fun x' x => set (x' := x) in H at n ) tac.
 *)
 
-Section _test.
+Section _test. Local Set Default Proof Using "All".
   Goal forall x y : nat, x = y -> x + x = y + x - x.
   Proof.
     intros.

@@ -3,7 +3,7 @@ Require coqutil.Decidable coqutil.Map.Properties.
 Import Interface.map.
 
 Module map.
-  Section MapKeys.
+  Section MapKeys. Local Set Default Proof Using "All".
     Context {key value} {map : map key value} {ok : map.ok map}.
     Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
     Context {key'} {map' : Interface.map.map key' value} {ok' : map.ok map'}.

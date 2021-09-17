@@ -2,7 +2,7 @@ Require Import Coq.ZArith.BinInt coqutil.Z.Lia.
 Require Import coqutil.Word.Interface coqutil.Map.Interface.
 Require coqutil.Map.SortedList.
 
-Section __.
+Section __. Local Set Default Proof Using "All".
   Context {width} (word : word width) {word_ok : @word.ok width word}.
   Global Instance strict_order_word
     : SortedList.parameters.strict_order (T:=word) word.ltu.

@@ -8,7 +8,7 @@ Require Import coqutil.Datatypes.List.
 Require Import coqutil.Tactics.Tactics.
 Require Import coqutil.Z.Lia.
 
-Section ListSetDefs.
+Section ListSetDefs. Local Set Default Proof Using "All".
   Context {E: Type}.
   Context (eeq: E -> E -> bool).
   Context {eeq_spec: EqDecider eeq}.
@@ -23,14 +23,14 @@ Section ListSetDefs.
     fold_left (fun res b => removeb eeq b res) B A.
 End ListSetDefs.
 
-Section ListSetProofs.
+Section ListSetProofs. Local Set Default Proof Using "All".
   Context {E: Type}.
   Context {eeq: E -> E -> bool}.
   Context {eeq_spec: EqDecider eeq}.
 
   Lemma length_list_union_nil_r: forall (l: list E),
       length (list_union eeq l []) <= length l.
-  Proof.
+  Proof using.
     induction l.
     - simpl. reflexivity.
     - simpl. destruct_one_match; simpl; blia.
@@ -108,7 +108,7 @@ Section ListSetProofs.
 
   Lemma list_union_empty_l: forall l,
       list_union eeq nil l = l.
-  Proof.
+  Proof using.
     intros. reflexivity.
   Qed.
 
@@ -129,14 +129,14 @@ Section ListSetProofs.
       Forall P l1 ->
       Forall P l2 ->
       Forall P (list_union eeq l1 l2).
-  Proof.
+  Proof using.
     induction l1; intros; simpl; [assumption|].
     inversion H. subst. clear H. destruct_one_match; eauto.
   Qed.
 
   Lemma of_list_removeb: forall x A,
       of_list (removeb eeq x A) = diff (of_list A) (singleton_set x).
-  Proof.
+  Proof using.
     unfold of_list, diff, singleton_set, elem_of. intros.
     extensionality e. apply propositional_extensionality. split.
     - induction A; intros.

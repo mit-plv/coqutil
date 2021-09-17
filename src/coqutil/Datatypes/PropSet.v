@@ -8,7 +8,7 @@ Definition elem_of{K: Type}(k: K)(ks: K -> Prop): Prop := ks k.
 
 Notation "x '\in' s" := (elem_of x s) (at level 70, no associativity).
 
-Section PropSet.
+Section PropSet. Local Set Default Proof Using "All".
   Context {E: Type}.
 
   (* basic definitions (which require knowing that set E = E -> Prop *)
@@ -54,7 +54,7 @@ Hint Unfold
      of_option
   : unf_derived_set_defs.
 
-Section PropSetLemmas.
+Section PropSetLemmas. Local Set Default Proof Using "All".
   Context {E: Type}.
 
   Lemma of_list_cons: forall (e: E) (l: list E),
@@ -227,7 +227,7 @@ Section PropSetLemmas.
     : Proper (sameset ==> sameset ==> iff) (@disjoint E).
   Proof. firstorder idtac. Defined.
 
-  Section with_eqb.
+  Section with_eqb. Local Set Default Proof Using "All".
     Context {eqb}
             {eq_dec : forall x y : E, BoolSpec (x = y) (x <> y) (eqb x y)}.
 

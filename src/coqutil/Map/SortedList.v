@@ -24,7 +24,7 @@ Module Import parameters.
   Global Arguments strict_order {_} _.
 End parameters. Notation parameters := parameters.parameters.
 
-Section SortedList.
+Section SortedList. Local Set Default Proof Using "All".
   Context {p : unique! parameters} {ok : strict_order ltb}.
 
   Local Definition eqb k1 k2 := andb (negb (ltb k1 k2)) (negb (ltb k2 k1)).
@@ -133,7 +133,7 @@ Section SortedList.
   Qed.
 
   Lemma eqb_sym: forall k1 k2, eqb k1 k2 = eqb k2 k1.
-  Proof.
+  Proof using.
     unfold eqb. intros.
     destruct (ltb k1 k2) eqn: E12;
     destruct (ltb k2 k1) eqn: E21;
@@ -142,7 +142,7 @@ Section SortedList.
 
   Lemma lookup_cons: forall k1 k2 v l,
       lookup ((k1, v) :: l) k2 = if eqb k2 k1 then Some v else lookup l k2.
-  Proof.
+  Proof using.
     unfold lookup. intros. simpl. rewrite eqb_sym. destruct (eqb k1 k2); reflexivity.
   Qed.
 
@@ -183,7 +183,7 @@ Section SortedList.
   |}.
 
   Lemma eq_value {x y : rep} : value x = value y -> x = y.
-  Proof.
+  Proof using.
     cbv [value]; destruct x as [x px], y as [y py].
     intro; subst y.
     apply f_equal, Eqdep_dec.UIP_dec; decide equality.

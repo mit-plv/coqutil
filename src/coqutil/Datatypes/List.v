@@ -10,7 +10,7 @@ Require Import Coq.Sorting.Permutation.
 Definition enumerate [A] start xs := combine (seq start (@length A xs)) xs.
 Definition zip [A B C] (f : A -> B -> C) xs ys := map (uncurry f) (combine xs ys).
 
-Section WithA.
+Section WithA. Local Set Default Proof Using "All".
   Context {A : Type}.
 
   Definition Znth_error {A} (xs : list A) z :=
@@ -175,7 +175,7 @@ Section WithA.
         destr (aeqb a a); congruence.
   Qed.
 
-  Section WithStep.
+  Section WithStep. Local Set Default Proof Using "All".
     Context (step : A -> A).
     Fixpoint unfoldn (n : nat) (start : A) :=
       match n with
@@ -392,7 +392,7 @@ Section WithA.
 
   Lemma firstn_seq: forall (n from len: nat),
       firstn n (seq from len) = seq from (min n len).
-  Proof.
+  Proof using.
     induction n; intros.
     - reflexivity.
     - simpl. destruct len; simpl; f_equal; auto.
@@ -956,7 +956,7 @@ Proof.
   blia.
 Qed.
 
-Section WithZ.
+Section WithZ. Local Set Default Proof Using "All".
   Import Coq.ZArith.BinInt.
   Local Open Scope Z_scope.
   Lemma splitZ_spec [A] (xsys : list A) i (H : 0 <= i < Z.of_nat (length xsys)) :
@@ -1022,7 +1022,7 @@ Module Import Nat.
   Proof. t. Qed.
 End Nat.
 
-Section Chunk.
+Section Chunk. Local Set Default Proof Using "All".
   Local Arguments Nat.ltb : simpl never.
   Context [A : Type] (k : nat).
   Implicit Types (bs ck xs ys : list A).

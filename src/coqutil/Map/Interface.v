@@ -40,7 +40,7 @@ Module map.
   }.
   Arguments ok {_ _} _.
 
-  Section WithMap.
+  Section WithMap. Local Set Default Proof Using "All".
     Context {key value : Type} {map : map key value} {map_ok : ok map}.
 
     Definition update (m : map) (k : key) (ov : option value) :=

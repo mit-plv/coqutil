@@ -5,7 +5,7 @@ Require Import coqutil.Datatypes.Option.
 Require Import Coq.Sorting.Permutation.
 
 Module map.
-  Section WithMap.
+  Section WithMap. Local Set Default Proof Using "All".
     Context {key value} {map : map key value} {ok : map.ok map}.
     Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
     Local Hint Mode map.map - - : typeclass_instances.
@@ -26,9 +26,9 @@ Module map.
       eauto with map_spec_hints_separate.
 
     Lemma get_update_same m k ov : get (update m k ov) k = ov.
-    Proof. case ov as [v|]; eauto using get_put_same, get_remove_same. Qed.
+    Proof using ok. case ov as [v|]; eauto using get_put_same, get_remove_same. Qed.
     Lemma get_update_diff m k k' ov (H:k' <> k) : get (update m k ov) k' = get m k'.
-    Proof. case ov as [v|]; cbn; eauto using get_put_diff, get_remove_diff. Qed.
+    Proof using ok. case ov as [v|]; cbn; eauto using get_put_diff, get_remove_diff. Qed.
 
     Lemma get_remove_dec m x y : get (remove m x) y = if key_eqb x y then None else get m y.
     Proof. prover. Qed.
@@ -135,7 +135,7 @@ Module map.
     Proof. cbv [split]. pose proof disjoint_comm m1 m2. intuition idtac. all:rewrite putmany_comm; eauto. Qed.
 
     Lemma split_disjoint_putmany : forall x y, disjoint x y -> split (putmany x y) x y.
-    Proof. cbv [split]; intuition eauto. Qed.
+    Proof using. cbv [split]; auto using conj, eq_refl with nocore. Qed.
 
     Lemma split_empty_r m1 m2 : split m1 m2 empty <-> m1 = m2.
     Proof. cbv [split]. erewrite putmany_empty_r. intuition eauto using disjoint_empty_r. Qed.
@@ -216,7 +216,7 @@ Module map.
         map.split m  m1 m2 ->
         map.split m' m1 m2 ->
         m = m'.
-    Proof.
+    Proof using.
       unfold map.split.
       intros *. intros [? ?] [? ?].
       subst.
@@ -264,7 +264,7 @@ Module map.
         map.get m1 k = Some v ->
         map.extends m2 m1 ->
         map.get m2 k = Some v.
-    Proof. unfold map.extends. intros. eauto. Qed.
+    Proof using. unfold map.extends. intros. eauto. Qed.
 
     Lemma put_extends: forall k v m1 m2,
         extends m2 m1 ->
@@ -280,7 +280,7 @@ Module map.
 
     Lemma fold_empty{R: Type}: forall (f: R -> key -> value -> R) (r0: R),
         map.fold f r0 map.empty = r0.
-    Proof.
+    Proof using ok.
       intros. remember map.empty as m. generalize Heqm.
       eapply map.fold_spec; intros.
       - reflexivity.
@@ -321,7 +321,7 @@ Module map.
                              P m r1 r2 ->
                              P (map.put m k v) (f1 r1 k v) (f2 r2 k v)) ->
         forall m, P m (map.fold f1 r01 m) (map.fold f2 r02 m).
-    Proof.
+    Proof using ok.
       intros.
       pose proof (fold_parametricity
         (fun '(r11, r21) r12 => r12 = r11)
@@ -371,7 +371,7 @@ Module map.
     Lemma fold_to_tuples_fold : forall {R: Type} (f: R -> key -> value -> R) r0 m,
         map.fold f r0 m =
         List.fold_right (fun '(k, v) r => f r k v) r0 (tuples m).
-    Proof.
+    Proof using ok.
       intros. unfold tuples.
       eapply fold_two_spec with
           (f1 := f)
@@ -416,7 +416,7 @@ Module map.
           (f_comm: forall r k1 v1 k2 v2, f (f r k1 v1) k2 v2 = f (f r k2 v2) k1 v1):
       forall r0 m k v,
         map.fold f (f r0 k v) m = f (map.fold f r0 m) k v.
-    Proof.
+    Proof using ok.
       intros.
       eapply fold_two_spec with (f1 := f) (f2 := f) (r01 := f r0 k v) (r02 := r0).
       - reflexivity.
@@ -427,7 +427,7 @@ Module map.
       P map.empty ->
       (forall m, P m -> forall k v, map.get m k = None -> P (map.put m k v)) ->
       forall m, P m.
-    Proof.
+    Proof using ok.
       intros Base Step.
       eapply (map.fold_spec (fun (m: map) (_: unit) => P m) (fun acc _ _ => acc) tt Base).
       intros.
@@ -602,7 +602,7 @@ Module map.
         extends m2 m1 ->
         getmany_of_list m1 ks = Some vs ->
         getmany_of_list m2 ks = Some vs.
-    Proof.
+    Proof using.
       induction ks; intros.
       - inversion H0. subst. reflexivity.
       - cbn in *.
@@ -618,7 +618,7 @@ Module map.
     Lemma getmany_of_list_length: forall ks vs m,
         map.getmany_of_list m ks = Some vs ->
         length ks = length vs.
-    Proof.
+    Proof using.
       induction ks; intros vs m E.
       - inversion E. reflexivity.
       - cbn in E. destruct (map.get m a) eqn: F; try discriminate.
@@ -634,7 +634,7 @@ Module map.
         List.In k ks ->
         map.getmany_of_list m ks = Some vs ->
         exists v, map.get m k = Some v.
-    Proof.
+    Proof using.
       induction ks; intros.
       - cbv in H. contradiction.
       - destruct H as [A | A].
@@ -652,7 +652,7 @@ Module map.
         List.Forall P ks ->
         (forall k, P k -> exists v, map.get m k = Some v) ->
         exists vs, map.getmany_of_list m ks = Some vs.
-    Proof.
+    Proof using.
       induction ks; intros.
       - exists nil. reflexivity.
       - inversion H. subst. clear H.
@@ -665,7 +665,7 @@ Module map.
     Lemma getmany_of_list_in_map: forall (m: map) ks vs,
         map.getmany_of_list m ks = Some vs ->
         List.Forall (fun v => exists k, map.get m k = Some v) vs.
-    Proof.
+    Proof using.
       induction ks; intros; unfold map.getmany_of_list, List.option_all in H; simpl in *.
       - apply eq_of_eq_Some in H. subst. constructor.
       - repeat match goal with
@@ -678,7 +678,7 @@ Module map.
     Lemma putmany_of_list_zip_sameLength : forall bs vs st st',
         map.putmany_of_list_zip bs vs st = Some st' ->
         length bs = length vs.
-    Proof.
+    Proof using.
       induction bs, vs; cbn; try discriminate; trivial; [].
       intros; destruct (map.putmany_of_list_zip bs vs st) eqn:?; eauto using f_equal.
     Qed.
@@ -686,13 +686,13 @@ Module map.
     Lemma sameLength_putmany_of_list : forall bs vs st,
         length bs = length vs ->
         exists st', map.putmany_of_list_zip bs vs st = Some st'.
-    Proof.
+    Proof using.
       induction bs, vs; cbn; try discriminate; intros; eauto.
     Qed.
 
     Lemma putmany_of_list_zip_nil_keys: forall (vs: list value) (m1 m2: map),
         map.putmany_of_list_zip nil vs m1 = Some m2 -> vs = nil.
-    Proof.
+    Proof using.
       intros.
       apply putmany_of_list_zip_sameLength in H.
       destruct vs; simpl in *; congruence.
@@ -700,7 +700,7 @@ Module map.
 
     Lemma putmany_of_list_zip_nil_values: forall (ks: list key) (m1 m2: map),
         map.putmany_of_list_zip ks nil m1 = Some m2 -> ks = nil.
-    Proof.
+    Proof using.
       intros.
       apply putmany_of_list_zip_sameLength in H.
       destruct ks; simpl in *; congruence.
@@ -729,7 +729,7 @@ Module map.
         List.nth_error ks n = Some k ->
         List.nth_error vs n = Some v ->
         get m k = Some v.
-    Proof.
+    Proof using.
       induction ks; intros.
       - apply List.nth_error_nil_Some in H0. contradiction.
       - unfold getmany_of_list in *. simpl in *.
@@ -862,7 +862,7 @@ Module map.
         map.putmany_of_list_zip ks vs map.empty = Some m ->
         List.nth_error ks i = Some k ->
         exists v, List.nth_error vs i = Some v.
-    Proof.
+    Proof using.
       induction ks; intros.
       - apply List.nth_error_nil_Some in H0. contradiction.
       - simpl in *. destruct vs; try discriminate.
@@ -880,7 +880,7 @@ Module map.
         getmany_of_tuple m ks = Some vs ->
         get m (PrimitivePair.pair._1 ks) = Some (PrimitivePair.pair._1 vs) /\
         getmany_of_tuple m (PrimitivePair.pair._2 ks) = Some (PrimitivePair.pair._2 vs).
-    Proof.
+    Proof using.
       intros. destruct ks as [k ks]. destruct vs as [v vs].
       simpl in *.
       unfold getmany_of_tuple, HList.tuple.map, HList.tuple.option_all in H.
@@ -900,7 +900,7 @@ Module map.
         (G1: map.get m (PrimitivePair.pair._1 ks) = Some (PrimitivePair.pair._1 vs))
         (G2: map.getmany_of_tuple m (PrimitivePair.pair._2 ks) = Some (PrimitivePair.pair._2 vs)):
         map.getmany_of_tuple m ks = Some vs.
-    Proof.
+    Proof using.
       unfold map.getmany_of_tuple, HList.tuple.option_all, HList.tuple.map.
       match goal with
       | |- match ?e with _ => _ end = _ =>
@@ -1004,16 +1004,16 @@ Module map.
     Qed.
 
     Lemma sub_domain_refl(m: map): sub_domain m m.
-    Proof. unfold sub_domain. eauto. Qed.
+    Proof using. unfold sub_domain. eauto. Qed.
 
     Lemma same_domain_refl(m: map): same_domain m m.
-    Proof. unfold same_domain. eauto using sub_domain_refl. Qed.
+    Proof using. unfold same_domain. eauto using sub_domain_refl. Qed.
 
     Lemma sub_domain_trans(m1 m2 m3: map)
       (S1: sub_domain m1 m2)
       (S2: sub_domain m2 m3):
       sub_domain m1 m3.
-    Proof.
+    Proof using.
       unfold sub_domain in *. intros k v1 G1.
       specialize S1 with (1 := G1). destruct S1 as [v2 S1].
       specialize S2 with (1 := S1). exact S2.
@@ -1023,12 +1023,12 @@ Module map.
       (S1: same_domain m1 m2)
       (S2: same_domain m2 m3):
       same_domain m1 m3.
-    Proof.
+    Proof using.
       unfold same_domain in *. intuition (eauto using sub_domain_trans).
     Qed.
 
     Lemma same_domain_sym(m1 m2: map)(S: same_domain m1 m2): same_domain m2 m1.
-    Proof. unfold same_domain in *. tauto. Qed.
+    Proof using. unfold same_domain in *. tauto. Qed.
 
     Lemma sub_domain_put(m1 m2: map)(k: key)(v1 v2: value)
         (S: sub_domain m1 m2):
@@ -1170,7 +1170,7 @@ Module map.
     Lemma putmany_of_disjoint_list_zip_length: forall (ks: list key) (vs: list value) m1 m2,
         putmany_of_disjoint_list_zip ks vs m1 = Some m2 ->
         length ks = length vs.
-    Proof.
+    Proof using.
       induction ks; intros.
       - destruct vs; simpl in *; try congruence.
       - destruct vs; simpl in *; try congruence.
@@ -1181,7 +1181,7 @@ Module map.
     Lemma of_disjoint_list_zip_length: forall (ks: list key) (vs: list value) m,
         of_disjoint_list_zip ks vs = Some m ->
         length ks = length vs.
-    Proof.
+    Proof using.
       unfold of_disjoint_list_zip. eauto using putmany_of_disjoint_list_zip_length.
     Qed.
 
@@ -1200,7 +1200,7 @@ Module map.
         (D: map.disjoint m1' m2)
         (S: sub_domain m1 m1'):
         map.disjoint m1 m2.
-    Proof.
+    Proof using.
       unfold sub_domain, disjoint in *. intros k v1 v2 G1 G2.
       specialize (S _ _ G1). destruct S as [v1' S].
       eauto.
@@ -1232,7 +1232,7 @@ Module map.
       map.undef_on m s ->
       map.same_domain m m' ->
       map.undef_on m' s.
-    Proof.
+    Proof using ok.
       intros U S. unfold undef_on, same_domain, sub_domain, agree_on in *.
       intros. specialize (U _ H). rewrite get_empty in *.
       destruct S as [S1 S2].
@@ -1245,7 +1245,7 @@ Module map.
       forall k v,
       List.In (k, v) l ->
       map.get (map.of_list l) k = Some v.
-    Proof.
+    Proof using ok.
       induction l; cbn; intros; try contradiction.
       inversion H; subst; clear H.
       specialize (IHl H4); clear H4.
@@ -1260,7 +1260,7 @@ Module map.
     Lemma all_gets_from_map_of_NoDup_list fs :
       List.NoDup (List.map fst fs) ->
       List.Forall (fun '(k, v) => map.get (map.of_list fs) k = Some v) fs.
-    Proof.
+    Proof using ok.
       intros.
       eapply List.Forall_forall; intros [] ?.
       eapply get_of_list_In_NoDup; eauto.
@@ -1271,7 +1271,7 @@ Module map.
         List.NoDup ks ->
         map.getmany_of_list m ks = Some vs ->
         List.NoDup vs.
-    Proof.
+    Proof using.
       intros.
       rewrite List.NoDup_nth_error in *.
       intros.
@@ -1314,11 +1314,11 @@ Module map.
     Qed.
 
     Lemma empty_injective: map.injective map.empty.
-    Proof. unfold injective. intros. rewrite map.get_empty in H. discriminate. Qed.
+    Proof using ok. unfold injective. intros. rewrite map.get_empty in H. discriminate. Qed.
 
     Lemma not_in_range_empty: forall (l: list value),
         map.not_in_range map.empty l.
-    Proof.
+    Proof using ok.
       unfold not_in_range.
       induction l; intros; constructor; intros;
         rewrite ?map.get_empty; [congruence|auto].
@@ -1338,7 +1338,7 @@ Module map.
     Qed.
   End WithMap.
 
-  Section WithTwoMaps.
+  Section WithTwoMaps. Local Set Default Proof Using "All".
     Context {K V1 V2: Type}{M1: map.map K V1}{M2: map.map K V2}
             (keqb: K -> K -> bool) {keqb_spec: EqDecider keqb}
             {OK1: map.ok M1} {OK2: map.ok M2}.

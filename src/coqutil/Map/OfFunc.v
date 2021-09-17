@@ -5,7 +5,7 @@ Require Coq.Lists.List.
 Import MapKeys.map Interface.map.
 
 Module map.
-  Section OfFunc.
+  Section OfFunc. Local Set Default Proof Using "All".
     Context {key value} {map : map key value} {ok : map.ok map}.
     Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
 
@@ -77,7 +77,7 @@ Module map.
   End OfFunc.
 
   Import Coq.Lists.List coqutil.Datatypes.List Interface.map.
-  Section OfListNatAt.
+  Section OfListNatAt. Local Set Default Proof Using "All".
     Context {value : Type} {map : map nat value} {ok : map.ok map}.
     Definition of_list_nat (xs : list value) : map :=
       of_func (nth_error xs) (seq 0 (length xs)).
@@ -100,7 +100,7 @@ Module map.
     Qed.
   End OfListNatAt.
 
-  Section OfListZAt.
+  Section OfListZAt. Local Set Default Proof Using "All".
     Import BinInt. Local Open Scope Z_scope.
     Context {value : Type} {map : map Z value} {ok : map.ok map}.
     Definition of_list_Z (xs : list value) : map :=

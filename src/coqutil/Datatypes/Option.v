@@ -28,7 +28,7 @@ Definition invert_Some_not_None {A} (x : option A) {pf : x <> None} : A
 Lemma eq_of_eq_Some {A} (x y : A) (H: Some x = Some y) : x = y.
 Proof. congruence. Qed.
 
-Section ProofsOfEquality.
+Section ProofsOfEquality. Local Set Default Proof Using "All".
   Definition option_relation_eq {A} (x y : option A) : x = y -> option_relation eq x y.
   Proof. destruct x; intro; subst; simpl; reflexivity. Defined.
   Definition eq_option_relation {A} (x y : option A) : option_relation eq x y -> x = y.

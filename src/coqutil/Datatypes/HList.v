@@ -6,7 +6,7 @@ Module Import polymorphic_list.
   Inductive list {A : Type} : Type := nil | cons (_:A) (_:list).
   Arguments list : clear implicits.
 
-  Section WithA.
+  Section WithA. Local Set Default Proof Using "All".
     Context {A : Type}.
     Fixpoint length (l : list A) : nat :=
       match l with
@@ -15,7 +15,7 @@ Module Import polymorphic_list.
       end.
   End WithA.
 
-  Section WithElement.
+  Section WithElement. Local Set Default Proof Using "All".
     Context {A} (x : A).
     Fixpoint repeat (x : A) (n : nat) {struct n} : list A :=
       match n with
@@ -88,7 +88,7 @@ Module tuple.
   Definition existss {A n} := hlist.existss (argts:=repeat A n).
 
   Import Datatypes.
-  Section WithA.
+  Section WithA. Local Set Default Proof Using "All".
     Context {A : Type}.
     Fixpoint to_list {n : nat} : tuple A n -> list A :=
       match n return tuple A n -> list A with
@@ -123,7 +123,7 @@ Module tuple.
       : to_list (eq_rect a _ xs b pf) = to_list xs.
     Proof. destruct pf. cbn. trivial. Qed.
 
-    Section WithF.
+    Section WithF. Local Set Default Proof Using "All".
       Context {B: Type}.
       Context (f: A -> B).
       Fixpoint map{sz: nat}: tuple A sz -> tuple B sz :=
@@ -133,7 +133,7 @@ Module tuple.
         end.
     End WithF.
 
-    Section WithStep.
+    Section WithStep. Local Set Default Proof Using "All".
       Context (step : A -> A).
       Fixpoint unfoldn (n : nat) (start : A) : tuple A n :=
         match n with
