@@ -7,6 +7,8 @@ Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Lists.List. Import ListNotations.
 Require Import Coq.Sorting.Permutation.
 
+Definition enumerate [A] start xs := combine (seq start (@length A xs)) xs.
+Definition zip [A B C] (f : A -> B -> C) xs ys := map (uncurry f) (combine xs ys).
 
 Section WithA.
   Context {A : Type}.

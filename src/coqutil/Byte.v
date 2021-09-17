@@ -108,4 +108,6 @@ Module byte.
     apply Z.mod_small.
     apply unsigned_range.
   Qed.
+
+  Definition xor a b := byte.of_Z (Z.lxor (byte.unsigned a) (byte.unsigned b)).
 End byte.
