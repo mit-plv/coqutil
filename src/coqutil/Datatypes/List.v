@@ -7,8 +7,10 @@ Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Lists.List. Import ListNotations.
 Require Import Coq.Sorting.Permutation.
 
-Definition enumerate [A] start xs := combine (seq start (@length A xs)) xs.
-Definition zip [A B C] (f : A -> B -> C) xs ys := map (uncurry f) (combine xs ys).
+Definition enumerate {A} start xs := combine (seq start (@length A xs)) xs.
+Definition zip {A B C} (f : A -> B -> C) xs ys :=
+  let uncurry f '(x, y) := f x y in
+  map (uncurry f) (combine xs ys).
 
 Section WithA. Local Set Default Proof Using "All".
   Context {A : Type}.
@@ -560,7 +562,7 @@ Section WithA. Local Set Default Proof Using "All".
       rewrite Bool.andb_false_r. constructor; congruence. }
   Qed.
 End WithA.
-#[export] Hint Resolve list_eqb_spec : typeclass_instances.
+Global Hint Resolve list_eqb_spec : typeclass_instances.
 
 Lemma length_flat_map: forall {A B: Type} (f: A -> list B) n (l: list A),
     (forall (a: A), length (f a) = n) ->
@@ -700,10 +702,10 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma nth_error_0_r [A] (l : list A) : nth_error l 0 = hd_error l.
+Lemma nth_error_0_r {A} (l : list A) : nth_error l 0 = hd_error l.
 Proof. destruct l; trivial. Qed.
 
-Lemma nth_error_as_skipn [A] (l : list A) i
+Lemma nth_error_as_skipn {A} (l : list A) i
   : nth_error l i = hd_error (skipn i l).
 Proof.
   erewrite <-nth_error_skipn, Nat.sub_diag by reflexivity.
@@ -1024,7 +1026,7 @@ End Nat.
 
 Section Chunk. Local Set Default Proof Using "All".
   Local Arguments Nat.ltb : simpl never.
-  Context [A : Type] (k : nat).
+  Context {A : Type} (k : nat).
   Implicit Types (bs ck xs ys : list A).
   Fixpoint chunk' bs ck {struct bs} : list (list A) :=
     match bs with
@@ -1164,7 +1166,7 @@ Goal False.
   assert (chunk 0 (seq 0 4) = [0]::[1]::[2]::[3]::nil) by exact eq_refl.
 Abort.
 
-Lemma length_concat_same_length [A] k (xs : list (list A))
+Lemma length_concat_same_length {A} k (xs : list (list A))
   (H : Forall (fun x => length x = k) xs)
   : length (concat xs) = length xs * k.
 Proof. induction H; cbn; rewrite ?app_length; Lia.lia. Qed.

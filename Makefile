@@ -6,8 +6,16 @@ default_target: all
 # use cygpath -m because Coq on Windows cannot handle cygwin paths
 SRCDIR := $(shell cygpath -m "$$(pwd)" 2>/dev/null || pwd)/src
 
-ALL_VS := $(shell find $(SRCDIR) -type f -name '*.v')
+COQC ?= "$(COQBIN)coqc"
+COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
+ifneq (,$(filter 8.11%,$(COQ_VERSION)))
+	EXCLUDEFILES := $(wildcard $(SRCDIR)/coqutil/Ltac2Lib/*.v) $(SRCDIR)/coqutil/Tactics/Records.v $(SRCDIR)/coqutil/Tactics/ParamRecords.v $(SRCDIR)/coqutil/Tactics/SafeSimpl.v $(SRCDIR)/coqutil/Word/ZifyLittleEndian.v
+endif
+ifneq (,$(filter 8.12%,$(COQ_VERSION)))
+	EXCLUDEFILES := $(SRCDIR)/coqutil/Tactics/Records.v $(SRCDIR)/coqutil/Tactics/ParamRecords.v $(SRCDIR)/coqutil/Tactics/SafeSimpl.v $(SRCDIR)/coqutil/Word/ZifyLittleEndian.v
+endif
 
+ALL_VS := $(filter-out $(EXCLUDEFILES),$(shell find $(SRCDIR) -type f -name '*.v'))
 ALL_VOS := $(patsubst %.v,%.vo,$(ALL_VOS))
 
 all: Makefile.coq.all $(ALL_VS)
