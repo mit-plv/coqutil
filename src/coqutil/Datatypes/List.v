@@ -573,6 +573,15 @@ Proof.
   - simpl. rewrite app_length. rewrite H. rewrite IHl; assumption || blia.
 Qed.
 
+Lemma flat_map_const_length{A B: Type}: forall (f: A -> list B) (n: nat) (l: list A),
+    (forall a, length (f a) = n) ->
+    length (flat_map f l) = (n * length l)%nat.
+Proof.
+  intros. induction l.
+  - simpl. blia.
+  - simpl. rewrite app_length. rewrite IHl. rewrite H. blia.
+Qed.
+
 Lemma remove_In_ne{A: Type}{aeqb: A -> A -> bool}{aeqb_spec: EqDecider aeqb}:
   forall (l: list A) (f1 f2: A),
       In f1 l ->

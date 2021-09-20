@@ -81,6 +81,15 @@ Ltac specialize_hyp H :=
            | ?P -> ?Q => let F := fresh in assert P as F; [clear H|specialize (H F); clear F]
            end.
 
+Ltac specialize_rec H :=
+  lazymatch type of H with
+  | ?P -> ?Q => let F := fresh in assert P as F; [clear H|specialize (H F); clear F; specialize_rec H]
+  | forall (x: ?T), _ => let n := fresh x in evar (n: T); specialize (H n); subst n; specialize_rec H
+  | _ => idtac
+  end.
+
+Tactic Notation "spec" constr(t) "as" ident(H) := pose proof t as H; specialize_rec H.
+
 (* What "split" really should be: does not unfold definitions to discover more
    conjunctions, but does split multiple conjunctions *)
 Ltac ssplit :=
