@@ -1529,6 +1529,183 @@ Module map.
         apply putmany_assoc.
     Qed.
 
+    Lemma put_remove_same: forall m k v, map.put (map.remove m k) k v = map.put m k v.
+    Proof.
+      intros. apply map.map_ext. intros.
+      rewrite !get_put_dec.
+      destr (key_eqb k k0). 1: reflexivity.
+      apply map.get_remove_diff. congruence.
+    Qed.
+
+    (* This is a helper function used to explain the behavior of putmany_of_list_zip.
+       Not recommended for actual use. *)
+    Fixpoint zipped_lookup (keys: list key) (values: list value) (k: key) : option value :=
+      match keys, values with
+      | nil, nil => None
+      | cons k0 keys0, cons v0 values0 =>
+        match zipped_lookup keys0 values0 k with
+        | Some v => Some v
+        | None => if key_eqb k0 k then Some v0 else None
+        end
+      | _, _ => None
+      end.
+
+    Lemma zipped_lookup_None_notin: forall (ks: list key) (vs: list value) k,
+        zipped_lookup ks vs k = None ->
+        List.length ks = List.length vs ->
+        ~ List.In k ks.
+    Proof.
+      induction ks as [|k ks]; cbn; intros; destruct vs as [|v vs]; try discriminate.
+      - auto.
+      - cbn in *. inversion H0.
+        destr (zipped_lookup ks vs k0). 1: discriminate.
+        destr (key_eqb k k0). 1: discriminate.
+        intro C. destruct C as [C | C]. 1: congruence. unfold not in IHks. eauto.
+    Qed.
+
+    Definition remove_many (m : map) (ks : list key) : map :=
+      List.fold_right (fun k res => map.remove res k) m ks.
+
+    Lemma get_remove_many_notin : forall (ks: list key) (k: key) (m: map),
+        ~ List.In k ks ->
+        map.get (remove_many m ks) k = map.get m k.
+    Proof.
+      induction ks; simpl; intros.
+      - reflexivity.
+      - rewrite get_remove_dec. destr (key_eqb a k).
+        + subst a. exfalso. apply H. left. reflexivity.
+        + apply IHks. intro C. apply H. right. exact C.
+    Qed.
+
+    Lemma get_remove_many_dec: forall ks m k,
+        get (remove_many m ks) k = if List.find (key_eqb k) ks then None else get m k.
+    Proof.
+      induction ks; simpl; intros.
+      - reflexivity.
+      - rewrite get_remove_dec.
+        rewrite IHks.
+        destr (key_eqb k a); destr (key_eqb a k); subst; congruence.
+    Qed.
+
+    Lemma zipped_lookup_Some_in : forall (ks: list key) (vs: list value) (k: key) (v: value),
+        zipped_lookup ks vs k = Some v ->
+        List.In k ks.
+    Proof.
+      induction ks as [|k0 ks]; cbn; intros; destruct vs as [|v0 vs]; try discriminate.
+      destr (key_eqb k0 k). 1: auto.
+      right. destr (zipped_lookup ks vs k). 2: discriminate. apply Option.eq_of_eq_Some in H.
+      subst. eauto.
+    Qed.
+
+    Lemma get_remove_many_Some_notin :
+        forall (ks: list key) (k: key) v (m: map),
+          map.get (remove_many m ks) k = Some v ->
+          ~ List.In k ks.
+    Proof.
+      induction ks; simpl; intros.
+      - auto.
+      - rewrite get_remove_dec in H. destr (key_eqb a k). 1: discriminate.
+        intro C. destruct C. 1: congruence. unfold not in IHks. eauto.
+    Qed.
+
+    (* This lemma is useful as a helper lemma for other lemmas because it completely
+       specifies the value of a get inside a map obtained with putmany_of_list_zip,
+       but should not be used as is. Instead, use higher-level lemmas derived from this one. *)
+    Lemma get_putmany_of_list_zip: forall (ks: list key) (vs: list value) (m r: map) k,
+        map.putmany_of_list_zip ks vs m = Some r ->
+        map.get r k = match zipped_lookup ks vs k with
+                      | Some v => Some v
+                      | None => map.get m k
+                      end.
+    Proof.
+      induction ks as [|k ks]; cbn; intros; destruct vs as [|v vs]; try discriminate.
+      - inversion H. subst. reflexivity.
+      - eapply putmany_of_list_zip_to_putmany in H.
+        destruct H as (r' & PM & ?). subst r.
+        specialize IHks with (1 := PM). specialize (IHks k0).
+        rewrite map.get_empty in IHks.
+        rewrite get_putmany_dec.
+        rewrite get_put_dec.
+        rewrite IHks.
+        destr (zipped_lookup ks vs k0). 1: reflexivity.
+        destr (key_eqb k k0); reflexivity.
+    Qed.
+
+    Lemma get_of_list_zip: forall (ks: list key) (vs: list value) (r: map) k,
+        map.of_list_zip ks vs = Some r ->
+        map.get r k = zipped_lookup ks vs k.
+    Proof.
+      intros. eapply get_putmany_of_list_zip with (k := k) in H.
+      rewrite map.get_empty in H.
+      destruct (zipped_lookup ks vs k); assumption.
+    Qed.
+
+    (* restrict a map to those keys in ks *)
+    Definition restrict(m: map)(ks: list key): map :=
+      fold (fun r k v => if List.find (key_eqb k) ks then put r k v else r) map.empty m.
+
+    Lemma get_restrict_dec: forall k ks m,
+        get (restrict m ks) k = if List.find (key_eqb k) ks then get m k else None.
+    Proof.
+      intros. unfold restrict.
+      apply fold_spec.
+      - rewrite get_empty. destr (List.find (key_eqb k) ks); reflexivity.
+      - intros. rewrite get_put_dec.
+        destr (List.find (key_eqb k0) ks).
+        + rewrite get_put_dec.
+          destr (key_eqb k0 k).
+          * subst. rewrite E. reflexivity.
+          * destr (List.find (key_eqb k) ks); assumption.
+        + destr (key_eqb k0 k).
+          * subst. rewrite E in *. assumption.
+          * assumption.
+    Qed.
+
+    Lemma putmany_of_list_zip_to_disjoint_putmany (ks: list key) (vs: list value)(m r: map):
+        map.putmany_of_list_zip ks vs m = Some r ->
+        exists m_unchanged m_overwritten ksvs,
+          map.of_list_zip ks vs = Some ksvs /\
+          m = map.putmany m_unchanged m_overwritten /\
+          map.disjoint m_unchanged m_overwritten /\
+          r = map.putmany m_unchanged ksvs /\
+          map.disjoint m_unchanged ksvs.
+    Proof.
+      intros.
+      pose proof H as L.
+      apply putmany_of_list_zip_sameLength in L. pose proof L as L0.
+      eapply sameLength_putmany_of_list with (st := map.empty) in L0.
+      destruct L0 as (ksvs & E).
+      exists (remove_many m ks), (restrict m ks), ksvs.
+      repeat split.
+      - exact E.
+      - apply map_ext.
+        intros. rewrite get_putmany_dec, get_remove_many_dec, get_restrict_dec.
+        destr (List.find (key_eqb k) ks). 2: reflexivity.
+        destr (get m k); reflexivity.
+      - unfold map.disjoint. intros.
+        rewrite get_remove_many_dec in H0.
+        rewrite get_restrict_dec in H1.
+        destr (List.find (key_eqb k) ks); discriminate.
+      - apply map_ext. intros.
+        rewrite get_putmany_dec, get_remove_many_dec.
+        eapply get_of_list_zip with (k := k) in E.
+        rewrite E.
+        eapply get_putmany_of_list_zip with (k := k) in H.
+        rewrite H.
+        destr (zipped_lookup ks vs k). 1: reflexivity.
+        destr (List.find (key_eqb k) ks). 2: reflexivity.
+        exfalso.
+        eapply zipped_lookup_None_notin in E0. 2: exact L.
+        eapply List.find_some in E1. destruct E1. destr (key_eqb k k0); subst.
+        1: contradiction. discriminate.
+      - unfold disjoint. intros.
+        rewrite get_remove_many_dec in H0.
+        eapply get_of_list_zip with (k := k) in E.
+        destr (List.find (key_eqb k) ks). 1: discriminate.
+        rewrite H1 in E. symmetry in E. eapply zipped_lookup_Some_in in E.
+        eapply List.find_none in E0. 2: exact E. destr (key_eqb k k); congruence.
+    Qed.
+
     Lemma get_split_l: forall m m1 m2 k v,
         split m m1 m2 ->
         get m2 k = None ->

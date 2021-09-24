@@ -400,6 +400,37 @@ Section WithA. Local Set Default Proof Using "All".
     - simpl. destruct len; simpl; f_equal; auto.
   Qed.
 
+  Lemma nth_error_firstn_weaken: forall (i n: nat) (l: list A) (a: A),
+      nth_error (firstn n l) i = Some a ->
+      nth_error l i = Some a.
+  Proof.
+    induction i; simpl; intros.
+    - destruct l.
+      + rewrite firstn_nil in H. assumption.
+      + destruct n; simpl in *. 1: discriminate. assumption.
+    - destruct l.
+      + rewrite firstn_nil in H. assumption.
+      + destruct n; simpl in *. 1: discriminate. eauto.
+  Qed.
+
+  Lemma Forall_firstn(P: A -> Prop): forall (n: nat) (l: list A),
+      Forall P l -> Forall P (firstn n l).
+  Proof.
+    induction n; intros.
+    - simpl. constructor.
+    - destruct l. 1: constructor. inversion H. subst. simpl. constructor; eauto.
+  Qed.
+
+  Lemma Forall_filter(P: A -> Prop)(f: A -> bool)(HfP: forall a, f a = true -> P a):
+    forall (l: list A), Forall P (filter f l).
+  Proof.
+    induction l; intros.
+    - simpl. constructor.
+    - simpl. destr (f a).
+      + constructor; eauto.
+      + assumption.
+  Qed.
+
   Lemma NoDup_app_iff (l1 l2 : list A) :
     NoDup (l1 ++ l2) <-> (NoDup l1 /\ NoDup l2
                           /\ (forall x, In x l1 -> ~ In x l2)
