@@ -55,6 +55,18 @@ Section WithA. Local Set Default Proof Using "All".
     destr (aeqb a2 a); simpl in *; subst; intuition congruence.
   Qed.
 
+  Lemma In_removeb_weaken{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
+    forall (x y: A) (l: list A),
+      In x (removeb aeqb y l) ->
+      In x l.
+  Proof.
+    induction l; simpl; intros.
+    - assumption.
+    - destr (aeqb y a).
+      + subst. simpl in H. auto.
+      + simpl in H. destruct H; auto.
+  Qed.
+
   Lemma NoDup_removeb{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
     forall (a: A) (l: list A),
       NoDup l ->
@@ -172,7 +184,7 @@ Section WithA. Local Set Default Proof Using "All".
       + assumption.
       + constructor. 2: assumption.
         intro C.
-        apply dedup_preserves_In in C. 2: assumption.
+        apply dedup_preserves_In in C.
         pose proof (find_none _ _ E _ C).
         destr (aeqb a a); congruence.
   Qed.

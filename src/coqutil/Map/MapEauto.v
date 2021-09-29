@@ -1,10 +1,11 @@
 Require Import coqutil.Decidable.
-Require Import coqutil.Map.Interface.
+Require Import coqutil.Map.Interface coqutil.Map.Properties.
 Require Import coqutil.Map.Solver.
 Require Import coqutil.Datatypes.PropSet.
+Require Import coqutil.Tactics.destr.
 
 Section WithParams. Local Set Default Proof Using "All".
-  Import map.
+  Import Interface.map.
   Context {var: Type}. (* variable name (key) *)
   Context {var_eqb: var -> var -> bool}.
   Context {var_eqb_spec: EqDecider var_eqb}.
@@ -96,5 +97,105 @@ Section WithParams. Local Set Default Proof Using "All".
     elem_of x d ->
     only_differ s d (put s x v).
   Proof. t. Qed.
+
+  Lemma extends_putmany: forall m1 m2 m3,
+      map.extends m1 m2 ->
+      map.extends m1 m3 ->
+      map.extends m1 (map.putmany m2 m3).
+  Proof. t. Qed.
+
+  Lemma putmany_r_extends: forall m1 m2 m3,
+      map.extends m2 m3 ->
+      map.extends (map.putmany m1 m2) m3.
+  Proof. t. Qed.
+
+  Lemma invert_extends_disjoint_putmany: forall m1 m2 m3,
+      map.disjoint m2 m3 ->
+      map.extends m1 (map.putmany m2 m3) ->
+      map.extends m1 m2 /\ map.extends m1 m3.
+  Proof.
+    unfold map.extends, map.disjoint. intros.
+    split; intros; specialize (H0 x); rewrite map.get_putmany_dec in H0.
+    - destr (map.get m3 x). 2: eauto. exfalso. eauto.
+    - destr (map.get m3 x). 1: eauto. discriminate.
+  Qed.
+
+  Lemma put_extends_l: forall m1 m2 k v,
+      map.get m2 k = None ->
+      map.extends m1 m2 ->
+      map.extends (map.put m1 k v) m2.
+  Proof. t. Qed.
+
+  Lemma remove_put_same: forall m k v,
+      map.remove (map.put m k v) k = map.remove m k.
+  Proof.
+    intros. apply map.map_ext. intros. rewrite ?map.get_remove_dec, map.get_put_dec.
+    destr (var_eqb k k0); reflexivity.
+  Qed.
+
+  Lemma remove_comm: forall m k1 k2,
+      map.remove (map.remove m k1) k2 = map.remove (map.remove m k2) k1.
+  Proof.
+    intros. apply map.map_ext. intros. rewrite ?map.get_remove_dec.
+    destr (var_eqb k1 k); destr (var_eqb k2 k); reflexivity.
+  Qed.
+
+  Lemma remove_extends: forall m1 m2 k,
+      map.extends m1 m2 ->
+      map.get m2 k = None ->
+      map.extends (map.remove m1 k) m2.
+  Proof. t. Qed.
+
+  Lemma extends_remove: forall m1 m2 k,
+      map.extends m1 m2 ->
+      map.extends m1 (map.remove m2 k).
+  Proof. t. Qed.
+
+  Lemma get_putmany_none: forall m1 m2 k,
+      map.get m1 k = None ->
+      map.get m2 k = None ->
+      map.get (map.putmany m1 m2) k = None.
+  Proof. t. Qed.
+
+  Lemma weaken_forall_keys: forall (P1 P2: var -> Prop) (m: state),
+      (forall k, P1 k -> P2 k) ->
+      forall_keys P1 m -> forall_keys P2 m.
+  Proof. unfold forall_keys. intros. eauto. Qed.
+
+  Lemma get_None_in_forall_keys: forall m k P,
+      forall_keys P m ->
+      ~ P k ->
+      map.get m k = None.
+  Proof.
+    unfold forall_keys. intros. destr (map.get m k). 2: reflexivity.
+    exfalso. eauto.
+  Qed.
+
+  Lemma invert_forall_keys_putmany: forall m1 m2 P,
+      forall_keys P (map.putmany m1 m2) ->
+      forall_keys P m1 /\ forall_keys P m2.
+  Proof.
+    unfold forall_keys. intros.
+    split; intros;
+      specialize (H k); rewrite map.get_putmany_dec in H;
+        destr (map.get m2 k); eauto; discriminate.
+  Qed.
+
+  Lemma only_differ_remove: forall m1 m2 s k,
+      map.only_differ m1 s m2 ->
+      map.only_differ (map.remove m1 k) (diff s (singleton_set k)) (map.remove m2 k).
+  Proof. t. Qed.
+
+  Lemma putmany_l_extends: forall m1 m2 m3,
+      map.extends m1 m3 ->
+      map.disjoint m1 m2 ->
+      map.extends (map.putmany m1 m2) m3.
+  Proof.
+    unfold map.extends, map.disjoint. intros. rewrite map.get_putmany_dec.
+    specialize (H _ _ H1).
+    destr (map.get m2 x).
+    - exfalso. eauto.
+    - exact H.
+  Qed.
 
 End WithParams.

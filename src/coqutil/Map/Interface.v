@@ -64,6 +64,9 @@ Module map.
     Definition sub_domain(m1 m2: map): Prop :=
       forall k v1, map.get m1 k = Some v1 -> exists v2, map.get m2 k = Some v2.
     Definition same_domain(m1 m2: map): Prop := sub_domain m1 m2 /\ sub_domain m2 m1.
+    Definition forall_keys(P : key -> Prop)(m : map): Prop :=
+      forall k v, map.get m k = Some v -> P k.
+
     Definition split m m1 m2 := m = (putmany m1 m2) /\ disjoint m1 m2.
 
     Definition getmany_of_list (m : map) (keys : list key) : option (list value) :=

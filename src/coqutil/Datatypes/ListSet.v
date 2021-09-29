@@ -222,4 +222,73 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       In x (list_union eeq l1 l2) -> In x l1 \/ In x l2.
   Proof. intros. eapply In_list_union_spec. assumption. Qed.
 
+  Lemma In_list_diff_weaken: forall (x: E) (l1 l2: list E),
+      In x (list_diff eeq l1 l2) ->
+      In x l1.
+  Proof.
+    intros. revert dependent l1. induction l2; simpl; intros.
+    - assumption.
+    - eapply IHl2 in H. unfold list_diff in H. eapply In_removeb_weaken; eassumption.
+  Qed.
+
+  Lemma list_diff_empty_l: forall (l: list E),
+      list_diff eeq [] l = [].
+  Proof.
+    induction l; simpl; intros; auto.
+  Qed.
+
+  Lemma list_diff_NoDup: forall (l1 l2: list E),
+      NoDup l1 ->
+      NoDup (list_diff eeq l1 l2).
+  Proof.
+    intros. revert dependent l1. induction l2; simpl; intros.
+    - assumption.
+    - eapply IHl2. eapply NoDup_removeb. assumption.
+  Qed.
+
+  Lemma list_diff_cons: forall (l1 l2: list E) (x: E),
+      list_diff eeq (x :: l1) l2 = if List.find (eeq x) l2
+                                   then list_diff eeq l1 l2
+                                   else x :: list_diff eeq l1 l2.
+  Proof.
+    intros. revert dependent l1.
+    induction l2; simpl; intros.
+    - reflexivity.
+    - destr (eeq a x).
+      + subst. simpl. destr (eeq x x). 2: contradiction. reflexivity.
+      + simpl. destr (eeq x a). 1: congruence. apply IHl2.
+  Qed.
+
+  Lemma In_list_diff: forall (l1 l2: list E) (x: E),
+      In x l1 ->
+      ~ In x l2 ->
+      In x (list_diff eeq l1 l2).
+  Proof.
+    induction l1; simpl; intros.
+    - contradiction.
+    - rewrite list_diff_cons. destr (find (eeq a) l2).
+      + eapply find_some in E0. destruct E0. destr (eeq a e). 2: congruence. subst.
+        destruct H.
+        * subst. contradiction.
+        * eauto.
+      + simpl. destruct H.
+        * subst. auto.
+        * auto.
+  Qed.
+
+  Lemma invert_In_list_diff: forall (l1 l2: list E) (x: E),
+      In x (list_diff eeq l1 l2) ->
+      In x l1 /\ ~ In x l2.
+  Proof.
+    induction l1; simpl; intros.
+    - rewrite list_diff_empty_l in H. inversion H.
+    - rewrite list_diff_cons in H. destr (find (eeq a) l2).
+      + eapply find_some in E0. destruct E0. destr (eeq a e). 2: congruence. subst.
+        specialize IHl1 with (1 := H). destruct IHl1. auto.
+      + simpl in *. destruct H.
+        * subst. split; [auto|]. intro C. eapply find_none in E0. 2: eassumption.
+          destr (eeq x x); congruence.
+        * specialize IHl1 with (1 := H). destruct IHl1. auto.
+  Qed.
+
 End ListSetProofs.

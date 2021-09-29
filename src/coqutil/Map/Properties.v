@@ -1706,6 +1706,36 @@ Module map.
         eapply List.find_none in E0. 2: exact E. destr (key_eqb k k); congruence.
     Qed.
 
+    Lemma not_in_of_list_zip_to_get_None (ks: list key) (vs: list value) (ksvs: map) (k: key):
+        map.of_list_zip ks vs = Some ksvs ->
+        ~ List.In k ks ->
+        map.get ksvs k = None.
+    Proof.
+      intros.
+      eapply get_of_list_zip in H. rewrite H.
+      match goal with
+      | |- ?x = _ => destr x; [exfalso|reflexivity]
+      end.
+      eapply zipped_lookup_Some_in in E. apply H0. exact E.
+    Qed.
+
+    Lemma undef_on_disjoint_of_list_zip: forall (m ksvs: map) ks vs,
+        map.disjoint m ksvs ->
+        map.of_list_zip ks vs = Some ksvs ->
+        map.undef_on m (PropSet.of_list ks).
+    Proof.
+      unfold map.disjoint, map.undef_on, of_list, map.agree_on, PropSet.elem_of.
+      intros. rewrite map.get_empty.
+      pose proof H0 as L. eapply putmany_of_list_zip_sameLength in L.
+      eapply get_of_list_zip with (k := k) in H0.
+      destr (map.get m k). 2: reflexivity. exfalso.
+      match type of H0 with
+      | _ = ?x => destr x
+      end.
+      1: eauto.
+      eapply zipped_lookup_None_notin; eassumption.
+    Qed.
+
     Lemma get_split_l: forall m m1 m2 k v,
         split m m1 m2 ->
         get m2 k = None ->
