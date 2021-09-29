@@ -140,7 +140,7 @@ Section WithA. Local Set Default Proof Using "All".
       | x :: xs => if List.find (aeqb x) xs then rec xs else x :: rec xs
       end.
 
-  Lemma dedup_preserves_In(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}(l: list A) a:
+  Lemma dedup_preserves_In{aeqb: A -> A -> bool}{aeqb_spec: EqDecider aeqb}(l: list A) a:
     In a l <-> In a (dedup aeqb l).
   Proof.
     induction l.
@@ -163,7 +163,7 @@ Section WithA. Local Set Default Proof Using "All".
           { firstorder idtac. }
   Qed.
 
-  Lemma NoDup_dedup(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}: forall (l: list A),
+  Lemma NoDup_dedup{aeqb: A -> A -> bool}{aeqb_spec: EqDecider aeqb}: forall (l: list A),
       NoDup (dedup aeqb l).
   Proof.
     induction l.
@@ -556,7 +556,7 @@ Section WithA. Local Set Default Proof Using "All".
   Definition list_eqb (aeqb : A -> A -> bool) (x y : list A) : bool :=
     ((length x =? length y)%nat && forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y))%bool.
 
-  Lemma list_forallb_eqb_refl (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} ls :
+  Lemma list_forallb_eqb_refl {aeqb : A -> A -> bool} {aeqb_spec:EqDecider aeqb} ls :
     forallb (fun xy => aeqb (fst xy) (snd xy)) (combine ls ls) = true.
   Proof.
     induction ls as [|x ?]; [ reflexivity | ].
@@ -564,7 +564,7 @@ Section WithA. Local Set Default Proof Using "All".
     destr (aeqb x x); subst; congruence || reflexivity.
   Qed.
 
-  Lemma length_eq_forallb_eqb_false (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} x y :
+  Lemma length_eq_forallb_eqb_false {aeqb : A -> A -> bool} {aeqb_spec:EqDecider aeqb} x y :
     length x = length y -> x <> y ->
     forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y) = false.
   Proof.
@@ -576,7 +576,7 @@ Section WithA. Local Set Default Proof Using "All".
     rewrite IHx by congruence. reflexivity.
   Qed.
 
-  Lemma list_eqb_spec (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb}
+  Lemma list_eqb_spec {aeqb : A -> A -> bool} {aeqb_spec:EqDecider aeqb}
     : EqDecider (list_eqb aeqb).
   Proof.
     cbv [list_eqb].
