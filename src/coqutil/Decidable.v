@@ -30,6 +30,15 @@ Module Nat.
   Qed.
 End Nat.
 
+Module Byte.
+  Instance eqb_spec: EqDecider Byte.eqb.
+  Proof.
+    intros. destruct (Byte.eqb x y) eqn: E; constructor.
+    - apply Byte.byte_dec_bl. assumption.
+    - apply Byte.eqb_false. assumption.
+  Qed.
+End Byte.
+
 Module N.
   Lemma eqb_spec: EqDecider N.eqb.
   Proof.
@@ -57,10 +66,11 @@ Module String.
   Qed.
 End String.
 
-Hint Resolve
+#[global] Hint Resolve
      Nat.eqb_spec
      Nat.leb_spec
      Nat.ltb_spec
+     Byte.eqb_spec
      N.eqb_spec
      N.leb_spec
      N.ltb_spec
