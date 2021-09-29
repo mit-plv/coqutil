@@ -136,7 +136,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
 
   Lemma of_list_removeb: forall x A,
       of_list (removeb eeq x A) = diff (of_list A) (singleton_set x).
-  Proof using.
+  Proof using eeq_spec.
     unfold of_list, diff, singleton_set, elem_of. intros.
     extensionality e. apply propositional_extensionality. split.
     - induction A; intros.

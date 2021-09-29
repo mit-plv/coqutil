@@ -29,7 +29,7 @@ Section WithA. Local Set Default Proof Using "All".
       end
     end.
 
-  Definition removeb(aeq: A -> A -> bool){aeq_spec: EqDecider aeq}(e: A)(l: list A): list A :=
+  Definition removeb(aeq: A -> A -> bool)(e: A)(l: list A): list A :=
     filter (fun e' => negb (aeq e e')) l.
 
   Lemma removeb_not_In{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
@@ -133,7 +133,7 @@ Section WithA. Local Set Default Proof Using "All".
   Qed.
 
   (* same as nodup from standard library but using BoolSpec instead of sumbool *)
-  Definition dedup{A: Type}(aeqb: A -> A -> bool){aeqb_spec: EqDecider aeqb}: list A -> list A :=
+  Definition dedup{A: Type}(aeqb: A -> A -> bool): list A -> list A :=
     fix rec l :=
       match l with
       | [] => []
@@ -172,7 +172,7 @@ Section WithA. Local Set Default Proof Using "All".
       + assumption.
       + constructor. 2: assumption.
         intro C.
-        apply dedup_preserves_In in C.
+        apply dedup_preserves_In in C. 2: assumption.
         pose proof (find_none _ _ E _ C).
         destr (aeqb a a); congruence.
   Qed.
@@ -553,7 +553,7 @@ Section WithA. Local Set Default Proof Using "All".
     apply Bool.andb_true_iff. eauto.
   Qed.
 
-  Definition list_eqb (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} (x y : list A) : bool :=
+  Definition list_eqb (aeqb : A -> A -> bool) (x y : list A) : bool :=
     ((length x =? length y)%nat && forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y))%bool.
 
   Lemma list_forallb_eqb_refl (aeqb : A -> A -> bool) {aeqb_spec:EqDecider aeqb} ls :
