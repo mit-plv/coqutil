@@ -3,9 +3,7 @@ Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
 Require Import coqutil.Datatypes.PropSet.
 
-(*Local Set Ltac Profiling.*)
-
-Section Tests. Local Set Default Proof Using "All".
+Section WithParams. Local Set Default Proof Using "All".
   Import map.
   Context {var: Type}. (* variable name (key) *)
   Context {var_eqb: var -> var -> bool}.
@@ -99,6 +97,4 @@ Section Tests. Local Set Default Proof Using "All".
     only_differ s d (put s x v).
   Proof. t. Qed.
 
-End Tests.
-
-(*Goal True. idtac "End of TestLemmas.v". Abort.*)
+End WithParams.
