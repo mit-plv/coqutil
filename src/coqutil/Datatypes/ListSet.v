@@ -134,6 +134,23 @@ Section ListSetProofs. Local Set Default Proof Using "All".
     inversion H. subst. clear H. destruct_one_match; eauto.
   Qed.
 
+  Lemma removeb_Forall_weaken: forall (P : E -> Prop) (l : list E) (e: E),
+      Forall P l ->
+      Forall P (removeb eeq e l).
+  Proof.
+    unfold removeb. intros. eapply Forall_forall. intros. eapply Forall_forall in H.
+    1: exact H.
+    eapply filter_In in H0. apply H0.
+  Qed.
+
+  Lemma list_diff_Forall_weaken: forall (P : E -> Prop) (l1 l2 : list E),
+      Forall P l1 -> Forall P (list_diff eeq l1 l2).
+  Proof.
+    unfold list_diff. intros *. revert l1. induction l2; simpl; intros.
+    - assumption.
+    - eapply IHl2. eapply removeb_Forall_weaken. assumption.
+  Qed.
+
   Lemma of_list_removeb: forall x A,
       of_list (removeb eeq x A) = diff (of_list A) (singleton_set x).
   Proof using eeq_spec.
