@@ -1668,7 +1668,8 @@ Module map.
           m = map.putmany m_unchanged m_overwritten /\
           map.disjoint m_unchanged m_overwritten /\
           r = map.putmany m_unchanged ksvs /\
-          map.disjoint m_unchanged ksvs.
+          map.disjoint m_unchanged ksvs /\
+          map.sub_domain m_overwritten ksvs.
     Proof.
       intros.
       pose proof H as L.
@@ -1704,6 +1705,11 @@ Module map.
         destr (List.find (key_eqb k) ks). 1: discriminate.
         rewrite H1 in E. symmetry in E. eapply zipped_lookup_Some_in in E.
         eapply List.find_none in E0. 2: exact E. destr (key_eqb k k); congruence.
+      - unfold sub_domain. intros. rewrite get_restrict_dec in H0.
+        destr (List.find (key_eqb k)). 2: discriminate.
+        eapply List.find_some in E0. destruct E0. destr (key_eqb k k0). 2: discriminate.
+        subst k0. eapply putmany_of_list_zip_get in E. 2: eassumption.
+        destr (get ksvs k). 2: contradiction. clear. eauto.
     Qed.
 
     Lemma not_in_of_list_zip_to_get_None (ks: list key) (vs: list value) (ksvs: map) (k: key):
