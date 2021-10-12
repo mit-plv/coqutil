@@ -7,7 +7,7 @@ Require Coq.Strings.String.
 
 (* needed because it unfolds to Nat.leb and then typeclass search picks Nat.leb_spec
    instead of Nat.ltb_spec *)
-Hint Opaque Nat.ltb : typeclass_instances.
+#[global] Hint Opaque Nat.ltb : typeclass_instances.
 
 Existing Class BoolSpec.
 
@@ -17,7 +17,7 @@ Proof. intro; subst. inversion H; auto. Qed.
 Lemma BoolSpec_false P Q x (H : BoolSpec P Q x) : autoforward (x = false) Q.
 Proof. intro; subst. inversion H; auto. Qed.
 
-Hint Resolve BoolSpec_true BoolSpec_false : typeclass_instances.
+#[global] Hint Resolve BoolSpec_true BoolSpec_false : typeclass_instances.
 
 Notation EqDecider f := (forall x y, BoolSpec (x = y) (x <> y) (f x y)).
 
