@@ -67,6 +67,14 @@ Module map.
       - rewrite !get_put_diff; congruence.
     Qed.
 
+    Lemma put_put_diff: forall m k1 k2 v1 v2,
+        k1 <> k2 ->
+        map.put (map.put m k1 v1) k2 v2 = map.put (map.put m k2 v2) k1 v1.
+    Proof.
+      intros. apply map.map_ext. intros.
+      rewrite ?get_put_dec. destr (key_eqb k1 k); destr (key_eqb k2 k); congruence.
+    Qed.
+
     Lemma putmany_spec m1 m2 k :
       (exists v, get m2 k = Some v /\ get (putmany m1 m2) k = Some v) \/
       (get m2 k = None /\ get (putmany m1 m2) k = get m1 k).
@@ -682,21 +690,37 @@ Module map.
       induction bs, vs; cbn; try discriminate; intros; eauto.
     Qed.
 
-    Lemma putmany_of_list_zip_nil_keys: forall (vs: list value) (m1 m2: map),
-        map.putmany_of_list_zip nil vs m1 = Some m2 -> vs = nil.
-    Proof using.
-      intros.
-      apply putmany_of_list_zip_sameLength in H.
-      destruct vs; simpl in *; congruence.
-    Qed.
+    Lemma putmany_of_list_zip_nil_keys: forall vs m0 m,
+        map.putmany_of_list_zip nil vs m0 = Some m ->
+        vs = nil /\ m = m0.
+    Proof. intros vs m0 m H. cbn in H. destruct vs. 2: discriminate. split; congruence. Qed.
 
-    Lemma putmany_of_list_zip_nil_values: forall (ks: list key) (m1 m2: map),
-        map.putmany_of_list_zip ks nil m1 = Some m2 -> ks = nil.
-    Proof using.
-      intros.
-      apply putmany_of_list_zip_sameLength in H.
-      destruct ks; simpl in *; congruence.
-    Qed.
+    Lemma putmany_of_list_zip_nil_values: forall ks m0 m,
+        map.putmany_of_list_zip ks nil m0 = Some m ->
+        ks = nil /\ m = m0.
+    Proof. intros ks m0 m H. destruct ks; cbn in H. 2: discriminate. split; congruence. Qed.
+
+    Lemma of_list_zip_nil_keys: forall vs m,
+        map.of_list_zip nil vs = Some m ->
+        vs = nil /\ m = map.empty.
+    Proof. intros *. apply putmany_of_list_zip_nil_keys. Qed.
+
+    Lemma of_list_zip_nil_values: forall ks m,
+        map.of_list_zip ks nil = Some m ->
+        ks = nil /\ m = map.empty.
+    Proof. intros *. apply putmany_of_list_zip_nil_values. Qed.
+
+    Lemma putmany_of_list_zip_cons_keys: forall k ks vsCons m0 m,
+        map.putmany_of_list_zip (cons k ks) vsCons m0 = Some m ->
+        exists v vs, vsCons = cons v vs /\
+                     map.putmany_of_list_zip ks vs (map.put m0 k v) = Some m.
+    Proof. intros. cbn in H. destruct vsCons. 1: discriminate. eauto. Qed.
+
+    Lemma putmany_of_list_zip_cons_values: forall ksCons v vs m0 m,
+        map.putmany_of_list_zip ksCons (cons v vs) m0 = Some m ->
+        exists k ks, ksCons = cons k ks /\
+                     map.putmany_of_list_zip ks vs (map.put m0 k v) = Some m.
+    Proof. intros. destruct ksCons; cbn in H. 1: discriminate. eauto. Qed.
 
     Lemma putmany_of_list_zip_find_index: forall ks vs (m1 m2: map) k v,
         putmany_of_list_zip ks vs m1 = Some m2 ->
@@ -1804,6 +1828,263 @@ Module map.
       specialize H with (1 := H1). specialize H3 with (1 := H2).
       rewrite get_putmany_dec in H.
       destruct (get mRest k); eauto.
+    Qed.
+
+    Lemma getmany_of_list_cons: forall m k v ks vs,
+        map.get m k = Some v ->
+        map.getmany_of_list m ks = Some vs ->
+        map.getmany_of_list m (cons k ks) = Some (cons v vs).
+    Proof using.
+      intros. unfold map.getmany_of_list in *. cbn. rewrite H. rewrite H0. reflexivity.
+    Qed.
+
+    Lemma invert_getmany_of_list_cons: forall m k v ks vs,
+        map.getmany_of_list m (cons k ks) = Some (cons v vs) ->
+        map.get m k = Some v /\ map.getmany_of_list m ks = Some vs.
+    Proof using.
+      intros. unfold map.getmany_of_list in *. cbn in *.
+      destr (map.get m k). 2: discriminate.
+      destr (List.option_all (List.map (map.get m) ks)). 2: discriminate.
+      inversion H. subst. auto.
+    Qed.
+
+    Lemma getmany_of_list_put_diff: forall ks vs k v m,
+        ~ List.In k ks ->
+        map.getmany_of_list m ks = Some vs ->
+        map.getmany_of_list (map.put m k v) ks = Some vs.
+    Proof using ok.
+      induction ks; simpl; intros; destruct vs as [|v0 vs].
+      - reflexivity.
+      - discriminate.
+      - cbn in H0.
+        destr (map.get m a); try discriminate.
+        destr (List.option_all (List.map (map.get m) ks)); try discriminate.
+      - eapply invert_getmany_of_list_cons in H0. destruct H0.
+        assert (a <> k) as NE. {
+          intro C. apply H. auto.
+        }
+        assert (~ List.In k ks) as NI. {
+          intro C. apply H. auto.
+        }
+        clear H.
+        eapply getmany_of_list_cons.
+        + rewrite map.get_put_diff by assumption. assumption.
+        + eauto.
+    Qed.
+
+    Lemma of_list_zip_cons_keys: forall k ks vals m,
+        map.of_list_zip (k :: ks) vals = Some m ->
+        exists v vs ksvs, vals = cons v vs /\ m = map.putmany (map.put map.empty k v) ksvs /\
+                          map.of_list_zip ks vs = Some ksvs.
+    Proof.
+      intros. destruct vals as [|v vs]. 1: discriminate.
+      cbn in H.
+      eapply putmany_of_list_zip_to_putmany in H.
+      destruct H as (r & E & ?). subst. eauto 10.
+    Qed.
+
+    Lemma of_list_zip_cons_keys': forall k ks vals m,
+        map.of_list_zip (k :: ks) vals = Some m ->
+        ~ List.In k ks ->
+        exists v vs ksvs, vals = cons v vs /\ m = map.put ksvs k v /\
+                          map.of_list_zip ks vs = Some ksvs.
+    Proof.
+      intros. destruct vals as [|v vs]. 1: discriminate.
+      cbn in H.
+      eapply putmany_of_list_zip_to_putmany in H.
+      destruct H as (r & E & ?). subst. do 3 eexists.
+      split; [reflexivity|].
+      split; [|exact E].
+      apply map.map_ext. intros.
+      rewrite get_putmany_dec, ?get_put_dec.
+      destr (key_eqb k k0).
+      - subst. erewrite not_in_of_list_zip_to_get_None by eassumption. reflexivity.
+      - rewrite map.get_empty. destr (map.get r k0); reflexivity.
+    Qed.
+
+    Lemma putmany_of_list_zip_to_getmany_of_list: forall ks vs m0 m,
+        map.putmany_of_list_zip ks vs m0 = Some m ->
+        List.NoDup ks ->
+        map.getmany_of_list m ks = Some vs.
+    Proof.
+      induction ks; intros; destruct vs as [|v vs]; try discriminate.
+      - reflexivity.
+      - inversion H0. subst. clear H0. cbn in *.
+        eapply putmany_of_list_zip_to_putmany in H.
+        destruct H as (m' & P & ?). subst.
+        rewrite get_putmany_dec, map.get_put_same.
+        unfold map.getmany_of_list in *.
+        replace (List.map (map.get (map.putmany (map.put m0 a v) m')) ks)
+          with (List.map (map.get m') ks). 2: {
+          eapply List.map_ext_in.
+          intros k HI.
+          rewrite get_putmany_dec, get_put_dec.
+          eapply putmany_of_list_zip_get in P. 2: exact HI.
+          destr (map.get m' k). 1: reflexivity. exfalso. congruence.
+        }
+        erewrite IHks by eassumption.
+        destr (map.get m' a). 2: reflexivity.
+        erewrite not_in_of_list_zip_to_get_None in E by eassumption. discriminate.
+    Qed.
+
+    Lemma of_list_zip_to_getmany_of_list: forall ks vs m,
+        map.of_list_zip ks vs = Some m ->
+        List.NoDup ks ->
+        map.getmany_of_list m ks = Some vs.
+    Proof. intros *. eapply putmany_of_list_zip_to_getmany_of_list. Qed.
+
+    Lemma putmany_of_list_zip_cons_put: forall k ks v vs m0,
+        map.putmany_of_list_zip (k :: ks) (v :: vs) m0 =
+        map.putmany_of_list_zip ks vs (map.put m0 k v).
+    Proof using. cbn. intros. reflexivity. Qed.
+
+    Lemma of_list_zip_cons_put: forall k ks v vs m,
+        map.of_list_zip ks vs = Some m ->
+        map.of_list_zip (k :: ks) (v :: vs) = Some (map.putmany (map.put map.empty k v) m).
+    Proof.
+      unfold map.of_list_zip. cbn. intros. cbn.
+      pose proof H as HL.
+      eapply putmany_of_list_zip_sameLength in HL.
+      eapply sameLength_putmany_of_list in HL.
+      destruct HL as (r & HL). rewrite HL.
+      f_equal.
+      eapply putmany_of_list_zip_to_putmany in HL.
+      destruct HL as (m' & HL & ?). subst r. rewrite H in HL.
+      inversion HL. subst m'. clear HL.
+      reflexivity.
+    Qed.
+
+    Lemma putmany_of_list_zip_snoc_put: forall ks k vs v m0 m,
+        map.putmany_of_list_zip ks vs m0 = Some m ->
+        map.putmany_of_list_zip (List.app ks (cons k nil))
+                                (List.app vs (cons v nil)) m0 = Some (map.put m k v).
+    Proof using.
+      induction ks; intros; destruct vs as [|v0 vs]; try discriminate.
+      - cbn in *. congruence.
+      - cbn in *. eapply IHks. assumption.
+    Qed.
+
+    Lemma of_list_zip_snoc_put: forall ks k vs v m,
+        map.of_list_zip ks vs = Some m ->
+        map.of_list_zip (List.app ks (cons k nil))
+                        (List.app vs (cons v nil)) = Some (map.put m k v).
+    Proof using. unfold map.of_list_zip. intros *. eapply putmany_of_list_zip_snoc_put. Qed.
+
+    Lemma putmany_of_list_zip_cons_put': forall ks k v vs m0 m,
+        ~ List.In k ks ->
+        map.putmany_of_list_zip ks vs m0 = Some m ->
+        map.putmany_of_list_zip (k :: ks) (v :: vs) m0 = Some (map.put m k v).
+    Proof.
+      induction ks; simpl; intros; destruct vs as [|v0 vs]; try discriminate.
+      - congruence.
+      - assert (a <> k) by intuition congruence.
+        assert (~ List.In k ks) by intuition congruence.
+        rewrite put_put_diff by congruence.
+        eapply IHks; eassumption.
+    Qed.
+
+    Lemma of_list_zip_cons_put': forall k ks v vs m,
+        ~ List.In k ks ->
+        map.of_list_zip ks vs = Some m ->
+        map.of_list_zip (k :: ks) (v :: vs) = Some (map.put m k v).
+    Proof. intros. eapply putmany_of_list_zip_cons_put'; eassumption. Qed.
+
+    Lemma invert_get_putmany_None: forall k m1 m2,
+        map.get (map.putmany m1 m2) k = None ->
+        map.get m1 k = None /\ map.get m2 k = None.
+    Proof.
+      intros. rewrite get_putmany_dec in H.
+      destr (map.get m2 k); destr (map.get m1 k); try discriminate H; auto.
+    Qed.
+
+    Lemma forall_keys_empty: forall (P: key -> Prop), map.forall_keys P map.empty.
+    Proof using ok.
+      unfold map.forall_keys. intros. rewrite map.get_empty in H. discriminate.
+    Qed.
+
+    Lemma forall_keys_put: forall (P: key -> Prop) m k v,
+        map.forall_keys P m ->
+        P k ->
+        map.forall_keys P (map.put m k v).
+    Proof.
+      unfold map.forall_keys. intros.
+      rewrite get_put_dec in H1.
+      destr (key_eqb k k0); subst; eauto.
+    Qed.
+
+    Lemma invert_forall_keys_put: forall (P: key -> Prop) m k v,
+        map.forall_keys P (map.put m k v) ->
+        P k /\ map.forall_keys P m.
+    Proof.
+      unfold map.forall_keys. intros. split.
+      - eapply H. apply map.get_put_same.
+      - intros. specialize (H k0). rewrite get_put_dec in H.
+        destr (key_eqb k k0); subst; eauto.
+    Qed.
+
+    Lemma forall_keys_putmany: forall (P: key -> Prop) m1 m2,
+        map.forall_keys P m1 ->
+        map.forall_keys P m2 ->
+        map.forall_keys P (map.putmany m1 m2).
+    Proof.
+      unfold map.forall_keys. intros. rewrite get_putmany_dec in H1.
+      destr (map.get m2 k).
+      - inversion H1. subst. eauto.
+      - eauto.
+    Qed.
+
+    Lemma forall_keys_remove: forall (P: key -> Prop) k m,
+        map.forall_keys P m ->
+        map.forall_keys P (map.remove m k).
+    Proof.
+      unfold map.forall_keys. intros. rewrite get_remove_dec in H0.
+      destr (key_eqb k k0). 1: discriminate. eauto.
+    Qed.
+
+    Lemma of_list_zip_forall_keys: forall ks vs m (P: key -> Prop),
+        map.of_list_zip ks vs = Some m ->
+        List.Forall P ks ->
+        map.forall_keys P m.
+    Proof.
+      induction ks; intros; destruct vs as [|v vs]; try discriminate.
+      - cbn in *. inversion H. subst. clear H. apply forall_keys_empty.
+      - inversion H0. subst. clear H0.
+        eapply of_list_zip_cons_keys in H. destruct H as (v0 & vs0 & ksvs & ? & ? & H).
+        inversion H0. subst v0 vs0 m. clear H0.
+        specialize (IHks _ _ _ H H4).
+        eauto using forall_keys_put, forall_keys_putmany, forall_keys_empty.
+    Qed.
+
+    Lemma split_by_or: forall (P Q: key -> Prop) m,
+        map.forall_keys (fun k => P k \/ Q k) m ->
+        exists mP mQ, m = map.putmany mP mQ /\
+                      map.disjoint mP mQ /\
+                      map.forall_keys P mP /\
+                      map.forall_keys Q mQ.
+    Proof.
+      intros *. eapply map_ind with (m := m); intros.
+      - exists map.empty, map.empty.
+        eauto using disjoint_empty_l, putmany_empty_l, forall_keys_empty.
+      - eapply invert_forall_keys_put in H1. destruct H1 as [HPQ F].
+        specialize (H F). destruct H as (mP & mQ & ? & D & FP & FQ). subst.
+        eapply invert_get_putmany_None in H0. destruct H0.
+        assert (map.disjoint (map.put mP k v) mQ). {
+          unfold map.disjoint in *. intros. rewrite get_put_dec in H1.
+          destr (key_eqb k k0); subst; try congruence; eauto.
+        }
+        assert (map.disjoint mP (map.put mQ k v)). {
+          unfold map.disjoint in *. intros. rewrite get_put_dec in H3.
+          destr (key_eqb k k0); subst; try congruence; eauto.
+        }
+        destruct HPQ as [HP | HQ].
+        + exists (map.put mP k v), mQ.
+          rewrite (putmany_comm (map.put mP k v)) by assumption.
+          rewrite <- (put_putmany_commute k v mQ mP).
+          rewrite putmany_comm by assumption.
+          eauto using forall_keys_put.
+        + exists mP, (map.put mQ k v).
+          rewrite <- (put_putmany_commute k v mP mQ).
+          eauto using forall_keys_put.
     Qed.
   End WithMap.
 

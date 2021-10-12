@@ -604,6 +604,49 @@ Section WithA. Local Set Default Proof Using "All".
       rewrite length_eq_forallb_eqb_false by auto.
       rewrite Bool.andb_false_r. constructor; congruence. }
   Qed.
+
+  Lemma unfoldn_0: forall (f: A -> A) (start: A),
+      unfoldn f 0 start = [].
+  Proof. intros. reflexivity. Qed.
+
+  Lemma unfoldn_S: forall (f: A -> A) (start: A) n,
+      unfoldn f (S n) start = start :: unfoldn f n (f start).
+  Proof. intros. reflexivity. Qed.
+
+  Lemma In_firstn_to_In: forall n a (l: list A),
+      In a (List.firstn n l) ->
+      In a l.
+  Proof.
+    induction n; simpl; intros.
+    - contradiction.
+    - destruct l. 1: contradiction.
+      simpl in H. destruct H.
+      + subst a0. simpl. auto.
+      + simpl. eauto.
+  Qed.
+
+  Lemma NoDup_firstn: forall n (l: list A),
+      NoDup l ->
+      NoDup (List.firstn n l).
+  Proof.
+    induction n; intros.
+    - constructor.
+    - destruct l as [|a l]; simpl. 1: constructor. inversion H. subst. clear H.
+      constructor. 2: eauto.
+      intro C. apply H2.
+      eapply In_firstn_to_In. exact C.
+  Qed.
+
+  Lemma invert_Forall_cons: forall (a: A) (l: list A) (P: A -> Prop),
+      List.Forall P (a :: l) ->
+      P a /\ List.Forall P l.
+  Proof. intros a l P H. inversion H. subst. auto. Qed.
+
+  Lemma invert_NoDup_cons: forall (a: A) (l: list A),
+      NoDup (a :: l) ->
+      ~ In a l /\ NoDup l.
+  Proof. intros a l H. inversion H. subst. auto. Qed.
+
 End WithA.
 Global Hint Resolve list_eqb_spec : typeclass_instances.
 
