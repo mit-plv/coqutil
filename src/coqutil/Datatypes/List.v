@@ -647,6 +647,71 @@ Section WithA. Local Set Default Proof Using "All".
       ~ In a l /\ NoDup l.
   Proof. intros a l H. inversion H. subst. auto. Qed.
 
+  Lemma nth_error_to_hd_skipn: forall n (l: list A) a d,
+      List.nth_error l n = Some a ->
+      hd d (skipn n l) = a.
+  Proof.
+    induction n; intros.
+    - destruct l; simpl in *. 1: discriminate. congruence.
+    - destruct l; simpl in *. 1: discriminate. eauto.
+  Qed.
+
+  Definition generate(len: nat)(f: nat -> A): list A := List.map f (List.seq 0 len).
+
+  Section MapWithIndex.
+    Context {B: Type} (f: A -> nat -> B).
+
+    Fixpoint map_with_start_index(start: nat)(l: list A): list B :=
+      match l with
+      | nil => nil
+      | h :: t => f h start :: map_with_start_index (S start) t
+      end.
+    Definition map_with_index: list A -> list B := map_with_start_index O.
+
+    Lemma map_with_start_index_app: forall l l' start,
+        map_with_start_index start (l ++ l') =
+        map_with_start_index start l ++ map_with_start_index (start + List.length l) l'.
+    Proof.
+      induction l; intros.
+      - simpl. rewrite PeanoNat.Nat.add_0_r. reflexivity.
+      - simpl. f_equal. rewrite IHl. f_equal. f_equal. Lia.lia.
+    Qed.
+
+    Lemma map_with_index_app: forall l l',
+        map_with_index (l ++ l') = map_with_index l ++ map_with_start_index (List.length l) l'.
+    Proof. intros. apply map_with_start_index_app. Qed.
+
+    Lemma map_with_start_index_cons: forall a l start,
+        map_with_start_index start (a :: l) = f a start :: map_with_start_index (S start) l.
+    Proof. intros. reflexivity. Qed.
+
+    Lemma map_with_index_cons: forall a l,
+        map_with_index (a :: l) = f a 0 :: map_with_start_index 1 l.
+    Proof. intros. reflexivity. Qed.
+
+    Lemma skipn_map_with_start_index: forall i start l,
+        skipn i (map_with_start_index start l) = map_with_start_index (start + i) (skipn i l).
+    Proof.
+      induction i; intros.
+      - simpl. rewrite PeanoNat.Nat.add_0_r. reflexivity.
+      - destruct l; simpl. 1: reflexivity. rewrite IHi. f_equal. Lia.lia.
+    Qed.
+
+    Lemma map_with_start_index_nth_error: forall (n start: nat) (l: list A) d,
+        List.nth_error l n = Some d ->
+        List.nth_error (map_with_start_index start l) n = Some (f d (start + n)).
+    Proof.
+      induction n; intros.
+      - destruct l; simpl in *. 1: discriminate. rewrite PeanoNat.Nat.add_0_r. congruence.
+      - destruct l; simpl in *. 1: discriminate. erewrite IHn. 2: eassumption.
+        f_equal. f_equal. Lia.lia.
+    Qed.
+
+    Lemma map_with_index_nth_error: forall (n: nat) (l : list A) d,
+        List.nth_error l n = Some d ->
+        List.nth_error (map_with_index l) n = Some (f d n).
+    Proof. intros. eapply map_with_start_index_nth_error. assumption. Qed.
+  End MapWithIndex.
 End WithA.
 Global Hint Resolve list_eqb_spec : typeclass_instances.
 
@@ -1080,6 +1145,48 @@ Section WithZ. Local Set Default Proof Using "All".
     split; trivial.
     rewrite length_firstn_inbounds, length_skipn; blia.
   Qed.
+
+  Section WithA.
+    Context {A: Type}.
+
+    Lemma not_In_Z_seq: forall L x d,
+        x < d \/ d + Z.of_nat L <= x ->
+        ~ In x (List.unfoldn (Z.add 1) L d).
+    Proof using.
+      unfold not.
+      induction L; cbn -[Z.add]; intros. 1: assumption.
+      destruct H0.
+      - subst. blia.
+      - eapply IHL. 2: exact H0. blia.
+    Qed.
+
+    Lemma unfoldn_Z_seq_Forall: forall L start,
+        Forall (fun x => start <= x < start + Z.of_nat L) (List.unfoldn (Z.add 1) L start).
+    Proof using.
+      induction L; intros.
+      - constructor.
+      - cbn -[Z.add Z.of_nat]. constructor. 1: blia.
+        eapply Forall_impl. 2: eapply IHL. cbv beta. intros. blia.
+    Qed.
+
+    Lemma NoDup_unfoldn_Z_seq: forall n start,
+        NoDup (List.unfoldn (Z.add 1) n start).
+    Proof using.
+      induction n; intros.
+      - constructor.
+      - cbn -[Z.add]. constructor. 2: eapply IHn.
+        eapply not_In_Z_seq. blia.
+    Qed.
+
+    Lemma unfoldn_Z_seq_snoc: forall n start,
+        List.unfoldn (Z.add 1) (n + 1) start =
+        List.unfoldn (Z.add 1) n start ++ [start + Z.of_nat n].
+    Proof using.
+      induction n; intros.
+      - cbn. rewrite Z.add_0_r. reflexivity.
+      - cbn -[Z.add Z.of_nat]. f_equal. rewrite IHn. f_equal. f_equal. blia.
+    Qed.
+  End WithA.
 End WithZ.
 
 Module Import Nat.

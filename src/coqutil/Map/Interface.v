@@ -66,6 +66,11 @@ Module map.
     Definition same_domain(m1 m2: map): Prop := sub_domain m1 m2 /\ sub_domain m2 m1.
     Definition forall_keys(P : key -> Prop)(m : map): Prop :=
       forall k v, map.get m k = Some v -> P k.
+    Definition forall_values(P: value -> Prop)(m: map): Prop :=
+      forall k v, map.get m k = Some v -> P v.
+    Definition forallb(f: key -> value -> bool): map -> bool :=
+      map.fold (fun res k v => andb res (f k v)) true.
+    Definition singleton(k: key)(v: value): map := map.put map.empty k v.
 
     Definition split m m1 m2 := m = (putmany m1 m2) /\ disjoint m1 m2.
 
