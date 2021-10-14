@@ -61,6 +61,10 @@ Ltac fwd_step :=
        of open goals in this tactic *)
     constr_eq h1 h2;
     inversion H; clear H
+  | E: ?x = ?RHS |- context[match ?x with _ => _ end] =>
+    let h := head_of_app RHS in is_constructor h; rewrite E in *
+  | H: context[match ?x with _ => _ end], E: ?x = ?RHS |- _ =>
+    let h := head_of_app RHS in is_constructor h; rewrite E in *
   | H: context[match ?x with _ => _ end] |- _ => destr x; try (discriminate H || x_neq_x H); []
   | H: _ |- _ => autoforward with typeclass_instances in H
   | |- _ => progress subst
