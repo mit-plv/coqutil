@@ -48,6 +48,12 @@ Ltac head_of_app e :=
   | _ => e
   end.
 
+Ltac fwd_rewrites_autorewrite := autorewrite with fwd_rewrites in *.
+
+(* Ltac fwd_rewrites ::= fwd_rewrites_autorewrite.
+   enables autorewrite on fwd, but note that this tends to be slow, so we do nothing by default. *)
+Ltac fwd_rewrites := fail.
+
 Ltac fwd_step :=
   match goal with
   | H: ?T |- _ => is_destructible_and T; destr_and H
@@ -68,7 +74,7 @@ Ltac fwd_step :=
   | H: context[match ?x with _ => _ end] |- _ => destr x; try (discriminate H || x_neq_x H); []
   | H: _ |- _ => autoforward with typeclass_instances in H
   | |- _ => progress subst
-  | |- _ => progress autorewrite with fwd_rewrites in *
+  | |- _ => progress fwd_rewrites
   end.
 
 Ltac fwd := repeat fwd_step.
