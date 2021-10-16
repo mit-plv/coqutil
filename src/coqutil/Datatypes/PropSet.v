@@ -91,6 +91,9 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
     subset empty_set s.
   Proof. firstorder idtac. Qed.
 
+  Lemma subset_refl: forall (s: set E), subset s s.
+  Proof. intros s x. exact id. Qed.
+
   Lemma union_empty_l (s : set E) :
     sameset (union empty_set s) s.
   Proof. firstorder idtac. Qed.
@@ -120,6 +123,18 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
 
   Lemma of_list_singleton x: sameset (@of_list E [x]) (singleton_set x).
   Proof. firstorder idtac. Qed.
+
+  Lemma in_union_l: forall x (s1 s2: set E), x \in s1 -> x \in (union s1 s2).
+  Proof. unfold union, elem_of. auto. Qed.
+
+  Lemma in_union_r: forall x (s1 s2: set E), x \in s2 -> x \in (union s1 s2).
+  Proof. unfold union, elem_of. auto. Qed.
+
+  Lemma in_of_list: forall x (l: list E), List.In x l -> x \in (of_list l).
+  Proof. unfold of_list, elem_of. auto. Qed.
+
+  Lemma in_singleton_set: forall (x: E), x \in singleton_set x.
+  Proof. unfold elem_of, singleton_set. intros. reflexivity. Qed.
 
   Lemma sameset_iff (s1 s2 : set E) :
     sameset s1 s2 <-> (forall e, s1 e <-> s2 e).

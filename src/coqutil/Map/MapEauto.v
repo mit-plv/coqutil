@@ -56,16 +56,36 @@ Section WithParams. Local Set Default Proof Using "All".
     only_differ s1 r s3.
   Proof. t. Qed.
 
+  Lemma only_differ_put_r: forall m1 m2 k (v : val) s,
+      k \in s ->
+      map.only_differ m1 s m2 ->
+      map.only_differ m1 s (map.put m2 k v).
+  Proof. t. Qed.
+
+  Lemma only_differ_trans_l: forall (s1 s2 s3 : stateMap) (r1 r2 : var -> Prop),
+      map.only_differ s1 r1 s2 ->
+      subset r1 r2 ->
+      map.only_differ s2 r2 s3 ->
+      map.only_differ s1 r2 s3.
+  Proof. t. Qed.
+
+  Lemma only_differ_trans_r: forall (s1 s2 s3 : stateMap) (r1 r2 : var -> Prop),
+      map.only_differ s2 r1 s3 ->
+      subset r1 r2 ->
+      map.only_differ s1 r2 s2 ->
+      map.only_differ s1 r2 s3.
+  Proof. t. Qed.
+
   Lemma undef_on_shrink: forall st (vs1 vs2: var -> Prop),
     undef_on st vs1 ->
     subset vs2 vs1 ->
     undef_on st vs2.
   Proof. t. Qed.
 
-  Lemma only_differ_subset: forall s1 s2 (r1 r2: var -> Prop),
-    subset r1 r2 ->
-    only_differ s1 r1 s2 ->
-    only_differ s1 r2 s2.
+  Lemma only_differ_subset: forall (s1 s2 : stateMap) (r1 r2 : var -> Prop),
+      map.only_differ s1 r1 s2 ->
+      subset r1 r2 ->
+      map.only_differ s1 r2 s2.
   Proof. t. Qed.
 
   Lemma extends_if_only_differ_in_undef: forall s1 s2 s vs,
@@ -151,11 +171,22 @@ Section WithParams. Local Set Default Proof Using "All".
       map.extends m1 (map.remove m2 k).
   Proof. t. Qed.
 
+  Lemma get_Some_remove: forall m k1 k2 v,
+      map.get (map.remove m k1) k2 = Some v ->
+      map.get m k2 = Some v.
+  Proof. t. Qed.
+
   Lemma get_putmany_none: forall m1 m2 k,
       map.get m1 k = None ->
       map.get m2 k = None ->
       map.get (map.putmany m1 m2) k = None.
   Proof. t. Qed.
+
+  Lemma get_put_diff_eq_l: forall m k v k' (r: option val),
+      k <> k' ->
+      map.get m k = r ->
+      map.get (map.put m k' v) k = r.
+  Proof using stateMapSpecs. intros. rewrite map.get_put_diff; eassumption. Qed.
 
   Lemma weaken_forall_keys: forall (P1 P2: var -> Prop) (m: state),
       (forall k, P1 k -> P2 k) ->
