@@ -48,6 +48,32 @@ Ltac head_of_app e :=
   | _ => e
   end.
 
+Ltac inv_rec t1 t2 :=
+  lazymatch t1 with
+  | ?f1 ?a1 =>
+    lazymatch t2 with
+    | ?f2 ?a2 =>
+      (tryif constr_eq a1 a2
+       then idtac
+       else assert (a1 = a2) by congruence);
+      inv_rec f1 f2
+    end
+  | _ => idtac
+  end.
+
+(* inversion of equalities whose LHS and RHS start with the same constructor,
+   without any unfolding and without recursively inverting the generated equalities *)
+Ltac same_ctor H :=
+  lazymatch type of H with
+  | ?LHS = ?RHS =>
+    let h1 := head_of_app LHS in is_constructor h1;
+    let h2 := head_of_app RHS in is_constructor h2;
+    (* if not eq, H is a contradiction, but we don't want to change the number
+       of open goals in this tactic *)
+    constr_eq h1 h2;
+    inv_rec LHS RHS
+  end.
+
 Ltac fwd_rewrites_autorewrite := autorewrite with fwd_rewrites in *.
 
 (* Ltac fwd_rewrites ::= fwd_rewrites_autorewrite.
@@ -66,7 +92,9 @@ Ltac fwd_step :=
     (* if not eq, H is a contradiction, but we don't want to change the number
        of open goals in this tactic *)
     constr_eq h1 h2;
-    inversion H; clear H
+    (* we don't use `inversion H` or `injection H` because they unfold definitions *)
+    inv_rec LHS RHS;
+    clear H
   | E: ?x = ?RHS |- context[match ?x with _ => _ end] =>
     let h := head_of_app RHS in is_constructor h; rewrite E in *
   | H: context[match ?x with _ => _ end], E: ?x = ?RHS |- _ =>
