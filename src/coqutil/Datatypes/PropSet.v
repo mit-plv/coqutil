@@ -1,6 +1,9 @@
 Require Import Coq.Lists.List. Import ListNotations.
 Require Import Coq.Classes.Morphisms.
 Require Import Coq.Classes.RelationClasses.
+Require Import Coq.Logic.PropExtensionality.
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import coqutil.Tactics.destr.
 
 Definition set(A: Type) := A -> Prop.
 
@@ -123,6 +126,14 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
 
   Lemma of_list_singleton x: sameset (@of_list E [x]) (singleton_set x).
   Proof. firstorder idtac. Qed.
+
+  Lemma singleton_set_eq_of_list: forall (x: E),
+      singleton_set x = of_list [x].
+  Proof.
+    unfold singleton_set, of_list, elem_of, In.
+    intros. extensionality y. apply propositional_extensionality.
+    intuition idtac.
+  Qed.
 
   Lemma in_union_l: forall x (s1 s2: set E), x \in s1 -> x \in (union s1 s2).
   Proof. unfold union, elem_of. auto. Qed.
@@ -305,6 +316,30 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
       end.
       constructor; [ rewrite in_app_iff; tauto | ].
       apply IHl1; eauto using disjoint_sym.
+    Qed.
+
+    Lemma disjoint_of_list_disjoint_Forall: forall (l1 l2: list E) (P1 P2: E -> Prop),
+        Forall P1 l1 ->
+        Forall P2 l2 ->
+        (forall x, P1 x -> P2 x -> False) ->
+        disjoint (of_list l1) (of_list l2).
+    Proof.
+      unfold disjoint, of_list, elem_of. intros.
+      destr (List.find (eqb x) l1).
+      - eapply find_some in E0. destruct E0 as [E1 E2].
+        destr (eqb x e). 2: discriminate.
+        subst e.
+        destr (List.find (eqb x) l2).
+        + eapply find_some in E0. destruct E0 as [F1 F2].
+          destr (eqb x e). 2: discriminate.
+          subst e.
+          eapply Forall_forall in H. 2: eassumption.
+          eapply Forall_forall in H0. 2: eassumption.
+          exfalso. eauto.
+        + right. intro C. eapply find_none in E0. 2: exact C.
+          destr (eqb x x); congruence.
+      - left. intro C. eapply find_none in E0. 2: exact C.
+        destr (eqb x x); congruence.
     Qed.
   End with_eqb.
 End PropSetLemmas.

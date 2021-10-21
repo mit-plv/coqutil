@@ -443,6 +443,12 @@ Section WithA. Local Set Default Proof Using "All".
       + assumption.
   Qed.
 
+  Lemma Forall_False_nil: Forall (fun _: A => False) [].
+  Proof. constructor. Qed.
+
+  Lemma Forall_singleton: forall (x: A), Forall (eq x) [x].
+  Proof. repeat constructor. Qed.
+
   Lemma NoDup_app_iff (l1 l2 : list A) :
     NoDup (l1 ++ l2) <-> (NoDup l1 /\ NoDup l2
                           /\ (forall x, In x l1 -> ~ In x l2)

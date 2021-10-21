@@ -118,6 +118,12 @@ Section WithParams. Local Set Default Proof Using "All".
     only_differ s d (put s x v).
   Proof. t. Qed.
 
+  Lemma only_differ_to_agree_on: forall (l1 l2: state) (A D: set var),
+      map.only_differ l1 D l2 ->
+      PropSet.disjoint A D ->
+      map.agree_on A l1 l2.
+  Proof. t. Qed.
+
   Lemma extends_putmany: forall m1 m2 m3,
       map.extends m1 m2 ->
       map.extends m1 m3 ->
