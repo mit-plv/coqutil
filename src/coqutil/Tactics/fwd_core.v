@@ -55,7 +55,16 @@ Ltac inv_rec t1 t2 :=
     | ?f2 ?a2 =>
       (tryif constr_eq a1 a2
        then idtac
-       else assert (a1 = a2) by congruence);
+       else lazymatch type of a1 with
+            (* If a1 is of type Set, and a2 appears to be of type Type unless simplified,
+               `assert (a1 = a2)` will fail with a universe inconsistency.
+               Reproduce with eg `Goal nat = (nat: Type).`
+               Since we don't care about equalities between types, we just skip these
+               potential trouble makers: *)
+            | Set => idtac
+            | Type => idtac
+            | _ => assert (a1 = a2) by congruence
+            end);
       inv_rec f1 f2
     end
   | _ => idtac
