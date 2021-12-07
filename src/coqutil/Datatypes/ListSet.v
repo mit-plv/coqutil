@@ -177,7 +177,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       + apply or_assoc. right. eapply IHl1. assumption.
       + destruct H as [ [ H | H ] | H ].
         * subst. eapply find_some in E0. destruct E0.
-          destr (eeq x e); try discriminate. subst e. assumption.
+          destr (eeq x e); try discriminate. assumption.
         * eapply IHl1. left. assumption.
         * eapply IHl1. right. assumption.
       + apply or_assoc. destruct H; [left|right]; auto. eapply IHl1. assumption.

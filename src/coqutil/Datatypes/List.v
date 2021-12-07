@@ -161,15 +161,15 @@ Section WithA. Local Set Default Proof Using "All".
       + destruct H.
         * subst. destruct_one_match.
           { apply find_some in E. destruct E as [E1 E2].
-            destr (aeqb a a0). 2: discriminate. subst a0. firstorder idtac. }
+            destr (aeqb a a0). 2: discriminate. firstorder idtac. }
           { simpl. auto. }
         * destruct_one_match.
           { apply find_some in E. destruct E as [E1 E2].
-            destr (aeqb a0 a1). 2: discriminate. subst a0. firstorder idtac. }
+            destr (aeqb a0 a1). 2: discriminate. firstorder idtac. }
           { simpl. firstorder idtac. }
       + destruct_one_match_hyp.
         * apply find_some in E. destruct E as [E1 E2].
-          destr (aeqb a0 a1). 2: discriminate. subst a0. firstorder idtac.
+          destr (aeqb a0 a1). 2: discriminate. firstorder idtac.
         * simpl in H. destruct H.
           { subst. auto. }
           { firstorder idtac. }
@@ -751,7 +751,7 @@ Proof.
     + subst a.
       destr (aeqb f2 f1); try congruence. simpl. auto.
     + destr (aeqb f2 a); simpl.
-      * subst a. eauto.
+      * eauto.
       * simpl. eauto.
 Qed.
 

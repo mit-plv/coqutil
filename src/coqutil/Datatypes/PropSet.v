@@ -328,16 +328,14 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
       destr (List.find (eqb x) l1).
       - eapply find_some in E0. destruct E0 as [E1 E2].
         destr (eqb x e). 2: discriminate.
-        subst e.
-        destr (List.find (eqb x) l2).
+        destr (List.find (eqb e) l2).
         + eapply find_some in E0. destruct E0 as [F1 F2].
-          destr (eqb x e). 2: discriminate.
-          subst e.
+          destr (eqb e e0). 2: discriminate.
           eapply Forall_forall in H. 2: eassumption.
           eapply Forall_forall in H0. 2: eassumption.
           exfalso. eauto.
         + right. intro C. eapply find_none in E0. 2: exact C.
-          destr (eqb x x); congruence.
+          destr (eqb e e); congruence.
       - left. intro C. eapply find_none in E0. 2: exact C.
         destr (eqb x x); congruence.
     Qed.

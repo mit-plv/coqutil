@@ -4,15 +4,35 @@
 Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr.
 Require Import Coq.ZArith.BinInt Coq.NArith.BinNat.
 
+Ltac fwd_subst_default H :=
+  match type of H with
+  | ?x = ?y =>
+    (* subst picks the first suitable equality from the top, so we move H at top *)
+    move H at top; (subst x || subst y);
+    (* if `subst` deleted H, we pose `H: True` to keep the name so that eg if `H` is `Hp3`,
+       the next hypothesis will be named `Hp4`, and later, the `Hp3: True` will be deleted,
+       so there will be a gap in the naming (no `Hp3`, `Hp4` directly follows `Hp2`), which
+       makes it more obvious while debugging that an equation was deleted by `subst` *)
+    pose proof Coq.Init.Logic.I as H
+  | _ => idtac
+  end.
+
+(* Called when a new fact has been found.
+   By default, if it's an equality where one side is a variable, that side is substituted.
+   Use `Ltac fwd_subst H ::= idtac.` to disable. *)
+Ltac fwd_subst H := fwd_subst_default H.
+
 (* One step of destructing "H: A0 /\ A1 /\ ... An" into "Hp0: A0, Hp1: A1, .. Hpn: An" *)
 Ltac destr_and H :=
   (* Note: We reuse the name H, so we will only succeed if H was cleared
      (which might not be the case if H is a section variable), and enforcing that H is cleared
      is needed to avoid infinite looping *)
   let Hl := fresh H "p0" in destruct H as [Hl H];
+  fwd_subst Hl;
   lazymatch type of H with
   | _ /\ _ => idtac (* not done yet *)
-  | _ => let Hr := fresh H "p0" in rename H into Hr (* done, name last clause uniformly *)
+  | _ => let Hr := fresh H "p0" in rename H into Hr (* done, name last clause uniformly *);
+         fwd_subst Hr
   end.
 
 (* fail on notations that we don't want to destruct *)
@@ -63,7 +83,7 @@ Ltac inv_rec t1 t2 :=
                potential trouble makers: *)
             | Set => idtac
             | Type => idtac
-            | _ => assert (a1 = a2) by congruence
+            | _ => let H := fresh in assert (a1 = a2) as H by congruence; fwd_subst H
             end);
       inv_rec f1 f2
     end
@@ -92,7 +112,7 @@ Ltac fwd_rewrites := fail.
 Ltac fwd_step :=
   match goal with
   | H: ?T |- _ => is_destructible_and T; destr_and H
-  | H: exists y, _ |- _ => let yf := fresh y in destruct H as [yf H]
+  | H: exists y, _ |- _ => let yf := fresh y in destruct H as [yf H]; fwd_subst H
   | H: ?x = ?x |- _ => clear H
   | H: True |- _ => clear H
   | H: ?LHS = ?RHS |- _ =>
@@ -105,12 +125,12 @@ Ltac fwd_step :=
     inv_rec LHS RHS;
     clear H
   | E: ?x = ?RHS |- context[match ?x with _ => _ end] =>
-    let h := head_of_app RHS in is_constructor h; rewrite E in *
+    let h := head_of_app RHS in is_constructor h; rewrite E
   | H: context[match ?x with _ => _ end], E: ?x = ?RHS |- _ =>
-    let h := head_of_app RHS in is_constructor h; rewrite E in *
-  | H: context[match ?x with _ => _ end] |- _ => destr x; try (discriminate H || x_neq_x H); []
-  | H: _ |- _ => autoforward with typeclass_instances in H
-  | |- _ => progress subst
+    let h := head_of_app RHS in is_constructor h; rewrite E in H; fwd_subst H
+  | H: context[match ?x with _ => _ end] |- _ =>
+    destr x; try (discriminate H || x_neq_x H); [fwd_subst H]
+  | H: _ |- _ => autoforward with typeclass_instances in H; fwd_subst H
   | |- _ => progress fwd_rewrites
   end.
 
