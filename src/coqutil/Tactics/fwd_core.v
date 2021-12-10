@@ -115,6 +115,7 @@ Ltac fwd_step :=
   | H: exists y, _ |- _ => let yf := fresh y in destruct H as [yf H]; fwd_subst H
   | H: ?x = ?x |- _ => clear H
   | H: True |- _ => clear H
+  | x: unit |- _ => destruct x
   | H: ?LHS = ?RHS |- _ =>
     let h1 := head_of_app LHS in is_constructor h1;
     let h2 := head_of_app RHS in is_constructor h2;
