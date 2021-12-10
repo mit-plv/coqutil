@@ -2116,7 +2116,7 @@ Module map.
 
   Section WithTwoMaps. Local Set Default Proof Using "All".
     Context {K V1 V2: Type}{M1: map.map K V1}{M2: map.map K V2}
-            (keqb: K -> K -> bool) {keqb_spec: EqDecider keqb}
+            {keqb: K -> K -> bool} {keqb_spec: EqDecider keqb}
             {OK1: map.ok M1} {OK2: map.ok M2}.
 
     Definition map_all_values(f: V1 -> option V2): M1 -> option M2 :=
