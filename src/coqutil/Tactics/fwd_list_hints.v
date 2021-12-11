@@ -10,7 +10,7 @@ Hint Rewrite
      @List.unfoldn_S
   : fwd_rewrites.
 
-#[export] Hint Extern 1 (autoforward (List.Forall _ (cons _ _)) _)
+Global Hint Extern 1 (autoforward (List.Forall _ (cons _ _)) _)
   => rapply @List.invert_Forall_cons : typeclass_instances.
-#[export] Hint Extern 1 (autoforward (NoDup (_ :: _)) _)
+Global Hint Extern 1 (autoforward (NoDup (_ :: _)) _)
   => rapply @List.invert_NoDup_cons : typeclass_instances.
