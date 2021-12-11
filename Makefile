@@ -11,6 +11,7 @@ COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
 ifneq (,$(filter 8.11%,$(COQ_VERSION)))
 	EXCLUDEFILES := \
 		$(wildcard $(SRCDIR)/coqutil/Ltac2Lib/*.v) \
+		$(wildcard $(SRCDIR)/coqutil/Tactics/fwd*.v) \
 		$(SRCDIR)/coqutil/Tactics/Records.v \
 		$(SRCDIR)/coqutil/Tactics/ParamRecords.v \
 		$(SRCDIR)/coqutil/Tactics/SafeSimpl.v \
