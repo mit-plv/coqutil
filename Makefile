@@ -15,6 +15,7 @@ ifneq (,$(filter 8.11%,$(COQ_VERSION)))
 		$(SRCDIR)/coqutil/Tactics/Records.v \
 		$(SRCDIR)/coqutil/Tactics/ParamRecords.v \
 		$(SRCDIR)/coqutil/Macros/ident_to_string.v \
+		$(SRCDIR)/coqutil/Tactics/ident_of_string.v \
 		$(SRCDIR)/coqutil/Tactics/SafeSimpl.v \
 		$(SRCDIR)/coqutil/Word/ZifyLittleEndian.v \
 		#
@@ -24,6 +25,7 @@ ifneq (,$(filter 8.12%,$(COQ_VERSION)))
 		$(SRCDIR)/coqutil/Tactics/Records.v \
 		$(SRCDIR)/coqutil/Tactics/ParamRecords.v \
 		$(SRCDIR)/coqutil/Macros/ident_to_string.v \
+		$(SRCDIR)/coqutil/Tactics/ident_of_string.v \
 		$(SRCDIR)/coqutil/Tactics/SafeSimpl.v \
 		$(SRCDIR)/coqutil/Word/ZifyLittleEndian.v \
 		#
