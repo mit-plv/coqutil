@@ -48,8 +48,6 @@ Section WithParameters.
         "swap_swap" t m [a_addr; b_addr]
         (fun t' m' rets => t=t' /\ (scalar a_addr a * (scalar b_addr b * R)) m' /\ rets = nil).
 
-  Require Import bedrock2.string2ident.
-
   Lemma swap_ok : program_logic_goal_for_function! swap.
   Proof.
     repeat straightline; []; eauto.

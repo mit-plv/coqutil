@@ -60,8 +60,6 @@ Section WithParameters.
       WeakestPrecondition.call functions
         "stacknondet" t m [] (fun t' m' rets => exists a b, rets = [a;b] /\ a = b /\ m'=m/\t'=t).
 
-  Require Import bedrock2.string2ident.
-
   Lemma stacknondet_ok : program_logic_goal_for_function! stacknondet.
   Proof.
     repeat straightline.
