@@ -11,6 +11,7 @@ Local Open Scope Z_scope.
 
 Section LittleEndian. Local Set Default Proof Using "All".
 
+  #[deprecated(note="Use coqutil.Word.LittleEndianList.le_combine.")]
   Fixpoint combine (n : nat) : forall (bs : tuple byte n), Z :=
     match n with
     | O => fun _ => 0
@@ -18,6 +19,7 @@ Section LittleEndian. Local Set Default Proof Using "All".
                              (Z.shiftl (combine n (pair._2 bs)) 8)
     end.
 
+  #[deprecated(note="Use coqutil.Word.LittleEndianList.le_split.")]
   Fixpoint split (n : nat) (w : Z) : tuple byte n :=
     match n with
     | O => tt
@@ -101,6 +103,35 @@ Section LittleEndian. Local Set Default Proof Using "All".
   Qed.
 
 End LittleEndian.
+
+Require Import coqutil.Word.LittleEndianList.
+
+Local Arguments le_combine !_.
+Local Arguments le_split !_.
+Lemma combine_eq n bs : combine n bs = le_combine (tuple.to_list bs).
+Proof.
+  induction n, bs; auto.
+  cbn [combine le_combine tuple.to_list pair._1 pair._2].
+  rewrite IHn; trivial.
+Qed.
+Lemma split_eq n z : split _ z = tuple.of_list (le_split n z).
+Proof.
+  revert z; induction n; auto.
+  cbn [split le_split tuple.of_list length].
+  intros. rewrite IHn. trivial.
+Qed.
+Lemma combine_of_list bs : combine _ (tuple.of_list bs) = le_combine bs.
+Proof.
+  induction bs; auto.
+  cbn [combine length le_combine tuple.of_list pair._1 pair._2].
+  rewrite <-IHbs; trivial.
+Qed.
+Lemma to_list_split n z : tuple.to_list (split n z) = le_split n z.
+Proof.
+  revert z; induction n; auto.
+  cbn [split le_split tuple.to_list pair._1 pair._2 length].
+  intros. rewrite IHn. trivial.
+Qed.
 
 Arguments combine: simpl never.
 Arguments split: simpl never.
