@@ -18,6 +18,7 @@ ifneq (,$(filter 8.11%,$(COQ_VERSION)))
 		$(SRCDIR)/coqutil/Tactics/ident_of_string.v \
 		$(SRCDIR)/coqutil/Tactics/SafeSimpl.v \
 		$(SRCDIR)/coqutil/Word/ZifyLittleEndian.v \
+		$(SRCDIR)/coqutil/Datatypes/Inhabited.v \
 		#
 endif
 ifneq (,$(filter 8.12%,$(COQ_VERSION)))
