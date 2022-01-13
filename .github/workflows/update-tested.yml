@@ -1,0 +1,59 @@
+name: Update tested branch
+
+on:
+  schedule:
+    # run at 06:59 UTC each day
+    - cron:  '59 6 * * *'
+
+jobs:
+  updateBranch:
+    runs-on: ubuntu-latest
+    name: Update tested
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: 'tested'
+        fetch-depth: 0
+    - run: pwd
+    - uses: samuelgruetter/check-ci-success@master
+      with:
+        repo_owner: 'mit-plv'
+        repo_name: 'coqutil'
+        branch_name: 'master'
+        check_name: 'build (master, coq libcoq-ocaml-dev, 1, ppa:jgross-h/coq-master-daily, --warnings, ubuntu-latest)'
+    - uses: samuelgruetter/check-ci-success@master
+      with:
+        repo_owner: 'mit-plv'
+        repo_name: 'coqutil'
+        branch_name: 'master'
+        check_name: 'build (8.14.0, coq-8.14.0 libcoq-8.14.0-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-11)'
+    - uses: samuelgruetter/check-ci-success@master
+      with:
+        repo_owner: 'mit-plv'
+        repo_name: 'coqutil'
+        branch_name: 'master'
+        check_name: 'build (8.13.1, coq-8.13.1 libcoq-8.13.1-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-05, ...'
+    - uses: samuelgruetter/check-ci-success@master
+      with:
+        repo_owner: 'mit-plv'
+        repo_name: 'coqutil'
+        branch_name: 'master'
+        check_name: 'build (8.12.2, coq-8.12.2 libcoq-8.12.2-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-05, ...'
+    - uses: samuelgruetter/check-ci-success@master
+      with:
+        repo_owner: 'mit-plv'
+        repo_name: 'coqutil'
+        branch_name: 'master'
+        check_name: 'build (8.11.2, coq-8.11.2 libcoq-8.11.2-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-05, ...'
+    - uses: samuelgruetter/check-ci-success@master
+      with:
+        repo_owner: 'mit-plv'
+        repo_name: 'coqutil'
+        branch_name: 'master'
+        check_name: 'build (Ubuntu LTS, coq libcoq-ocaml-dev, 1, ubuntu-20.04)'
+    - run: echo "This step runs after the python script"
+    - run: git fetch origin master
+    - run: git log --oneline --max-count=10
+    - run: git merge --ff-only remotes/origin/master
+    - run: git log --oneline --max-count=10
+    - run: git push
