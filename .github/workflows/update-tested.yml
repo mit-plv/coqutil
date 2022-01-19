@@ -20,37 +20,37 @@ jobs:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: 'build (master, coq libcoq-ocaml-dev, 1, ppa:jgross-h/coq-master-daily, --warnings, ubuntu-latest)'
+        check_name: 'master'
     - uses: samuelgruetter/check-ci-success@master
       with:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: 'build (8.14.0, coq-8.14.0 libcoq-8.14.0-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-11, ...'
+        check_name: '8.14.0'
     - uses: samuelgruetter/check-ci-success@master
       with:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: 'build (8.13.1, coq-8.13.1 libcoq-8.13.1-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-05, ...'
+        check_name: '8.13.1'
     - uses: samuelgruetter/check-ci-success@master
       with:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: 'build (8.12.2, coq-8.12.2 libcoq-8.12.2-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-05, ...'
+        check_name: '8.12.2'
     - uses: samuelgruetter/check-ci-success@master
       with:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: 'build (8.11.2, coq-8.11.2 libcoq-8.11.2-ocaml-dev, 1, ppa:jgross-h/many-coq-versions-ocaml-4-05, ...'
+        check_name: '8.11.2'
     - uses: samuelgruetter/check-ci-success@master
       with:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: 'build (Ubuntu LTS, coq libcoq-ocaml-dev, 1, ubuntu-20.04)'
+        check_name: 'Ubuntu LTS'
     - run: echo "This step runs after the python script"
     - run: git fetch origin master
     - run: git log --oneline --max-count=10
