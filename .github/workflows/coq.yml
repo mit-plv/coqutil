@@ -10,6 +10,7 @@ jobs:
   build:
 
     strategy:
+      fail-fast: false
       matrix:
         env:
         - { COQ_VERSION: "8.14.0", COQ_PACKAGE: "coq-8.14.0 libcoq-8.14.0-ocaml-dev", SKIP_VALIDATE: "1", PPA: "ppa:jgross-h/many-coq-versions-ocaml-4-11" }
