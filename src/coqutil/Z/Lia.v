@@ -6,7 +6,6 @@ Require Import Coq.micromega.Lia.
 Ltac is_lia P :=
   lazymatch P with
   | @eq Z _ _ => idtac
-  | not (@eq Z _ _) => idtac
   | (_ < _)%Z => idtac
   | (_ <= _)%Z => idtac
   | (_ > _)%Z => idtac
@@ -14,15 +13,14 @@ Ltac is_lia P :=
   | ?A /\ ?B => is_lia A; is_lia B
   | ?A \/ ?B => is_lia A; is_lia B
   | ?A -> ?B => is_lia A; is_lia B
+  | not ?A => is_lia A
   | False => idtac
   | @eq nat _ _ => idtac
-  | not (@eq nat _ _) => idtac
   | (_ < _)%nat => idtac
   | (_ <= _)%nat => idtac
   | (_ > _)%nat => idtac
   | (_ >= _)%nat => idtac
   | @eq N _ _ => idtac
-  | not (@eq N _ _) => idtac
   | (_ < _)%N => idtac
   | (_ <= _)%N => idtac
   | (_ > _)%N => idtac
