@@ -38,7 +38,7 @@ Section PropSet. Local Set Default Proof Using "All".
 
 End PropSet.
 
-Hint Unfold
+#[global] Hint Unfold
      elem_of
      empty_set
      singleton_set
@@ -48,7 +48,7 @@ Hint Unfold
      of_list
   : unf_basic_set_defs.
 
-Hint Unfold
+#[global] Hint Unfold
      add
      remove
      subset

@@ -413,7 +413,7 @@ Module map.
 
     Lemma fold_spec_with_order : forall m, exists (l: list (key * value)),
       (forall k v, List.In (k, v) l <-> map.get m k = Some v) /\
-      forall {R: Type} (f: R -> key -> value -> R) r0,
+      forall (R: Type) (f: R -> key -> value -> R) r0,
         map.fold f r0 m = List.fold_right (fun '(k, v) r => f r k v) r0 l.
     Proof.
       intros. eexists. split.

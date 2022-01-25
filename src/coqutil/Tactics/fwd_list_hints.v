@@ -3,7 +3,7 @@ Require Import Coq.Lists.List.
 Require Import coqutil.Datatypes.List.
 Require Import coqutil.Tactics.autoforward.
 
-Hint Rewrite
+#[export] Hint Rewrite
      @List.length_nil
      @List.length_cons
      @List.unfoldn_0

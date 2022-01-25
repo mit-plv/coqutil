@@ -73,14 +73,14 @@ Ltac simpl_word_exprs_getEq OK t :=
   | context[ word.of_Z (BitOps.signExtend ?w ?v)] => constr:(@sextend_width_nop _ _ OK w v)
   end.
 
-Hint Rewrite
+#[global] Hint Rewrite
      Nat2Z.inj_succ
      Nat2Z.inj_add
      Nat2Z.inj_mul
      List.app_length
   : rew_simpl_Z_nat.
 
-Hint Unfold
+#[global] Hint Unfold
      Z.succ
   : unf_simpl_Z_nat.
 

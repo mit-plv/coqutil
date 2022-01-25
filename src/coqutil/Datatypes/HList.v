@@ -1,5 +1,7 @@
 Require Import Coq.Lists.List.
-Require Import coqutil.Datatypes.PrimitivePair. Import pair.
+Require Import coqutil.Datatypes.PrimitivePair.
+Local Set Warnings "-notation-overridden".
+Import pair.
 Local Set Universe Polymorphism.
 
 Module Import polymorphic_list.

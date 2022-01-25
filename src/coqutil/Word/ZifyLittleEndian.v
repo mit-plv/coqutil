@@ -11,69 +11,69 @@ Import coqutil.Datatypes.HList.
 Lemma LE_combine_bound_1: forall t, 0 <= LittleEndian.combine 1 t < 2 ^ 8.
 Proof. exact LittleEndian.combine_bound. Qed.
 
-Instance InjByteTuple1: InjTyp (tuple byte 1) Z := {|
+#[global] Instance InjByteTuple1: InjTyp (tuple byte 1) Z := {|
   inj := LittleEndian.combine 1;
   pred x := 0 <= x < 2 ^ 8;
   cstr := LE_combine_bound_1;
 |}.
 Add Zify InjTyp InjByteTuple1.
 
-Program Instance Op_combine1 : UnOp (LittleEndian.combine 1) :=
+#[global] Program Instance Op_combine1 : UnOp (LittleEndian.combine 1) :=
   {| TUOp := fun x  => x ;  |}.
 Add Zify UnOp Op_combine1.
 
 Lemma LE_combine_bound_2: forall t, 0 <= LittleEndian.combine 2 t < 2 ^ 16.
 Proof. exact LittleEndian.combine_bound. Qed.
 
-Instance InjByteTuple2: InjTyp (tuple byte 2) Z := {|
+#[global] Instance InjByteTuple2: InjTyp (tuple byte 2) Z := {|
   inj := LittleEndian.combine 2;
   pred x := 0 <= x < 2 ^ 16;
   cstr := LE_combine_bound_2;
 |}.
 Add Zify InjTyp InjByteTuple2.
 
-Program Instance Op_combine2 : UnOp (LittleEndian.combine 2) :=
+#[global] Program Instance Op_combine2 : UnOp (LittleEndian.combine 2) :=
   {| TUOp := fun x  => x ;  |}.
 Add Zify UnOp Op_combine2.
 
 Lemma LE_combine_bound_4: forall t, 0 <= LittleEndian.combine 4 t < 2 ^ 32.
 Proof. exact LittleEndian.combine_bound. Qed.
 
-Instance InjByteTuple4: InjTyp (tuple byte 4) Z := {|
+#[global] Instance InjByteTuple4: InjTyp (tuple byte 4) Z := {|
   inj := LittleEndian.combine 4;
   pred x := 0 <= x < 2 ^ 32;
   cstr := LE_combine_bound_4;
 |}.
 Add Zify InjTyp InjByteTuple4.
 
-Program Instance Op_combine4 : UnOp (LittleEndian.combine 4) :=
+#[global] Program Instance Op_combine4 : UnOp (LittleEndian.combine 4) :=
   {| TUOp := fun x  => x ;  |}.
 Add Zify UnOp Op_combine4.
 
 Lemma LE_combine_bound_8: forall t, 0 <= LittleEndian.combine 8 t < 2 ^ 64.
 Proof. exact LittleEndian.combine_bound. Qed.
 
-Instance InjByteTuple8: InjTyp (tuple byte 8) Z := {|
+#[global] Instance InjByteTuple8: InjTyp (tuple byte 8) Z := {|
   inj := LittleEndian.combine 8;
   pred x := 0 <= x < 2 ^ 64;
   cstr := LE_combine_bound_8;
 |}.
 Add Zify InjTyp InjByteTuple8.
 
-Program Instance Op_combine8 : UnOp (LittleEndian.combine 8) :=
+#[global] Program Instance Op_combine8 : UnOp (LittleEndian.combine 8) :=
   {| TUOp := fun x  => x ;  |}.
 Add Zify UnOp Op_combine8.
 
 (* not strictly about LittleEndian, but handy to have here too: *)
 
-Instance InjByte: InjTyp byte Z := {|
+#[global] Instance InjByte: InjTyp byte Z := {|
   inj := byte.unsigned;
   pred x := 0 <= x < 2 ^ 8;
   cstr := byte.unsigned_range;
 |}.
 Add Zify InjTyp InjByte.
 
-Program Instance Op_byte_unsigned : UnOp byte.unsigned :=
+#[global] Program Instance Op_byte_unsigned : UnOp byte.unsigned :=
   {| TUOp := fun x  => x ;  |}.
 Add Zify UnOp Op_byte_unsigned.
 

@@ -27,7 +27,7 @@ Module Z.
   Qed.
 
   Lemma mod_0_r: forall (m: Z),
-      m mod 0 = 
+      m mod 0 =
       ltac:(match eval hnf in (1 mod 0) with | 0 => exact 0 | _ => exact m end).
   Proof.
     intros. destruct m; reflexivity.
@@ -268,12 +268,12 @@ Module Z.
   Qed.
 
   (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)
-  Hint Rewrite
+  #[global] Hint Rewrite
        Z.shiftl_spec_low Z.lxor_spec Z.lor_spec Z.land_spec Z.lnot_spec Z.ldiff_spec Z.shiftl_spec Z.shiftr_spec Z.ones_spec_high Z.shiftl_spec_alt Z.ones_spec_low Z.shiftr_spec_aux Z.shiftl_spec_high Z.ones_spec_iff Z.testbit_spec
        Z.div_pow2_bits Z.pow2_bits_eqb Z.bits_opp Z.testbit_0_l
        Z.testbit_mod_pow2 Z.testbit_ones_nonneg Z.testbit_minus1
        using solve [auto with zarith] : z_bitwise.
-  Hint Rewrite <-Z.ones_equiv
+  #[global] Hint Rewrite <-Z.ones_equiv
        using solve [auto with zarith] : z_bitwise.
 
 End Z.

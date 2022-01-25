@@ -31,7 +31,7 @@ Module Nat.
 End Nat.
 
 Module Byte.
-  Instance eqb_spec: EqDecider Byte.eqb.
+  #[global] Instance eqb_spec: EqDecider Byte.eqb.
   Proof.
     intros. destruct (Byte.eqb x y) eqn: E; constructor.
     - apply Byte.byte_dec_bl. assumption.

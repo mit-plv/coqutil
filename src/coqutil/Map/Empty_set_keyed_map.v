@@ -1,7 +1,7 @@
 Local Unset Universe Minimization ToSet.
 Require Import coqutil.Map.Interface.
 
-Instance map(V: Type): map.map Empty_set V := {|
+#[export] Instance map(V: Type): map.map Empty_set V := {|
   map.rep := unit;
   map.get m := Empty_set_rect _;
   map.empty := tt;
@@ -12,7 +12,7 @@ Instance map(V: Type): map.map Empty_set V := {|
 
 Local Set Default Goal Selector "all".
 
-Instance ok(V: Type): map.ok (map V).
+#[export] Instance ok(V: Type): map.ok (map V).
 Proof.
   constructor.
   intros.

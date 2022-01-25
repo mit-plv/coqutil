@@ -504,7 +504,7 @@ End word.
 
 Require Import coqutil.Decidable.
 
-Existing Instance word.eqb_spec.
+#[global] Existing Instance word.eqb_spec.
 
 
 (* Ring Helpers: *)
@@ -519,7 +519,7 @@ Ltac word_cst w :=
   | _ => constr:(NotConstant)
   end.
 
-Hint Rewrite
+#[global] Hint Rewrite
   @word.ring_morph_add
   @word.ring_morph_sub
   @word.ring_morph_mul

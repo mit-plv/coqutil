@@ -1,6 +1,7 @@
 Module pair.
   Local Set Universe Polymorphism.
   Local Set Primitive Projections.
+  Local Set Warnings "-notation-overridden".
   Record pair {A B} := mk { _1 : A; _2 : B _1 }.
   Arguments pair : clear implicits.
   Arguments mk {A B} _ _.
@@ -12,7 +13,7 @@ Module pair.
   Notation "{ ' pat  &  P }" := (pair _ (fun pat => P)) : type_scope.
 
   Notation "{ x : A  &  P }" := (pair A (fun x => P)) : type_scope.
-  Notation "{ ' pat : A  &  P }" := (pair A (fun pat => P)) : type_scope. 
+  Notation "{ ' pat : A  &  P }" := (pair A (fun pat => P)) : type_scope.
 
   Notation "( x , y , .. , z )" := (mk .. (mk x y) .. z) : core_scope.
 

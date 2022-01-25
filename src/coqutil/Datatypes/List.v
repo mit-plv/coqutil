@@ -229,7 +229,7 @@ Section WithA. Local Set Default Proof Using "All".
     : length (firstn n xs) = n.
   Proof.
     rewrite firstn_length, PeanoNat.Nat.min_comm.
-    destruct (Min.min_spec (length xs) n); blia.
+    destruct (Nat.min_spec (length xs) n); blia.
   Qed.
   Lemma length_tl_inbounds (xs : list A) : length (tl xs) = (length xs - 1)%nat.
   Proof.

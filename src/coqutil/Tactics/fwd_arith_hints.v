@@ -8,7 +8,7 @@ Require Import Coq.Arith.PeanoNat Coq.NArith.BinNat Coq.ZArith.BinInt.
    autoforward lemma in it, so we use autorewrite instead (which is called
    as the last tactic of fwd_step). *)
 
-Hint Rewrite
+#[export] Hint Rewrite
      Nat.eqb_eq Nat.eqb_neq
      Nat.leb_le Nat.leb_gt
      Nat.ltb_lt Nat.ltb_ge

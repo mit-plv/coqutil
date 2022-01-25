@@ -11,7 +11,7 @@ End Option.
 
 Ltac2 int_of_constr_ascii (a : constr) :=
   match! a with
-  | Ascii.Ascii ?b0 ?b1 ?b2 ?b3 ?b4 ?b5 ?b6 ?b7 => 
+  | Ascii.Ascii ?b0 ?b1 ?b2 ?b3 ?b4 ?b5 ?b6 ?b7 =>
     (Int.add (match! b0 with true => 1 | false => 0 end) (Int.mul 2 (
     (Int.add (match! b1 with true => 1 | false => 0 end) (Int.mul 2 (
     (Int.add (match! b2 with true => 1 | false => 0 end) (Int.mul 2 (
@@ -39,14 +39,14 @@ Ltac2 ident_of_string (s : string) := Option.get (Ident.of_string s).
 Ltac2 ident_of_constr_string (s : constr) := ident_of_string (string_of_constr_string s).
 
 Ltac exact_idlambda_named_after_string := ltac2:(s |-
-	let s := Option.get (Ltac1.to_constr s) in
-	let ident := ident_of_constr_string s in
+        let s := Option.get (Ltac1.to_constr s) in
+        let ident := ident_of_constr_string s in
   let binder := Constr.Binder.make (Some ident) constr:(unit) in
   let body := Constr.Unsafe.make (Constr.Unsafe.Rel 1) in
   let lambda := Constr.Unsafe.make (Constr.Unsafe.Lambda binder body) in
   exact $lambda).
 Ltac ident_of_string s :=
-	lazymatch constr:(ltac:(exact_idlambda_named_after_string s) : unit -> unit) with
+        lazymatch constr:(ltac:(exact_idlambda_named_after_string s) : unit -> unit) with
   | (fun (name:_) => _) => name
   end.
 Ltac intro_as_string s := let s := ident_of_string s in intro s.
@@ -57,9 +57,10 @@ Proof.
   (* Time *) do 1000 ltac1:(intro_as_string "ab_cdef_gh"; revert ab_cdef_gh). (*1.6s*)
 Abort.
 
+Local Set Warnings "-abstract-large-number".
 Goal forall x:nat, True.
 Proof.
   ltac1:(
-	 let s := eval vm_compute in (string_of_list_ascii (List.repeat "a"%char 10000)) in
+         let s := eval vm_compute in (string_of_list_ascii (List.repeat "a"%char 10000)) in
     (* time *) intro_as_string s (*1.25s*) ).
 Abort.

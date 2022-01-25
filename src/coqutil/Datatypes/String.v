@@ -64,7 +64,7 @@ Proof. induction k1, k2, k3; strict_order_t. Qed.
 Lemma ltb_total : forall k1 k2, ltb k1 k2 = false -> ltb k2 k1 = false -> k1 = k2.
 Proof. induction k1, k2; strict_order_t. Qed.
 
-Instance eqb_spec: EqDecider eqb.
+#[global] Instance eqb_spec: EqDecider eqb.
 Proof.
   intros. destruct (x =? y)%string eqn: E; constructor.
   - apply eqb_eq. assumption.

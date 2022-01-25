@@ -47,7 +47,7 @@ Proof.
   intros. destruct b; reflexivity.
 Qed.
 
-Hint Rewrite
+#[global] Hint Rewrite
      if_same
      then_true_else_false
      Bool.andb_false_r
@@ -203,7 +203,7 @@ Proof.
   - subst. cbv. intuition congruence.
 Qed.
 
-Hint Rewrite
+#[global] Hint Rewrite
     Z.lxor_spec
     Z.ldiff_spec
     Z.testbit_neg_r
@@ -222,7 +222,7 @@ Hint Rewrite
     using blia
 : rew_testbit.
 
-Hint Rewrite
+#[global] Hint Rewrite
      testbit_above'
      testbit_above_signed'
 (*   testbit_above_signed''  <-- TODO why does this one make proofs run forever? *)

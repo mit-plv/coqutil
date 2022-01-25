@@ -2,7 +2,7 @@ Require Import Coq.Program.Tactics.
 Require Import coqutil.Map.Interface coqutil.Map.Properties.
 Require Import coqutil.Tactics.autoforward.
 
-Hint Rewrite
+#[export] Hint Rewrite
      @map.putmany_of_list_zip_cons_put
   : fwd_rewrites.
 

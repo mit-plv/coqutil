@@ -11,9 +11,9 @@ Local Definition fst: forall {A B : Type}, A * B -> A := Eval cbv delta [fst] in
 Local Definition snd: forall {A B : Type}, A * B -> B := Eval cbv delta [snd] in @snd.
 Local Definition app: forall {A : Type}, list A -> list A -> list A := Eval cbv delta [app] in @app.
 
-Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_derived_map_defs.
+#[global] Hint Unfold map.extends map.only_differ map.agree_on map.undef_on : unf_derived_map_defs.
 
-Hint Unfold
+#[global] Hint Unfold
      (* set definitions: *)
      empty_set
      singleton_set
