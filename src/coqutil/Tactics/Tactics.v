@@ -101,3 +101,19 @@ Ltac ssplit :=
 Ltac prewrite lhs lem :=
   pattern lhs;
   eapply eq_rect; [|symmetry; eapply lem].
+
+Ltac eqapply A :=
+  let t := type of A in
+  let g := lazymatch goal with |- ?G => G end in
+  replace g with t; [exact A|f_equal..].
+
+Ltac head t :=
+  lazymatch t with
+  | ?f _ => head f
+  | _ => t
+  end.
+
+Ltac eqassumption :=
+  multimatch goal with
+  | H: ?T |- ?U => let hT := head T in let hU := head U in constr_eq hT hU; eqapply H
+  end.

@@ -1372,6 +1372,20 @@ Module map.
       intros. apply map_ext. intros. rewrite get_put_dec. destr (key_eqb k k0); congruence.
     Qed.
 
+    Lemma invert_put_eq: forall (k: key) (v1 v2: value) (m1 m2: map),
+        get m1 k = None ->
+        get m2 k = None ->
+        put m1 k v1 = put m2 k v2 ->
+        v1 = v2 /\ m1 = m2.
+    Proof.
+      intros. split.
+      - eapply (f_equal (fun m => get m k)) in H1.
+        rewrite 2get_put_same in H1. congruence.
+      - eapply map_ext. intros. destr (key_eqb k0 k). 1: congruence.
+        eapply (f_equal (fun m => get m k0)) in H1.
+        rewrite 2get_put_diff in H1 by assumption. exact H1.
+    Qed.
+
     (* to get stronger guarantees such as indexing into vs, we'd need NoDup *)
     Lemma putmany_of_list_zip_get: forall (ks: list key) (vs: list value) m0 m k,
         putmany_of_list_zip ks vs m0 = Some m ->

@@ -105,6 +105,12 @@ Ltac same_ctor H :=
 
 Ltac fwd_rewrites_autorewrite := autorewrite with fwd_rewrites in *.
 
+Ltac fwd_rewrite_db_in_star :=
+  repeat match goal with
+         | H: _ |- _ => progress rewrite_db fwd_rewrites in H
+         end;
+  try rewrite_db fwd_rewrites.
+
 (* Ltac fwd_rewrites ::= fwd_rewrites_autorewrite.
    enables autorewrite on fwd, but note that this tends to be slow, so we do nothing by default. *)
 Ltac fwd_rewrites := fail.

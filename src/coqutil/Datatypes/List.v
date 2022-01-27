@@ -225,6 +225,12 @@ Section WithA. Local Set Default Proof Using "All".
     intros; rewrite IHn; trivial; blia.
   Qed.
 
+  Lemma firstn_eq_O: forall (n: nat) (l : list A), n = 0%nat -> List.firstn n l = [].
+  Proof. intros. subst. apply List.firstn_O. Qed.
+
+  Lemma skipn_eq_O: forall (n: nat) (l : list A), n = 0%nat -> List.skipn n l = l.
+  Proof. intros. subst. apply List.skipn_O. Qed.
+
   Lemma length_firstn_inbounds n (xs : list A) (H : le n (length xs))
     : length (firstn n xs) = n.
   Proof.

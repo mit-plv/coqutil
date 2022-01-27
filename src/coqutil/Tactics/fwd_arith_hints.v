@@ -19,3 +19,8 @@ Require Import Coq.Arith.PeanoNat Coq.NArith.BinNat Coq.ZArith.BinInt.
      Z.leb_le Z.leb_gt
      Z.ltb_lt Z.ltb_ge
   : fwd_rewrites.
+
+#[export] Hint Rewrite
+     Nat.min_id
+     Nat.max_id
+  : fwd_rewrites.
