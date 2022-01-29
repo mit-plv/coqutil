@@ -746,6 +746,30 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
         List.nth_error (map_with_index l) n = Some (f d n).
     Proof. intros. eapply map_with_start_index_nth_error. assumption. Qed.
   End MapWithIndex.
+
+  Definition zip_with_start_index: nat -> list A -> list (A * nat) :=
+    map_with_start_index pair.
+  Definition zip_with_index: list A -> list (A * nat) := zip_with_start_index 0.
+
+  Lemma snd_zip_with_start_index: forall (l: list A) (start: nat),
+      List.map snd (zip_with_start_index start l) = List.seq start (List.length l).
+  Proof. induction l; simpl; intros. 1: reflexivity. f_equal. apply IHl. Qed.
+
+  Lemma snd_zip_with_index: forall (l: list A),
+      List.map snd (zip_with_index l) = List.seq 0 (List.length l).
+  Proof. intros. apply snd_zip_with_start_index. Qed.
+
+  Lemma map_nth_seq_self(d: A)(l: list A):
+    List.map (fun i => List.nth i l d) (List.seq 0 (List.length l)) = l.
+  Proof.
+    induction l; cbn -[List.nth]. 1: reflexivity.
+    unfold List.nth at 1.
+    f_equal.
+    etransitivity. 2: exact IHl.
+    rewrite <- List.seq_shift.
+    rewrite List.map_map.
+    reflexivity.
+  Qed.
 End WithNonmaximallyInsertedA.
 
 Lemma length_flat_map: forall [A B: Type] (f: A -> list B) n (l: list A),
