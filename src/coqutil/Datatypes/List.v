@@ -417,6 +417,10 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     congruence.
   Qed.
 
+  Lemma nth_error_Some_bound_index (xs : list A) x i (H : nth_error xs i = Some x)
+    : i < length xs.
+  Proof. apply (nth_error_Some xs i). congruence. Qed.
+
   Definition endswith (xs : list A) (suffix : list A) :=
     exists prefix, xs = prefix ++ suffix.
   Lemma endswith_refl (xs : list A) : endswith xs xs.
