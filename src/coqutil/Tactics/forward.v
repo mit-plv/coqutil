@@ -53,10 +53,10 @@ Tactic Notation "unique" "eapply" constr(p) "in" "copy" "of" ident(H) :=
 
 Ltac ret_type P :=
   lazymatch P with
+  | _ -> ?Q => ret_type Q
   | forall x, @?Q x => let Q' := open_constr:(Q _) in
                        let Q'' := eval cbv beta in Q' in
                            ret_type Q''
-  | _ -> ?Q => ret_type Q
   | ?Q => open_constr:(Q)
   end.
 
