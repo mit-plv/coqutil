@@ -4,7 +4,7 @@
    of the original list. *)
 
 Require Import Coq.Arith.PeanoNat.
-Require Import Coq.Sorting.Permutation Coq.Sorting.Sorting.
+Require Import coqutil.Sorting.Permutation Coq.Sorting.Sorting.
 Require Import coqutil.Tactics.destr.
 Require Import coqutil.Datatypes.List.
 

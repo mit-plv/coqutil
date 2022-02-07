@@ -2,7 +2,7 @@ Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidab
 Require Import coqutil.Z.Lia.
 Import map.
 Require Import coqutil.Datatypes.Option.
-Require Import Coq.Sorting.Permutation.
+Require Import coqutil.Sorting.Permutation.
 
 Module map.
   Section WithMap. Local Set Default Proof Using "All".

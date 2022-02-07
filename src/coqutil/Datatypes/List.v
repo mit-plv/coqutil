@@ -5,7 +5,7 @@ Require Import coqutil.Z.Lia.
 Require Import coqutil.Datatypes.Option.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Lists.List. Import ListNotations.
-Require Import Coq.Sorting.Permutation.
+Require Import coqutil.Sorting.Permutation.
 
 Definition enumerate [A] start xs := combine (seq start (@length A xs)) xs.
 Definition zip [A B C] (f : A -> B -> C) xs ys :=
