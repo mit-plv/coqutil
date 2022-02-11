@@ -104,8 +104,9 @@ Ltac prewrite lhs lem :=
 
 Ltac eqapply A :=
   let t := type of A in
+  let r := ret_type t in
   let g := lazymatch goal with |- ?G => G end in
-  replace g with t; [exact A|f_equal..].
+  replace g with r; [eapply A|f_equal..].
 
 Ltac head t :=
   lazymatch t with
