@@ -1,6 +1,7 @@
 Require Import coqutil.sanity.
 Require Import coqutil.Decidable.
 Require Import coqutil.Tactics.destr coqutil.Tactics.Tactics.
+Require Import Coq.micromega.Lia.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Datatypes.Option.
 Require Import Coq.Arith.PeanoNat.
@@ -14,6 +15,23 @@ Definition zip [A B C] (f : A -> B -> C) xs ys :=
 
 Section WithAAndEqDecider. Local Set Default Proof Using "All".
   Context {A : Type}. (* maximally inserted to make sure aeqb_dec is inferred *)
+
+  Definition Znth z (xs : list A) (default : A) : A :=
+    if BinInt.Z.ltb z BinInt.Z0 then default
+    else List.nth (BinInt.Z.to_nat z) xs default.
+
+  Lemma Znth_ext: forall l l' d d',
+      length l = length l' ->
+      (forall z, BinInt.Z.le BinInt.Z0 z /\ BinInt.Z.lt z (BinInt.Z.of_nat (length l)) ->
+                 Znth z l d = Znth z l' d') ->
+      l = l'.
+  Proof.
+    intros. eapply List.nth_ext. 1: assumption.
+    intros. unfold Znth in H0. specialize (H0 (BinInt.Z.of_nat n)).
+    replace (BinInt.Z.ltb (BinInt.Z.of_nat n) BinNums.Z0) with false in H0. 2: Lia.lia.
+    rewrite Znat.Nat2Z.id in H0.
+    eapply H0. Lia.lia.
+  Qed.
 
   Definition Znth_error (xs : list A) z :=
     if BinInt.Z.ltb z BinInt.Z0 then None
@@ -349,6 +367,19 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
               apply IHxs. }
   Qed.
 
+  Lemma nth_error_firstn: forall i (l: list A) j,
+      j < i ->
+      nth_error (firstn i l) j = nth_error l j.
+  Proof.
+    induction i; intros.
+    - blia.
+    - simpl. destruct l; [reflexivity|].
+      destruct j; [reflexivity|].
+      simpl.
+      apply IHi.
+      blia.
+  Qed.
+
   Lemma nth_error_nil_Some: forall i (a: A), nth_error nil i = Some a -> False.
   Proof.
     intros. destruct i; simpl in *; discriminate.
@@ -420,6 +451,45 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
   Lemma nth_error_Some_bound_index (xs : list A) x i (H : nth_error xs i = Some x)
     : i < length xs.
   Proof. apply (nth_error_Some xs i). congruence. Qed.
+
+  Lemma nth_nil: forall i (d: A), List.nth i [] d = d.
+  Proof. intros. cbn. destruct i; reflexivity. Qed.
+
+  Lemma nth_firstn: forall (i : nat) (l : list A) (j : nat) d,
+      (j < i)%nat ->
+      nth j (firstn i l) d = nth j l d.
+  Proof.
+    intros. pose proof H as B.
+    assert (List.length l <= i \/ i < List.length l)%nat as C by lia. destruct C as [C | C].
+    { rewrite List.firstn_all2 by exact C. reflexivity. }
+    eapply (nth_error_firstn _ l) in H.
+    erewrite nth_error_nth' in H. 2: {
+      rewrite List.firstn_length. lia.
+    }
+    erewrite nth_error_nth' in H by lia.
+    apply Option.eq_of_eq_Some in H.
+    exact H.
+  Qed.
+
+  Lemma nth_skipn: forall (i j : nat) (l : list A) d,
+      nth i (skipn j l) d = nth (j + i) l d.
+  Proof.
+    intros.
+    assert (List.length l <= i + j \/ i + j < List.length l)%nat as C by lia.
+    destruct C as [C | C].
+    { rewrite List.nth_overflow. 2: {
+        rewrite length_skipn. lia.
+      }
+      rewrite List.nth_overflow by lia.
+      reflexivity.
+    }
+    rewrite <- (List.firstn_skipn j l) at 2.
+    replace (j + i)%nat with (List.length (List.firstn j l) + i)%nat. 2: {
+      rewrite List.firstn_length. lia.
+    }
+    rewrite List.app_nth2_plus.
+    reflexivity.
+  Qed.
 
   Definition endswith (xs : list A) (suffix : list A) :=
     exists prefix, xs = prefix ++ suffix.
@@ -879,19 +949,6 @@ Proof.
       destr (Nat.ltb i (length l)); [reflexivity|blia].
 Qed.
 
-Lemma nth_error_firstn: forall E i (l: list E) j,
-  j < i ->
-  nth_error (firstn i l) j = nth_error l j.
-Proof.
-  induction i; intros.
-  - blia.
-  - simpl. destruct l; [reflexivity|].
-    destruct j; [reflexivity|].
-    simpl.
-    apply IHi.
-    blia.
-Qed.
-
 Lemma nth_error_skipn: forall E i j (l: list E),
   i <= j ->
   nth_error (skipn i l) (j - i) = nth_error l j.
@@ -1162,6 +1219,78 @@ Proof.
   repeat f_equal.
   blia.
 Qed.
+
+Section MoreUpdLemmas.
+  Context [A: Type].
+
+  Lemma upds_above: forall l i (vs: list A),
+      (List.length l <= i)%nat ->
+      List.upds l i vs = l.
+  Proof.
+    unfold List.upds. intros.
+    rewrite (List.firstn_eq_O _ vs) by lia.
+    rewrite List.skipn_all by lia.
+    rewrite List.firstn_all2 by lia.
+    cbn. apply List.app_nil_r.
+  Qed.
+
+  Lemma upd_above: forall l i (v: A),
+      (List.length l <= i)%nat ->
+      List.upd l i v = l.
+  Proof.
+    unfold List.upds. intros. apply upds_above. assumption.
+  Qed.
+
+  Lemma nth_upd_same: forall n (l: list A) v d,
+      (n < List.length l)%nat ->
+      nth n (List.upd l n v) d = v.
+  Proof.
+    intros. unfold List.upd, List.upds.
+    rewrite List.app_nth2. 2: {
+      rewrite List.firstn_length. lia.
+    }
+    rewrite List.app_nth1. 2: {
+      rewrite ?List.firstn_length. cbn [List.length]. lia.
+    }
+    rewrite List.firstn_length.
+    replace (n - Init.Nat.min n (Datatypes.length l))%nat with 0%nat by lia.
+    replace (Datatypes.length l - n)%nat with (S (pred (Datatypes.length l - n))) by lia.
+    reflexivity.
+  Qed.
+
+  Lemma nth_upd_diff: forall n1 n2 (l: list A) v d,
+      n1 <> n2 ->
+      nth n1 (List.upd l n2 v) d = nth n1 l d.
+  Proof.
+    intros.
+    assert (List.length l <= n2 \/ n2 < List.length l)%nat as C by lia.
+    destruct C as [C | C].
+    { rewrite upd_above by exact C. reflexivity. }
+    assert (List.length l <= n1 \/ n1 < List.length l)%nat as D by lia.
+    destruct D as [D | D].
+    { rewrite (List.nth_overflow l) by exact D.
+      apply List.nth_overflow.
+      rewrite List.upd_length.
+      exact D. }
+    unfold List.upd, List.upds.
+    assert (n1 < n2 \/ n2 < n1)%nat as B by lia. destruct B as [B | B].
+    - rewrite List.app_nth1. 2: {
+        rewrite List.firstn_length. lia.
+      }
+      apply nth_firstn. assumption.
+    - rewrite List.app_nth2. 2: {
+        rewrite ?List.firstn_length. lia.
+      }
+      rewrite List.firstn_length.
+      rewrite List.app_nth2. 2: {
+        rewrite ?List.firstn_length. cbn. lia.
+      }
+      rewrite List.firstn_length. cbn [List.length].
+      rewrite nth_skipn.
+      f_equal.
+      lia.
+  Qed.
+End MoreUpdLemmas.
 
 Section WithZ. Local Set Default Proof Using "All".
   Import Coq.ZArith.BinInt.
