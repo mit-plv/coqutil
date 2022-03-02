@@ -949,7 +949,7 @@ Proof.
       destr (Nat.ltb i (length l)); [reflexivity|blia].
 Qed.
 
-Lemma nth_error_skipn: forall E i j (l: list E),
+Lemma nth_error_skipn': forall E i j (l: list E),
   i <= j ->
   nth_error (skipn i l) (j - i) = nth_error l j.
 Proof.
@@ -970,7 +970,7 @@ Proof. destruct l; trivial. Qed.
 Lemma nth_error_as_skipn [A] (l : list A) i
   : nth_error l i = hd_error (skipn i l).
 Proof.
-  erewrite <-nth_error_skipn, Nat.sub_diag by reflexivity.
+  erewrite <-nth_error_skipn', Nat.sub_diag by reflexivity.
   eapply nth_error_0_r.
 Qed.
 
@@ -994,7 +994,7 @@ Proof.
     rewrite firstn_length_le by blia.
     change (length [e]) with 1.
     replace (j - i -1) with (j - (S i)) by blia.
-    apply nth_error_skipn.
+    apply nth_error_skipn'.
     blia.
   - inversion H.
     pose proof (nth_error_None l j) as P.
@@ -1289,6 +1289,65 @@ Section MoreUpdLemmas.
       rewrite nth_skipn.
       f_equal.
       lia.
+  Qed.
+
+  Lemma nth_error_upd_diff: forall n1 n2 v (l: list A),
+      n1 <> n2 ->
+      nth_error (List.upd l n2 v) n1 = nth_error l n1.
+  Proof.
+    intros.
+    assert (List.length l <= n1 \/ n1 < List.length l)%nat as D by lia.
+    destruct D as [D | D].
+    { rewrite (proj2 (nth_error_None _ n1)). 2: {
+        rewrite upd_length. assumption.
+      }
+      rewrite (proj2 (nth_error_None _ n1)) by assumption. reflexivity.
+    }
+    assert (List.length l <= n2 \/ n2 < List.length l)%nat as C by lia.
+    destruct C as [C | C].
+    { rewrite upd_above by assumption. reflexivity. }
+    rewrite nth_error_nth' with (d := v). 2: {
+      rewrite upd_length. assumption.
+    }
+    rewrite nth_error_nth' with (d := v) by assumption.
+    rewrite nth_upd_diff by assumption.
+    reflexivity.
+  Qed.
+
+  Lemma nth_error_skipn: forall i j (l: list A),
+      nth_error (skipn i l) j = nth_error l (i + j).
+  Proof.
+    induction i; intros.
+    - cbn. reflexivity.
+    - destruct l; cbn. 1: destruct j; reflexivity.
+      eapply IHi.
+  Qed.
+
+  Lemma nth_error_upd_same: forall i v (l: list A),
+      (i < List.length l)%nat ->
+      nth_error (List.upd l i v) i = Some v.
+  Proof.
+    unfold List.upd, List.upds. intros.
+    rewrite nth_error_app2. 2: {
+      rewrite List.firstn_length. Lia.lia.
+    }
+    rewrite nth_error_app1. 2: {
+      rewrite ?List.firstn_length. cbn. Lia.lia.
+    }
+    rewrite List.firstn_all2. 2: {
+      cbn. Lia.lia.
+    }
+    rewrite List.firstn_length.
+    replace (i - Init.Nat.min i (Datatypes.length l))%nat with 0%nat by Lia.lia.
+    reflexivity.
+  Qed.
+
+  Lemma nth_error_upd_same_eq: forall i j v (l: list A),
+      (i < List.length l)%nat ->
+      i = j ->
+      nth_error (List.upd l i v) j = Some v.
+  Proof.
+    intros. subst. apply nth_error_upd_same. assumption.
   Qed.
 End MoreUpdLemmas.
 
