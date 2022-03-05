@@ -179,6 +179,16 @@ Module word.
     Let twice_halfm : 2^(width-1) * 2 = 2^width.
     Proof. rewrite Z.mul_comm, <-Z.pow_succ_r by blia; f_equal; blia. Qed.
 
+    Lemma modulus_gt_1 : 1 < 2^width.
+    Proof.
+      pose proof half_modulus_pos.
+      pose proof word.width_pos.
+      assert (1 < 2^(width-1)*2^1) as Hw by Lia.lia.
+      rewrite <-Zpower_exp in Hw by Lia.lia.
+      replace (width - 1 + 1) with width in * by Lia.lia.
+      assumption.
+    Qed.
+
     Lemma unsigned_of_Z_1 : word.unsigned (word.of_Z 1) = 1.
     Proof.
       rewrite word.unsigned_of_Z; cbv [wrap]; rewrite Z.mod_small; trivial; []; blia.
@@ -378,6 +388,16 @@ Module word.
         cbv [wrap]; rewrite Zdiv.Zminus_mod_idemp_l; f_equal; blia.
     Qed.
 
+    Lemma unsigned_sub_neq x y (H : x <> y) : word.unsigned (word.sub x y) <> 0.
+    Proof.
+      rewrite word.unsigned_sub. cbv [word.wrap].
+      pose proof Properties.word.unsigned_range x as Ha.
+      pose proof Properties.word.unsigned_range y as Hk.
+      assert (word.unsigned x <> word.unsigned y).
+      { intro X; case H; eapply Properties.word.unsigned_inj; trivial. }
+      cbv [word.wrap]; Z.div_mod_to_equations; assert (q = 0 \/ q = -1);  Lia.nia.
+    Qed.
+
     Lemma decrement_nonzero_lt x (H : word.unsigned x <> 0) :
       word.unsigned (word.sub x (word.of_Z 1)) < word.unsigned x.
     Proof.
@@ -385,6 +405,15 @@ Module word.
       rewrite word.unsigned_sub, word.unsigned_of_Z_1.
       unfold word.wrap. Z.div_mod_to_equations.
       enough (0 <= q); Lia.nia.
+    Qed.
+
+    Lemma decrement_nonzero x (H : word.unsigned x <> 0) :
+      word.unsigned (word.sub x (word.of_Z 1)) = word.unsigned x - 1.
+    Proof.
+      pose proof word.unsigned_range x; pose proof modulus_gt_1.
+      rewrite word.unsigned_sub, word.unsigned_of_Z_1.
+      unfold word.wrap.
+      rewrite Z.mod_small; Lia.lia.
     Qed.
 
     Lemma well_founded_lt_unsigned : well_founded (fun a b : word => word.unsigned a < word.unsigned b).
