@@ -65,6 +65,7 @@ ifneq (,$(filter 8.13%,$(COQ_VERSION)))
 	EXCLUDEFILES := \
 		$(wildcard $(SRCDIR)/coqutil/Tactics/fwd*.v) \
 		$(wildcard $(SRCDIR)/coqutil/Map/*.v) \
+		$(SRCDIR)/coqutil/Tactics/SafeSimpl.v \
 		$(SRCDIR)/coqutil/Datatypes/Prod.v \
 		$(SRCDIR)/coqutil/Datatypes/Inhabited.v \
 		$(SRCDIR)/coqutil/Word/Properties.v \
