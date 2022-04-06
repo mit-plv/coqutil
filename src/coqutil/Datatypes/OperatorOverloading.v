@@ -103,7 +103,10 @@ Notation "a * b" := (Z.mul a b) (only printing) : oo_scope.
 #[export] Instance MulTypeType(a b: Type): Multiplication a b (prod a b) := {}.
 #[export] Instance MulTypeSet(a: Type)(b: Set): Multiplication a b (prod a b) := {}.
 #[export] Instance MulSetType(a: Set)(b: Type): Multiplication a b (prod a b) := {}.
-#[export] Instance MulSetSet(a: Set)(b: Set): Multiplication a b (prod a b) := {}.
+#[export] Instance MulSetSetSet(a: Set)(b: Set):
+  @Multiplication Set Set Set a b (prod a b) | 5 := {}.
+#[export] Instance MulSetSetType(a: Set)(b: Set):
+  @Multiplication Set Set Type a b (prod a b) | 6 := {}.
 Notation "a * b" := (prod a b) (only printing) : oo_scope.
 
 #[export] Instance MulWord{width: Z}{word: word.word width}(a b: word):
