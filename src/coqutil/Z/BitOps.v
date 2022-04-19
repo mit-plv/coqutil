@@ -1,5 +1,6 @@
 Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Z.bitblast.
+Require Import coqutil.Z.ZLib.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Z.div_mod_to_equations.
 
@@ -109,6 +110,55 @@ Proof.
   Lia.nia.
 Qed.
 
+Lemma bitSlice_nonneg: forall start eend v,
+    0 <= bitSlice v start eend.
+Proof.
+  intros. unfold bitSlice.
+  eapply Z.land_nonneg.
+  right.
+  eapply Z.lnot_nonneg.
+  eapply Z.shiftl_neg.
+  reflexivity.
+Qed.
+
+Lemma bitSlice_upper_bound: forall start eend v,
+    bitSlice v start eend < 2 ^ (Z.max 0 (eend - start)).
+Proof.
+  intros. unfold bitSlice.
+  assert (eend - start < 0 \/ 0 <= eend - start) as C by Lia.lia.
+  destruct C.
+  - rewrite Z.shiftl_minus_one_neg by Lia.lia.
+    change (Z.lnot (-1)) with 0.
+    rewrite Z.land_0_r.
+    replace (Z.max 0 (eend - start)) with 0 by Lia.lia.
+    reflexivity.
+  - replace (Z.max 0 (eend - start)) with (eend - start) by Lia.lia.
+    rewrite Z.shiftl_mul_pow2 by assumption.
+    rewrite Z.mul_comm.
+    rewrite <- Z.opp_eq_mul_m1.
+    replace (Z.lnot (- 2 ^ (eend - start))) with (Z.pred (2 ^ (eend - start))). 2: {
+       pose proof (Z.add_lnot_diag (- 2 ^ (eend - start))). Lia.lia.
+    }
+    rewrite <- Z.ones_equiv.
+    rewrite Z.land_ones by assumption.
+    eapply Z.mod_pos_bound.
+    apply Z.pow_pos_nonneg. 1: reflexivity. assumption.
+Qed.
+
+Lemma bitSlice_bounds: forall start eend v,
+    0 <= bitSlice v start eend < 2 ^ (Z.max 0 (eend - start)).
+Proof. eauto using bitSlice_nonneg, bitSlice_upper_bound. Qed.
+
+Lemma mod20_bitSlice: forall n,
+    bitSlice n 0 1 = 0 ->
+    n mod 2 = 0.
+Proof.
+  intros. rewrite bitSlice_alt in H by Lia.lia.
+  unfold bitSlice' in *.
+  Z.div_mod_to_equations.
+  Lia.lia.
+Qed.
+
 
 (** ** signExtend *)
 
@@ -172,7 +222,7 @@ Qed.
 
 Lemma signExtend_range: forall i z,
     0 < i ->
-    - 2^ (i - 1) <= signExtend i z < 2 ^ (i - 1).
+    - 2 ^ (i - 1) <= signExtend i z < 2 ^ (i - 1).
 Proof.
   intros.
   unfold signExtend.
@@ -186,6 +236,13 @@ Proof.
   change (2 ^ 1) with 2 in *.
   remember (2 ^ (i - 1)) as B.
   blia.
+Qed.
+
+Lemma signExtend_bounds: forall i z,
+    0 <= i -> - 2 ^ i <= signExtend (i + 1) z < 2 ^ i.
+Proof.
+  intros. pose proof (signExtend_range (i + 1) z) as P.
+  replace (i + 1 - 1) with i in P by Lia.lia. eapply P. Lia.lia.
 Qed.
 
 Lemma signExtend_nop: forall l w v,
