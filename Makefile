@@ -25,6 +25,7 @@ ifneq (,$(filter 8.11%,$(COQ_VERSION)))
 		$(SRCDIR)/coqutil/Datatypes/Prod.v \
 		$(SRCDIR)/coqutil/Word/Properties.v \
 		$(SRCDIR)/coqutil/Z/ZLib.v \
+		$(SRCDIR)/coqutil/Z/BitOps.v \
 		$(SRCDIR)/coqutil/Z/prove_Zeq_bitwise.v \
 		$(SRCDIR)/coqutil/Datatypes/ListSet.v \
 		$(SRCDIR)/coqutil/Map/Interface.v \
@@ -53,6 +54,7 @@ ifneq (,$(filter 8.12%,$(COQ_VERSION)))
 		$(SRCDIR)/coqutil/Datatypes/Prod.v \
 		$(SRCDIR)/coqutil/Word/Properties.v \
 		$(SRCDIR)/coqutil/Z/ZLib.v \
+		$(SRCDIR)/coqutil/Z/BitOps.v \
 		$(SRCDIR)/coqutil/Z/prove_Zeq_bitwise.v \
 		$(SRCDIR)/coqutil/Word/BigEndian.v \
 		$(SRCDIR)/coqutil/Word/DebugWordEq.v \
@@ -72,6 +74,7 @@ ifneq (,$(filter 8.13%,$(COQ_VERSION)))
 		$(SRCDIR)/coqutil/Datatypes/Prod.v \
 		$(SRCDIR)/coqutil/Word/Properties.v \
 		$(SRCDIR)/coqutil/Z/ZLib.v \
+		$(SRCDIR)/coqutil/Z/BitOps.v \
 		$(SRCDIR)/coqutil/Z/prove_Zeq_bitwise.v \
 		$(SRCDIR)/coqutil/Word/BigEndian.v \
 		$(SRCDIR)/coqutil/Word/DebugWordEq.v \
