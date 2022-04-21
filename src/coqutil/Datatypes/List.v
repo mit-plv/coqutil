@@ -1,21 +1,40 @@
 Require Import coqutil.sanity.
 Require Import coqutil.Decidable.
 Require Import coqutil.Tactics.destr coqutil.Tactics.Tactics.
+Require Import Coq.micromega.Lia.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Datatypes.Option.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Lists.List. Import ListNotations.
-Require Import Coq.Sorting.Permutation.
+Require Import coqutil.Sorting.Permutation.
 
-Definition enumerate {A} start xs := combine (seq start (@length A xs)) xs.
-Definition zip {A B C} (f : A -> B -> C) xs ys :=
+Definition enumerate [A] start xs := combine (seq start (@length A xs)) xs.
+Definition zip [A B C] (f : A -> B -> C) xs ys :=
   let uncurry f '(x, y) := f x y in
   map (uncurry f) (combine xs ys).
 
-Section WithA. Local Set Default Proof Using "All".
-  Context {A : Type}.
+Section WithAAndEqDecider. Local Set Default Proof Using "All".
+  Context {A : Type}. (* maximally inserted to make sure aeqb_dec is inferred *)
 
-  Definition Znth_error {A} (xs : list A) z :=
+  Definition Znth z (xs : list A) (default : A) : A :=
+    if BinInt.Z.ltb z BinInt.Z0 then default
+    else List.nth (BinInt.Z.to_nat z) xs default.
+
+  (* commented out because lia of Coq 8.12.2 fails on it, TODO reactivate
+  Lemma Znth_ext: forall l l' d d',
+      length l = length l' ->
+      (forall z, BinInt.Z.le BinInt.Z0 z /\ BinInt.Z.lt z (BinInt.Z.of_nat (length l)) ->
+                 Znth z l d = Znth z l' d') ->
+      l = l'.
+  Proof.
+    intros. eapply List.nth_ext. 1: assumption.
+    intros. unfold Znth in H0. specialize (H0 (BinInt.Z.of_nat n)).
+    replace (BinInt.Z.ltb (BinInt.Z.of_nat n) BinNums.Z0) with false in H0. 2: Lia.lia.
+    rewrite Znat.Nat2Z.id in H0.
+    eapply H0. Lia.lia.
+  Qed. *)
+
+  Definition Znth_error (xs : list A) z :=
     if BinInt.Z.ltb z BinInt.Z0 then None
     else List.nth_error xs (BinInt.Z.to_nat z).
 
@@ -32,7 +51,20 @@ Section WithA. Local Set Default Proof Using "All".
   Definition removeb(aeq: A -> A -> bool)(e: A)(l: list A): list A :=
     filter (fun e' => negb (aeq e e')) l.
 
-  Lemma removeb_not_In{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
+  (* same as nodup from standard library but using BoolSpec instead of sumbool *)
+  Definition dedup(aeqb: A -> A -> bool): list A -> list A :=
+    fix rec l :=
+      match l with
+      | [] => []
+      | x :: xs => if List.find (aeqb x) xs then rec xs else x :: rec xs
+      end.
+
+  Definition list_eqb (aeqb : A -> A -> bool) (x y : list A) : bool :=
+    ((length x =? length y)%nat && forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y))%bool.
+
+  Context {aeqb : A -> A -> bool} {aeqb_dec: EqDecider aeqb}.
+
+  Lemma removeb_not_In:
     forall (l : list A) (a: A), ~ In a l -> removeb aeqb a l = l.
   Proof.
     induction l; intros; simpl; try reflexivity.
@@ -41,21 +73,21 @@ Section WithA. Local Set Default Proof Using "All".
     + f_equal. eauto.
   Qed.
 
-  Lemma In_removeb_In{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
+  Lemma In_removeb_In:
     forall (a1 a2: A) (l: list A), In a1 (removeb aeqb a2 l) -> In a1 l.
   Proof.
     induction l; intros; simpl in *; try contradiction.
     destr (aeqb a2 a); simpl in *; intuition idtac.
   Qed.
 
-  Lemma In_removeb_diff{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
+  Lemma In_removeb_diff:
     forall (a1 a2: A) (l: list A), a1 <> a2 -> In a1 l -> In a1 (removeb aeqb a2 l).
   Proof.
     induction l; intros; simpl in *; try contradiction.
     destr (aeqb a2 a); simpl in *; subst; intuition congruence.
   Qed.
 
-  Lemma In_removeb_weaken{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
+  Lemma In_removeb_weaken:
     forall (x y: A) (l: list A),
       In x (removeb aeqb y l) ->
       In x l.
@@ -67,7 +99,7 @@ Section WithA. Local Set Default Proof Using "All".
       + simpl in H. destruct H; auto.
   Qed.
 
-  Lemma NoDup_removeb{aeqb : A -> A -> bool}{aeqb_dec: EqDecider aeqb}:
+  Lemma NoDup_removeb:
     forall (a: A) (l: list A),
       NoDup l ->
       NoDup (removeb aeqb a l).
@@ -77,7 +109,7 @@ Section WithA. Local Set Default Proof Using "All".
     constructor; auto. intro C. apply H2. eapply In_removeb_In. eassumption.
   Qed.
 
-  Lemma length_NoDup_removeb{aeqb: A -> A -> bool}{aeqb_sepc: EqDecider aeqb}:
+  Lemma length_NoDup_removeb:
     forall (s: list A) (a: A),
       In a s ->
       NoDup s ->
@@ -94,7 +126,101 @@ Section WithA. Local Set Default Proof Using "All".
         * reflexivity.
   Qed.
 
-  Lemma option_all_None l : option_all l = None ->
+  Lemma dedup_preserves_In(l: list A) a:
+    In a l <-> In a (dedup aeqb l).
+  Proof.
+    induction l.
+    - simpl. firstorder idtac.
+    - simpl. split; intro H.
+      + destruct H.
+        * subst. destruct_one_match.
+          { apply find_some in E. destruct E as [E1 E2].
+            destr (aeqb a a0). 2: discriminate. firstorder idtac. }
+          { simpl. auto. }
+        * destruct_one_match.
+          { apply find_some in E. destruct E as [E1 E2].
+            destr (aeqb a0 a1). 2: discriminate. firstorder idtac. }
+          { simpl. firstorder idtac. }
+      + destruct_one_match_hyp.
+        * apply find_some in E. destruct E as [E1 E2].
+          destr (aeqb a0 a1). 2: discriminate. firstorder idtac.
+        * simpl in H. destruct H.
+          { subst. auto. }
+          { firstorder idtac. }
+  Qed.
+
+  Lemma NoDup_dedup: forall (l: list A),
+      NoDup (dedup aeqb l).
+  Proof.
+    induction l.
+    - simpl. constructor.
+    - simpl. destruct_one_match.
+      + assumption.
+      + constructor. 2: assumption.
+        intro C.
+        apply dedup_preserves_In in C.
+        pose proof (find_none _ _ E _ C).
+        destr (aeqb a a); congruence.
+  Qed.
+
+  Lemma list_forallb_eqb_refl ls :
+    forallb (fun xy => aeqb (fst xy) (snd xy)) (combine ls ls) = true.
+  Proof.
+    induction ls as [|x ?]; [ reflexivity | ].
+    cbn [combine fst snd forallb]. rewrite IHls.
+    destr (aeqb x x); subst; congruence || reflexivity.
+  Qed.
+
+  Lemma length_eq_forallb_eqb_false x y :
+    length x = length y -> x <> y ->
+    forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y) = false.
+  Proof.
+    revert y.
+    induction x as [|x0 x]; destruct y as [|y0 y];
+      cbn [length]; [ congruence .. | ].
+    intros. cbn [combine fst snd forallb].
+    destr (aeqb x0 y0); [ | reflexivity ].
+    rewrite IHx by congruence. reflexivity.
+  Qed.
+
+  Lemma list_eqb_spec: EqDecider (list_eqb aeqb).
+  Proof.
+    cbv [list_eqb].
+    induction x as [|x0 x]; destruct y as [|y0 y];
+      cbn [length combine forallb Nat.eqb andb fst snd];
+      try (constructor; congruence) ; [ ].
+    destruct (IHx y); subst.
+    { rewrite Nat.eqb_refl.
+      rewrite list_forallb_eqb_refl by auto.
+      destr (aeqb x0 y0); subst; constructor; congruence. }
+    { destr (length x =? length y); cbn [andb];
+      try (constructor; congruence); [ ].
+      rewrite length_eq_forallb_eqb_false by auto.
+      rewrite Bool.andb_false_r. constructor; congruence. }
+  Qed.
+
+  Lemma remove_In_ne:
+    forall (l: list A) (f1 f2: A),
+      In f1 l ->
+      f1 <> f2 ->
+      In f1 (removeb aeqb f2 l).
+  Proof.
+    induction l; intros.
+    - inversion H.
+    - simpl in *. destruct H.
+      + subst a.
+        destr (aeqb f2 f1); try congruence. simpl. auto.
+      + destr (aeqb f2 a); simpl.
+        * eauto.
+        * simpl. eauto.
+  Qed.
+End WithAAndEqDecider.
+Global Hint Resolve list_eqb_spec : typeclass_instances.
+
+Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
+  Context [A: Type].
+
+  Lemma option_all_None (l: list (option A)) : option_all l = None ->
     exists i, nth_error l i = Some None.
   Proof.
     induction l; cbn; intuition try congruence.
@@ -144,51 +270,6 @@ Section WithA. Local Set Default Proof Using "All".
       + simpl. firstorder idtac.
   Qed.
 
-  (* same as nodup from standard library but using BoolSpec instead of sumbool *)
-  Definition dedup{A: Type}(aeqb: A -> A -> bool): list A -> list A :=
-    fix rec l :=
-      match l with
-      | [] => []
-      | x :: xs => if List.find (aeqb x) xs then rec xs else x :: rec xs
-      end.
-
-  Lemma dedup_preserves_In{aeqb: A -> A -> bool}{aeqb_spec: EqDecider aeqb}(l: list A) a:
-    In a l <-> In a (dedup aeqb l).
-  Proof.
-    induction l.
-    - simpl. firstorder idtac.
-    - simpl. split; intro H.
-      + destruct H.
-        * subst. destruct_one_match.
-          { apply find_some in E. destruct E as [E1 E2].
-            destr (aeqb a a0). 2: discriminate. firstorder idtac. }
-          { simpl. auto. }
-        * destruct_one_match.
-          { apply find_some in E. destruct E as [E1 E2].
-            destr (aeqb a0 a1). 2: discriminate. firstorder idtac. }
-          { simpl. firstorder idtac. }
-      + destruct_one_match_hyp.
-        * apply find_some in E. destruct E as [E1 E2].
-          destr (aeqb a0 a1). 2: discriminate. firstorder idtac.
-        * simpl in H. destruct H.
-          { subst. auto. }
-          { firstorder idtac. }
-  Qed.
-
-  Lemma NoDup_dedup{aeqb: A -> A -> bool}{aeqb_spec: EqDecider aeqb}: forall (l: list A),
-      NoDup (dedup aeqb l).
-  Proof.
-    induction l.
-    - simpl. constructor.
-    - simpl. destruct_one_match.
-      + assumption.
-      + constructor. 2: assumption.
-        intro C.
-        apply dedup_preserves_In in C.
-        pose proof (find_none _ _ E _ C).
-        destr (aeqb a a); congruence.
-  Qed.
-
   Section WithStep. Local Set Default Proof Using "All".
     Context (step : A -> A).
     Fixpoint unfoldn (n : nat) (start : A) :=
@@ -224,6 +305,12 @@ Section WithA. Local Set Default Proof Using "All".
     revert dependent xs; induction n, xs; cbn; auto; try blia; [].
     intros; rewrite IHn; trivial; blia.
   Qed.
+
+  Lemma firstn_eq_O: forall (n: nat) (l : list A), n = 0%nat -> List.firstn n l = [].
+  Proof. intros. subst. apply List.firstn_O. Qed.
+
+  Lemma skipn_eq_O: forall (n: nat) (l : list A), n = 0%nat -> List.skipn n l = l.
+  Proof. intros. subst. apply List.skipn_O. Qed.
 
   Lemma length_firstn_inbounds n (xs : list A) (H : le n (length xs))
     : length (firstn n xs) = n.
@@ -279,6 +366,19 @@ Section WithA. Local Set Default Proof Using "All".
             - change (skipn (S m) (a :: xs)) with (skipn m xs).
               change (skipn (S (S m)) (a :: xs)) with (skipn (S m) xs).
               apply IHxs. }
+  Qed.
+
+  Lemma nth_error_firstn: forall i (l: list A) j,
+      j < i ->
+      nth_error (firstn i l) j = nth_error l j.
+  Proof.
+    induction i; intros.
+    - blia.
+    - simpl. destruct l; [reflexivity|].
+      destruct j; [reflexivity|].
+      simpl.
+      apply IHi.
+      blia.
   Qed.
 
   Lemma nth_error_nil_Some: forall i (a: A), nth_error nil i = Some a -> False.
@@ -347,6 +447,49 @@ Section WithA. Local Set Default Proof Using "All".
     pose proof proj2 (nth_error_None xs i) ltac:(blia).
     pose proof proj2 (nth_error_None ys i) ltac:(blia).
     congruence.
+  Qed.
+
+  Lemma nth_error_Some_bound_index (xs : list A) x i (H : nth_error xs i = Some x)
+    : i < length xs.
+  Proof. apply (nth_error_Some xs i). congruence. Qed.
+
+  Lemma nth_nil: forall i (d: A), List.nth i [] d = d.
+  Proof. intros. cbn. destruct i; reflexivity. Qed.
+
+  Lemma nth_firstn: forall (i : nat) (l : list A) (j : nat) d,
+      (j < i)%nat ->
+      nth j (firstn i l) d = nth j l d.
+  Proof.
+    intros. pose proof H as B.
+    assert (List.length l <= i \/ i < List.length l)%nat as C by lia. destruct C as [C | C].
+    { rewrite List.firstn_all2 by exact C. reflexivity. }
+    eapply (nth_error_firstn _ l) in H.
+    erewrite nth_error_nth' in H. 2: {
+      rewrite List.firstn_length. lia.
+    }
+    erewrite nth_error_nth' in H by lia.
+    apply Option.eq_of_eq_Some in H.
+    exact H.
+  Qed.
+
+  Lemma nth_skipn: forall (i j : nat) (l : list A) d,
+      nth i (skipn j l) d = nth (j + i) l d.
+  Proof.
+    intros.
+    assert (List.length l <= i + j \/ i + j < List.length l)%nat as C by lia.
+    destruct C as [C | C].
+    { rewrite List.nth_overflow. 2: {
+        rewrite length_skipn. lia.
+      }
+      rewrite List.nth_overflow by lia.
+      reflexivity.
+    }
+    rewrite <- (List.firstn_skipn j l) at 2.
+    replace (j + i)%nat with (List.length (List.firstn j l) + i)%nat. 2: {
+      rewrite List.firstn_length. lia.
+    }
+    rewrite List.app_nth2_plus.
+    reflexivity.
   Qed.
 
   Definition endswith (xs : list A) (suffix : list A) :=
@@ -571,46 +714,6 @@ Section WithA. Local Set Default Proof Using "All".
     apply Bool.andb_true_iff. eauto.
   Qed.
 
-  Definition list_eqb (aeqb : A -> A -> bool) (x y : list A) : bool :=
-    ((length x =? length y)%nat && forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y))%bool.
-
-  Lemma list_forallb_eqb_refl {aeqb : A -> A -> bool} {aeqb_spec:EqDecider aeqb} ls :
-    forallb (fun xy => aeqb (fst xy) (snd xy)) (combine ls ls) = true.
-  Proof.
-    induction ls as [|x ?]; [ reflexivity | ].
-    cbn [combine fst snd forallb]. rewrite IHls.
-    destr (aeqb x x); subst; congruence || reflexivity.
-  Qed.
-
-  Lemma length_eq_forallb_eqb_false {aeqb : A -> A -> bool} {aeqb_spec:EqDecider aeqb} x y :
-    length x = length y -> x <> y ->
-    forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y) = false.
-  Proof.
-    revert y.
-    induction x as [|x0 x]; destruct y as [|y0 y];
-      cbn [length]; [ congruence .. | ].
-    intros. cbn [combine fst snd forallb].
-    destr (aeqb x0 y0); [ | reflexivity ].
-    rewrite IHx by congruence. reflexivity.
-  Qed.
-
-  Lemma list_eqb_spec {aeqb : A -> A -> bool} {aeqb_spec:EqDecider aeqb}
-    : EqDecider (list_eqb aeqb).
-  Proof.
-    cbv [list_eqb].
-    induction x as [|x0 x]; destruct y as [|y0 y];
-      cbn [length combine forallb Nat.eqb andb fst snd];
-      try (constructor; congruence) ; [ ].
-    destruct (IHx y); subst.
-    { rewrite Nat.eqb_refl.
-      rewrite list_forallb_eqb_refl by auto.
-      destr (aeqb x0 y0); subst; constructor; congruence. }
-    { destr (length x =? length y); cbn [andb];
-      try (constructor; congruence); [ ].
-      rewrite length_eq_forallb_eqb_false by auto.
-      rewrite Bool.andb_false_r. constructor; congruence. }
-  Qed.
-
   Lemma unfoldn_0: forall (f: A -> A) (start: A),
       unfoldn f 0 start = [].
   Proof. intros. reflexivity. Qed.
@@ -718,10 +821,33 @@ Section WithA. Local Set Default Proof Using "All".
         List.nth_error (map_with_index l) n = Some (f d n).
     Proof. intros. eapply map_with_start_index_nth_error. assumption. Qed.
   End MapWithIndex.
-End WithA.
-Global Hint Resolve list_eqb_spec : typeclass_instances.
 
-Lemma length_flat_map: forall {A B: Type} (f: A -> list B) n (l: list A),
+  Definition zip_with_start_index: nat -> list A -> list (A * nat) :=
+    map_with_start_index pair.
+  Definition zip_with_index: list A -> list (A * nat) := zip_with_start_index 0.
+
+  Lemma snd_zip_with_start_index: forall (l: list A) (start: nat),
+      List.map snd (zip_with_start_index start l) = List.seq start (List.length l).
+  Proof. induction l; simpl; intros. 1: reflexivity. f_equal. apply IHl. Qed.
+
+  Lemma snd_zip_with_index: forall (l: list A),
+      List.map snd (zip_with_index l) = List.seq 0 (List.length l).
+  Proof. intros. apply snd_zip_with_start_index. Qed.
+
+  Lemma map_nth_seq_self(d: A)(l: list A):
+    List.map (fun i => List.nth i l d) (List.seq 0 (List.length l)) = l.
+  Proof.
+    induction l; cbn -[List.nth]. 1: reflexivity.
+    unfold List.nth at 1.
+    f_equal.
+    etransitivity. 2: exact IHl.
+    rewrite <- List.seq_shift.
+    rewrite List.map_map.
+    reflexivity.
+  Qed.
+End WithNonmaximallyInsertedA.
+
+Lemma length_flat_map: forall [A B: Type] (f: A -> list B) n (l: list A),
     (forall (a: A), length (f a) = n) ->
     length (flat_map f l) = (n * length l)%nat.
 Proof.
@@ -730,29 +856,13 @@ Proof.
   - simpl. rewrite app_length. rewrite H. rewrite IHl; assumption || blia.
 Qed.
 
-Lemma flat_map_const_length{A B: Type}: forall (f: A -> list B) (n: nat) (l: list A),
+Lemma flat_map_const_length[A B: Type]: forall (f: A -> list B) (n: nat) (l: list A),
     (forall a, length (f a) = n) ->
     length (flat_map f l) = (n * length l)%nat.
 Proof.
   intros. induction l.
   - simpl. blia.
   - simpl. rewrite app_length. rewrite IHl. rewrite H. blia.
-Qed.
-
-Lemma remove_In_ne{A: Type}{aeqb: A -> A -> bool}{aeqb_spec: EqDecider aeqb}:
-  forall (l: list A) (f1 f2: A),
-      In f1 l ->
-      f1 <> f2 ->
-      In f1 (removeb aeqb f2 l).
-Proof.
-  induction l; intros.
-  - inversion H.
-  - simpl in *. destruct H.
-    + subst a.
-      destr (aeqb f2 f1); try congruence. simpl. auto.
-    + destr (aeqb f2 a); simpl.
-      * eauto.
-      * simpl. eauto.
 Qed.
 
 Lemma firstn_skipn_reassemble: forall (T: Type) (l l1 l2: list T) (n: nat),
@@ -840,20 +950,7 @@ Proof.
       destr (Nat.ltb i (length l)); [reflexivity|blia].
 Qed.
 
-Lemma nth_error_firstn: forall E i (l: list E) j,
-  j < i ->
-  nth_error (firstn i l) j = nth_error l j.
-Proof.
-  induction i; intros.
-  - blia.
-  - simpl. destruct l; [reflexivity|].
-    destruct j; [reflexivity|].
-    simpl.
-    apply IHi.
-    blia.
-Qed.
-
-Lemma nth_error_skipn: forall E i j (l: list E),
+Lemma nth_error_skipn': forall E i j (l: list E),
   i <= j ->
   nth_error (skipn i l) (j - i) = nth_error l j.
 Proof.
@@ -868,13 +965,13 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma nth_error_0_r {A} (l : list A) : nth_error l 0 = hd_error l.
+Lemma nth_error_0_r [A] (l : list A) : nth_error l 0 = hd_error l.
 Proof. destruct l; trivial. Qed.
 
-Lemma nth_error_as_skipn {A} (l : list A) i
+Lemma nth_error_as_skipn [A] (l : list A) i
   : nth_error l i = hd_error (skipn i l).
 Proof.
-  erewrite <-nth_error_skipn, Nat.sub_diag by reflexivity.
+  erewrite <-nth_error_skipn', Nat.sub_diag by reflexivity.
   eapply nth_error_0_r.
 Qed.
 
@@ -898,7 +995,7 @@ Proof.
     rewrite firstn_length_le by blia.
     change (length [e]) with 1.
     replace (j - i -1) with (j - (S i)) by blia.
-    apply nth_error_skipn.
+    apply nth_error_skipn'.
     blia.
   - inversion H.
     pose proof (nth_error_None l j) as P.
@@ -1124,10 +1221,141 @@ Proof.
   blia.
 Qed.
 
+Section MoreUpdLemmas.
+  Context [A: Type].
+
+  Lemma upds_above: forall l i (vs: list A),
+      (List.length l <= i)%nat ->
+      List.upds l i vs = l.
+  Proof.
+    unfold List.upds. intros.
+    rewrite (List.firstn_eq_O _ vs) by lia.
+    rewrite List.skipn_all by lia.
+    rewrite List.firstn_all2 by lia.
+    cbn. apply List.app_nil_r.
+  Qed.
+
+  Lemma upd_above: forall l i (v: A),
+      (List.length l <= i)%nat ->
+      List.upd l i v = l.
+  Proof.
+    unfold List.upds. intros. apply upds_above. assumption.
+  Qed.
+
+  Lemma nth_upd_same: forall n (l: list A) v d,
+      (n < List.length l)%nat ->
+      nth n (List.upd l n v) d = v.
+  Proof.
+    intros. unfold List.upd, List.upds.
+    rewrite List.app_nth2. 2: {
+      rewrite List.firstn_length. lia.
+    }
+    rewrite List.app_nth1. 2: {
+      rewrite ?List.firstn_length. cbn [List.length]. lia.
+    }
+    rewrite List.firstn_length.
+    replace (n - Init.Nat.min n (Datatypes.length l))%nat with 0%nat by lia.
+    replace (Datatypes.length l - n)%nat with (S (pred (Datatypes.length l - n))) by lia.
+    reflexivity.
+  Qed.
+
+  Lemma nth_upd_diff: forall n1 n2 (l: list A) v d,
+      n1 <> n2 ->
+      nth n1 (List.upd l n2 v) d = nth n1 l d.
+  Proof.
+    intros.
+    assert (List.length l <= n2 \/ n2 < List.length l)%nat as C by lia.
+    destruct C as [C | C].
+    { rewrite upd_above by exact C. reflexivity. }
+    assert (List.length l <= n1 \/ n1 < List.length l)%nat as D by lia.
+    destruct D as [D | D].
+    { rewrite (List.nth_overflow l) by exact D.
+      apply List.nth_overflow.
+      rewrite List.upd_length.
+      exact D. }
+    unfold List.upd, List.upds.
+    assert (n1 < n2 \/ n2 < n1)%nat as B by lia. destruct B as [B | B].
+    - rewrite List.app_nth1. 2: {
+        rewrite List.firstn_length. lia.
+      }
+      apply nth_firstn. assumption.
+    - rewrite List.app_nth2. 2: {
+        rewrite ?List.firstn_length. lia.
+      }
+      rewrite List.firstn_length.
+      rewrite List.app_nth2. 2: {
+        rewrite ?List.firstn_length. cbn. lia.
+      }
+      rewrite List.firstn_length. cbn [List.length].
+      rewrite nth_skipn.
+      f_equal.
+      lia.
+  Qed.
+
+  Lemma nth_error_upd_diff: forall n1 n2 v (l: list A),
+      n1 <> n2 ->
+      nth_error (List.upd l n2 v) n1 = nth_error l n1.
+  Proof.
+    intros.
+    assert (List.length l <= n1 \/ n1 < List.length l)%nat as D by lia.
+    destruct D as [D | D].
+    { rewrite (proj2 (nth_error_None _ n1)). 2: {
+        rewrite upd_length. assumption.
+      }
+      rewrite (proj2 (nth_error_None _ n1)) by assumption. reflexivity.
+    }
+    assert (List.length l <= n2 \/ n2 < List.length l)%nat as C by lia.
+    destruct C as [C | C].
+    { rewrite upd_above by assumption. reflexivity. }
+    rewrite nth_error_nth' with (d := v). 2: {
+      rewrite upd_length. assumption.
+    }
+    rewrite nth_error_nth' with (d := v) by assumption.
+    rewrite nth_upd_diff by assumption.
+    reflexivity.
+  Qed.
+
+  Lemma nth_error_skipn: forall i j (l: list A),
+      nth_error (skipn i l) j = nth_error l (i + j).
+  Proof.
+    induction i; intros.
+    - cbn. reflexivity.
+    - destruct l; cbn. 1: destruct j; reflexivity.
+      eapply IHi.
+  Qed.
+
+  Lemma nth_error_upd_same: forall i v (l: list A),
+      (i < List.length l)%nat ->
+      nth_error (List.upd l i v) i = Some v.
+  Proof.
+    unfold List.upd, List.upds. intros.
+    rewrite nth_error_app2. 2: {
+      rewrite List.firstn_length. Lia.lia.
+    }
+    rewrite nth_error_app1. 2: {
+      rewrite ?List.firstn_length. cbn. Lia.lia.
+    }
+    rewrite List.firstn_all2. 2: {
+      cbn. Lia.lia.
+    }
+    rewrite List.firstn_length.
+    replace (i - Init.Nat.min i (Datatypes.length l))%nat with 0%nat by Lia.lia.
+    reflexivity.
+  Qed.
+
+  Lemma nth_error_upd_same_eq: forall i j v (l: list A),
+      (i < List.length l)%nat ->
+      i = j ->
+      nth_error (List.upd l i v) j = Some v.
+  Proof.
+    intros. subst. apply nth_error_upd_same. assumption.
+  Qed.
+End MoreUpdLemmas.
+
 Section WithZ. Local Set Default Proof Using "All".
   Import Coq.ZArith.BinInt.
   Local Open Scope Z_scope.
-  Lemma splitZ_spec {A} (xsys : list A) i (H : 0 <= i < Z.of_nat (length xsys)) :
+  Lemma splitZ_spec [A] (xsys : list A) i (H : 0 <= i < Z.of_nat (length xsys)) :
     let xs := firstn (Z.to_nat i) xsys in
     let ys := skipn (Z.to_nat i) xsys in
     xsys = xs ++ ys /\
@@ -1139,7 +1367,7 @@ Section WithZ. Local Set Default Proof Using "All".
     rewrite length_firstn_inbounds, length_skipn; blia.
   Qed.
 
-  Lemma splitZ_spec_n {A} (xsys : list A) i n
+  Lemma splitZ_spec_n [A] (xsys : list A) i n
     (Hn : Z.of_nat (length xsys) = n) (H : 0 <= i < n) :
     let xs := firstn (Z.to_nat i) xsys in
     let ys := skipn (Z.to_nat i) xsys in
@@ -1152,47 +1380,43 @@ Section WithZ. Local Set Default Proof Using "All".
     rewrite length_firstn_inbounds, length_skipn; blia.
   Qed.
 
-  Section WithA.
-    Context {A: Type}.
+  Lemma not_In_Z_seq: forall L x d,
+      x < d \/ d + Z.of_nat L <= x ->
+      ~ In x (List.unfoldn (Z.add 1) L d).
+  Proof using.
+    unfold not.
+    induction L; cbn -[Z.add]; intros. 1: assumption.
+    destruct H0.
+    - subst. blia.
+    - eapply IHL. 2: exact H0. blia.
+  Qed.
 
-    Lemma not_In_Z_seq: forall L x d,
-        x < d \/ d + Z.of_nat L <= x ->
-        ~ In x (List.unfoldn (Z.add 1) L d).
-    Proof using.
-      unfold not.
-      induction L; cbn -[Z.add]; intros. 1: assumption.
-      destruct H0.
-      - subst. blia.
-      - eapply IHL. 2: exact H0. blia.
-    Qed.
+  Lemma unfoldn_Z_seq_Forall: forall L start,
+      Forall (fun x => start <= x < start + Z.of_nat L) (List.unfoldn (Z.add 1) L start).
+  Proof using.
+    induction L; intros.
+    - constructor.
+    - cbn -[Z.add Z.of_nat]. constructor. 1: blia.
+      eapply Forall_impl. 2: eapply IHL. cbv beta. intros. blia.
+  Qed.
 
-    Lemma unfoldn_Z_seq_Forall: forall L start,
-        Forall (fun x => start <= x < start + Z.of_nat L) (List.unfoldn (Z.add 1) L start).
-    Proof using.
-      induction L; intros.
-      - constructor.
-      - cbn -[Z.add Z.of_nat]. constructor. 1: blia.
-        eapply Forall_impl. 2: eapply IHL. cbv beta. intros. blia.
-    Qed.
+  Lemma NoDup_unfoldn_Z_seq: forall n start,
+      NoDup (List.unfoldn (Z.add 1) n start).
+  Proof using.
+    induction n; intros.
+    - constructor.
+    - cbn -[Z.add]. constructor. 2: eapply IHn.
+      eapply not_In_Z_seq. blia.
+  Qed.
 
-    Lemma NoDup_unfoldn_Z_seq: forall n start,
-        NoDup (List.unfoldn (Z.add 1) n start).
-    Proof using.
-      induction n; intros.
-      - constructor.
-      - cbn -[Z.add]. constructor. 2: eapply IHn.
-        eapply not_In_Z_seq. blia.
-    Qed.
-
-    Lemma unfoldn_Z_seq_snoc: forall n start,
-        List.unfoldn (Z.add 1) (n + 1) start =
+  Lemma unfoldn_Z_seq_snoc: forall n start,
+      List.unfoldn (Z.add 1) (n + 1) start =
         List.unfoldn (Z.add 1) n start ++ [start + Z.of_nat n].
-    Proof using.
-      induction n; intros.
-      - cbn. rewrite Z.add_0_r. reflexivity.
-      - cbn -[Z.add Z.of_nat]. f_equal. rewrite IHn. f_equal. f_equal. blia.
-    Qed.
-  End WithA.
+  Proof using.
+    induction n; intros.
+    - cbn. rewrite Z.add_0_r. reflexivity.
+    - cbn -[Z.add Z.of_nat]. f_equal. rewrite IHn. f_equal. f_equal. blia.
+  Qed.
 End WithZ.
 
 Module Import Nat.
@@ -1234,7 +1458,7 @@ End Nat.
 
 Section Chunk. Local Set Default Proof Using "All".
   Local Arguments Nat.ltb : simpl never.
-  Context {A : Type} (k : nat).
+  Context [A : Type] (k : nat).
   Implicit Types (bs ck xs ys : list A).
   Fixpoint chunk' bs ck {struct bs} : list (list A) :=
     match bs with
@@ -1374,7 +1598,7 @@ Goal False.
   assert (chunk 0 (seq 0 4) = [0]::[1]::[2]::[3]::nil) by exact eq_refl.
 Abort.
 
-Lemma length_concat_same_length {A} k (xs : list (list A))
+Lemma length_concat_same_length [A] k (xs : list (list A))
   (H : Forall (fun x => length x = k) xs)
   : length (concat xs) = length xs * k.
 Proof. induction H; cbn; rewrite ?app_length; Lia.lia. Qed.

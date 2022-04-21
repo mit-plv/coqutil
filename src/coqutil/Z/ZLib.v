@@ -221,6 +221,13 @@ Module Z.
     destruct (Z.leb_spec 0 i); cbn; solve [trivial | blia].
   Qed.
 
+  Lemma shiftl_minus_one_neg: forall n,
+      n <= 0 -> Z.shiftl (-1) n = -1.
+  Proof.
+    unfold Z.shiftl. intros. destruct n; try Lia.lia. clear H.
+    induction p; cbn; rewrite ?IHp; try reflexivity.
+  Qed.
+
   Lemma signed_bounds_to_sz_pos: forall sz n,
       - 2 ^ (sz - 1) <= n < 2 ^ (sz - 1) ->
       0 < sz.

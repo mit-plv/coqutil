@@ -105,9 +105,21 @@ Ltac same_ctor H :=
 
 Ltac fwd_rewrites_autorewrite := autorewrite with fwd_rewrites in *.
 
+Ltac fwd_rewrite_db_in_star :=
+  repeat match goal with
+         | H: _ |- _ => progress rewrite_db fwd_rewrites in H
+         end;
+  try rewrite_db fwd_rewrites.
+
 (* Ltac fwd_rewrites ::= fwd_rewrites_autorewrite.
    enables autorewrite on fwd, but note that this tends to be slow, so we do nothing by default. *)
 Ltac fwd_rewrites := fail.
+
+Ltac contrad H :=
+  lazymatch type of H with
+  | ?x <> ?x => exfalso; apply (H eq_refl)
+  | False => case H
+  end.
 
 Ltac fwd_step :=
   match goal with
@@ -130,7 +142,7 @@ Ltac fwd_step :=
   | H: context[match ?x with _ => _ end], E: ?x = ?RHS |- _ =>
     let h := head_of_app RHS in is_constructor h; rewrite E in H; fwd_subst H
   | H: context[match ?x with _ => _ end] |- _ =>
-    destr x; try (discriminate H || x_neq_x H); [fwd_subst H]
+    destr x; try (discriminate H || contrad H); [fwd_subst H]
   | H: _ |- _ => autoforward with typeclass_instances in H; fwd_subst H
   | |- _ => progress fwd_rewrites
   end.

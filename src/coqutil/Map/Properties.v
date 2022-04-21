@@ -2,7 +2,7 @@ Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidab
 Require Import coqutil.Z.Lia.
 Import map.
 Require Import coqutil.Datatypes.Option.
-Require Import Coq.Sorting.Permutation.
+Require Import coqutil.Sorting.Permutation.
 
 Module map.
   Section WithMap. Local Set Default Proof Using "All".
@@ -1370,6 +1370,20 @@ Module map.
         put m k v = m.
     Proof.
       intros. apply map_ext. intros. rewrite get_put_dec. destr (key_eqb k k0); congruence.
+    Qed.
+
+    Lemma invert_put_eq: forall (k: key) (v1 v2: value) (m1 m2: map),
+        get m1 k = None ->
+        get m2 k = None ->
+        put m1 k v1 = put m2 k v2 ->
+        v1 = v2 /\ m1 = m2.
+    Proof.
+      intros. split.
+      - eapply (f_equal (fun m => get m k)) in H1.
+        rewrite 2get_put_same in H1. congruence.
+      - eapply map_ext. intros. destr (key_eqb k0 k). 1: congruence.
+        eapply (f_equal (fun m => get m k0)) in H1.
+        rewrite 2get_put_diff in H1 by assumption. exact H1.
     Qed.
 
     (* to get stronger guarantees such as indexing into vs, we'd need NoDup *)
