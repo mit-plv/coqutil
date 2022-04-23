@@ -1,4 +1,5 @@
 Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt coqutil.Z.Lia.
+Require Import coqutil.Tactics.destr.
 Require Import coqutil.sanity coqutil.Word.Interface. Import word.
 Local Open Scope Z_scope.
 
@@ -19,6 +20,17 @@ Section WithWidth. Local Set Default Proof Using "All".
     mk (wrap_value z) (minimize_eq_proof Z.eq_dec (Zdiv.Zmod_mod z _)).
   Definition signed w := swrap_value (unsigned w).
 
+  Record special_cases := {
+    div_by_zero: Z -> Z;
+    mod_by_zero: Z -> Z;
+    adjust_too_big_shift_amount: Z -> Z;
+  }.
+
+  Context {sp: special_cases}.
+
+  Let adjust_shift_amount n :=
+    if Z.ltb n width then n else sp.(adjust_too_big_shift_amount) n.
+
   Unset Universe Minimization ToSet.
   (* without the above option, defining "word" as below and then running
 
@@ -32,7 +44,7 @@ Section WithWidth. Local Set Default Proof Using "All".
      later.
      If the above option is turned on, it prints "word@{Top.72} : word.word@{Top.72} width",
      and no universe inconsistencies occur, hopefully. *)
-  Definition word : word.word width := {|
+  Definition gen_word : word.word width := {|
     word.rep := rep;
     word.unsigned := unsigned;
     word.signed := signed;
@@ -53,14 +65,18 @@ Section WithWidth. Local Set Default Proof Using "All".
     mulhsu x y := wrap (Z.mul (signed x) (unsigned y) / 2^width);
     mulhuu x y := wrap (Z.mul (unsigned x) (unsigned y) / 2^width);
 
-    divu x y := wrap (Z.div (unsigned x) (unsigned y));
-    divs x y := wrap (Z.quot (signed x) (signed y));
-    modu x y := wrap (Z.modulo (unsigned x) (unsigned y));
-    mods x y := wrap (Z.rem (signed x) (signed y));
+    divu x y := wrap (if Z.eqb (unsigned y) 0 then sp.(div_by_zero) (unsigned x)
+                      else Z.div (unsigned x) (unsigned y));
+    divs x y := wrap (if Z.eqb (signed y) 0 then sp.(div_by_zero) (signed x)
+                      else Z.quot (signed x) (signed y));
+    modu x y := wrap (if Z.eqb (unsigned y) 0 then sp.(mod_by_zero) (unsigned x)
+                      else Z.modulo (unsigned x) (unsigned y));
+    mods x y := wrap (if Z.eqb (signed y) 0 then sp.(mod_by_zero) (signed x)
+                      else Z.rem (signed x) (signed y));
 
-    slu x y := wrap (Z.shiftl (unsigned x) (unsigned y));
-    sru x y := wrap (Z.shiftr (unsigned x) (unsigned y));
-    srs x y := wrap (Z.shiftr (signed x) (unsigned y));
+    slu x y := wrap (Z.shiftl (unsigned x) (adjust_shift_amount (unsigned y)));
+    sru x y := wrap (Z.shiftr (unsigned x) (adjust_shift_amount (unsigned y)));
+    srs x y := wrap (Z.shiftr (signed x) (adjust_shift_amount (unsigned y)));
 
     eqb x y := Z.eqb (unsigned x) (unsigned y);
     ltu x y := Z.ltb (unsigned x) (unsigned y);
@@ -87,20 +103,35 @@ Section WithWidth. Local Set Default Proof Using "All".
 
   Context (width_nonneg : Z.lt 0 width).
 
-  Global Instance ok : word.ok word.
+  Global Instance gen_ok : word.ok gen_word.
   Proof.
     split; intros;
       repeat match goal with
              | a: @word.rep _ _ |- _ => destruct a
              end;
-      cbn;
-      eauto using of_Z_unsigned, signed_of_Z.
+      cbn in *;
+      unfold adjust_shift_amount in *;
+      repeat match goal with
+             | |- context[if ?b then _ else _] => destr b
+             end;
+      eauto using of_Z_unsigned, signed_of_Z;
+      try (exfalso; blia).
     apply eq_unsigned; assumption.
   Qed.
 End WithWidth.
-Arguments word : clear implicits.
-Arguments ok : clear implicits.
+Arguments gen_word : clear implicits.
+Arguments gen_ok : clear implicits.
 
+Definition default_special_case_handlers width := {|
+  div_by_zero x := -1;
+  mod_by_zero x := x;
+  adjust_too_big_shift_amount n := n mod 2 ^ Z.log2 width;
+|}.
+
+Definition word width: word.word width :=
+  gen_word width (default_special_case_handlers width).
+Definition ok width: 0 < width -> word.ok (word width) :=
+  gen_ok width (default_special_case_handlers width).
 
 (* NOTE: this can be moved into a separate file to build Properties and the above in parallel *)
 (** [Add Ring] for sizes used in instruction sets of common processors *)
