@@ -54,3 +54,16 @@ Ltac find_constr_eq xs y :=
   | cons ?x _ => constr:(ltac:(constr_eq x y; exact 0%nat))
   | cons _ ?xs => let i := find_constr_eq xs y in constr:(S i)
   end.
+
+
+(** Last match: *)
+
+Ltac find_in_list_bw test Ps :=
+  match Ps with
+  | cons _ ?t => lazymatch find_in_list_bw test t with
+                 | (?i, ?P) => constr:((S i, P))
+                 end
+  | cons ?h _ => lazymatch test h with
+                 | true => constr:((0%nat, h))
+                 end
+  end.
