@@ -1578,14 +1578,6 @@ Module map.
         apply putmany_assoc.
     Qed.
 
-    Lemma put_remove_same: forall m k v, map.put (map.remove m k) k v = map.put m k v.
-    Proof.
-      intros. apply map.map_ext. intros.
-      rewrite !get_put_dec.
-      destr (key_eqb k k0). 1: reflexivity.
-      apply map.get_remove_diff. congruence.
-    Qed.
-
     (* This is a helper function used to explain the behavior of putmany_of_list_zip.
        Not recommended for actual use. *)
     Fixpoint zipped_lookup (keys: list key) (values: list value) (k: key) : option value :=
@@ -2023,6 +2015,95 @@ Module map.
     Proof.
       intros. rewrite get_putmany_dec in H.
       destr (map.get m2 k); destr (map.get m1 k); try discriminate H; auto.
+    Qed.
+
+    Lemma extends_refl m:
+      extends m m.
+    Proof using. firstorder. Qed.
+
+    Lemma extends_eq m1 m2:
+      m1 = m2 ->
+      extends m1 m2.
+    Proof using. intros * ->; apply extends_refl. Qed.
+
+    Lemma put_put_diff_comm k1 k2 v1 v2 m :
+      k1 <> k2 ->
+      put (put m k1 v1) k2 v2 = put (put m k2 v2) k1 v1.
+    Proof.
+      intros. apply map_ext. intros.
+      rewrite ! get_put_dec;
+        repeat match goal with |- context [key_eqb ?x ?y] =>
+                               destr (key_eqb x y) end;
+        congruence.
+    Qed.
+
+    Lemma put_noop k v m :
+      get m k = Some v -> put m k v = m.
+    Proof.
+      intros. apply map_ext. intros.
+      rewrite !get_put_dec;
+        repeat match goal with |- context [key_eqb ?x ?y] =>
+                               destr (key_eqb x y) end;
+        congruence.
+    Qed.
+
+    Lemma disjoint_put_r m1 m2 k v :
+      get m1 k = None ->
+      disjoint m1 m2 ->
+      disjoint m1 (put m2 k v).
+    Proof.
+      cbv [disjoint]. intros.
+      match goal with H : context [get (put _ ?k _) ?k'] |- _ =>
+                      rewrite get_put_dec in H
+      end.
+      destr (key_eqb k k0); subst; eauto; congruence.
+    Qed.
+
+    Lemma disjoint_put_l m1 m2 k v :
+      get m2 k = None ->
+      disjoint m1 m2 ->
+      disjoint (put m1 k v) m2.
+    Proof.
+      cbv [disjoint]. intros.
+      match goal with H : context [get (put _ ?k _) ?k'] |- _ =>
+                      rewrite get_put_dec in H
+      end.
+      destr (key_eqb k k0); subst; eauto; congruence.
+    Qed.
+
+    Lemma put_remove_same m k v :
+      put (remove m k)  k v = put m k v.
+    Proof.
+      apply map_ext; intro.
+      rewrite !get_put_dec, !get_remove_dec.
+      destr (key_eqb k k0); congruence.
+    Qed.
+
+    Lemma remove_put_same m k v :
+      remove (put m k v) k = remove m k.
+    Proof.
+      intros; apply map_ext; intro.
+      rewrite !get_remove_dec, !get_put_dec.
+      destr (key_eqb k k0); congruence.
+    Qed.
+
+    Lemma remove_put_diff m k1 k2 v :
+      k1 <> k2 ->
+      remove (put m k1 v) k2 = put (remove m k2) k1 v.
+    Proof.
+      intros; apply map_ext; intro.
+      rewrite !get_put_dec, !get_remove_dec.
+      destr (key_eqb k2 k); destr (key_eqb k1 k); subst;
+        rewrite ?get_put_diff, ?get_put_same by congruence;
+        congruence.
+    Qed.
+
+    Lemma remove_not_in m k :
+      get m k = None ->
+      remove m k = m.
+    Proof.
+      intros; apply map_ext; intros.
+      rewrite get_remove_dec. destr (key_eqb k k0); congruence.
     Qed.
 
     Lemma get_forallb: forall f m,

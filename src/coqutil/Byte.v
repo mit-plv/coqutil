@@ -10,6 +10,10 @@ Module byte.
 
   Definition wrap(z: Z): Z := z mod 2 ^ 8.
 
+  Lemma wrap_range z:
+    0 <= byte.wrap z < 2 ^ 8.
+  Proof. apply Z.mod_pos_bound. reflexivity. Qed.
+
   Lemma Byte_of_N_of_mod_not_None: forall z, Byte.of_N (Z.to_N (wrap z)) <> None.
   Proof.
     intros z C.
@@ -109,5 +113,7 @@ Module byte.
     apply unsigned_range.
   Qed.
 
+  (* FIXME isn't this defined somewhere already? *)
+  Definition and (b1 b2: byte) := byte.of_Z (Z.land (byte.unsigned b1) (byte.unsigned b2)).
   Definition xor a b := byte.of_Z (Z.lxor (byte.unsigned a) (byte.unsigned b)).
 End byte.

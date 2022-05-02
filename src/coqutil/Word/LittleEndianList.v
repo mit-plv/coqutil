@@ -1,5 +1,5 @@
 Require Import Coq.ZArith.ZArith.
-Require Import coqutil.Z.Lia.
+Require Import coqutil.Z.Lia Coq.micromega.Lia.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
 Require Import coqutil.Z.bitblast.
@@ -124,6 +124,57 @@ Section LittleEndian.
   Proof.
     rewrite <-(List.firstn_all t), le_combine_firstn, List.firstn_all.
     eapply Z.mod_pos_bound, Z.pow_pos_nonneg; blia.
+  Qed.
+
+  Lemma le_combine_app bs1 bs2:
+    le_combine (bs1 ++ bs2) =
+      Z.lor (le_combine bs1) (Z.shiftl (le_combine bs2) (Z.of_nat (List.length bs1) * 8)).
+  Proof.
+    induction bs1; cbn -[Z.shiftl Z.of_nat Z.mul]; intros.
+    - rewrite Z.mul_0_l, Z.shiftl_0_r; reflexivity.
+    - rewrite IHbs1, Z.shiftl_lor, Z.shiftl_shiftl, !Z.lor_assoc by lia.
+      f_equal; f_equal; lia.
+  Qed.
+
+  Lemma le_combine_0 n:
+    le_combine (List.repeat Byte.x00 n) = 0.
+  Proof. induction n; simpl; intros; rewrite ?IHn; reflexivity. Qed.
+
+  Lemma le_combine_app_0 bs n:
+    le_combine (bs ++ List.repeat Byte.x00 n) = le_combine bs.
+  Proof.
+    rewrite le_combine_app; simpl; rewrite le_combine_0.
+    rewrite Z.shiftl_0_l, Z.lor_0_r.
+    reflexivity.
+  Qed.
+
+  Import List.ListNotations. Open Scope list_scope.
+
+  Lemma le_combine_snoc_0 bs:
+    le_combine (bs ++ [Byte.x00]) = le_combine bs.
+  Proof. apply le_combine_app_0 with (n := 1%nat). Qed.
+
+  Lemma le_split_mod z n:
+    le_split n z = le_split n (z mod 2 ^ (Z.of_nat n * 8)).
+  Proof.
+    apply le_combine_inj.
+    - rewrite !length_le_split; reflexivity.
+    - rewrite !le_combine_split.
+      coqutil.Z.PushPullMod.Z.push_pull_mod; reflexivity.
+  Qed.
+
+  Lemma split_le_combine' bs n:
+    List.length bs = n ->
+    le_split n (le_combine bs) = bs.
+  Proof. intros <-; apply split_le_combine. Qed.
+
+  Lemma le_combine_chunk_split n z:
+    (0 < n)%nat ->
+    List.map le_combine (List.chunk n (le_split n z)) =
+      [z mod 2 ^ (Z.of_nat n * 8)].
+  Proof.
+    intros; rewrite List.chunk_small by (rewrite length_le_split; lia).
+    simpl; rewrite le_combine_split; reflexivity.
   Qed.
 End LittleEndian.
 
