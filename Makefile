@@ -44,13 +44,13 @@ HI_COMPAT_FILES := \
 	$(SRCDIR)/coqutil/Z/PushPullMod.v
 
 ifneq (,$(filter 8.11%,$(COQ_VERSION)))
-	ALL_VS := HI_COMPAT_FILES
+	ALL_VS := $(HI_COMPAT_FILES)
 endif
 ifneq (,$(filter 8.12%,$(COQ_VERSION)))
-	ALL_VS := HI_COMPAT_FILES
+	ALL_VS := $(HI_COMPAT_FILES)
 endif
 ifneq (,$(filter 8.13%,$(COQ_VERSION)))
-	ALL_VS := HI_COMPAT_FILES
+	ALL_VS := $(HI_COMPAT_FILES)
 endif
 
 ALL_VS ?= $(filter-out $(EXCLUDEFILES),$(shell find $(SRCDIR) -type f -name '*.v'))
