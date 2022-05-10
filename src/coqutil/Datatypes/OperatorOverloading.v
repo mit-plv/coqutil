@@ -81,6 +81,9 @@ Notation "[| x |]" := (cons x nil) (format "[|  x  |]"): oo_scope.
 Notation "[| x ; y ; .. ; z |]" :=
   (cons x (cons y .. (cons z nil) .. )) (format "[|  x ;  y ;  .. ;  z  |]") : oo_scope.
 
+(* since list_scope should not be opened when using oo_scope, we add ++ to oo_scope: *)
+Infix "++" := Coq.Init.Datatypes.app : oo_scope.
+
 Goal True /\ True.
   split; [ |exact I]. (* space between [ and | is required *)
 Abort.
