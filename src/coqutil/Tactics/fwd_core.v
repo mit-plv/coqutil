@@ -4,7 +4,26 @@
 Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr.
 Require Import Coq.ZArith.BinInt Coq.NArith.BinNat.
 
+Ltac is_var_without_rhs x :=
+  is_var x; assert_fails (clearbody x).
+
 Ltac fwd_subst_default H :=
+  match type of H with
+  | ?x = ?y =>
+    (* We can't use subst because we can't tell it which equation to pick,
+       but it just picks the first from the top, and if we move H at top,
+       it might change the position of variables occurring in H *)
+    first [ is_var_without_rhs x; try ( rewrite -> H in * ); clear x H
+          | is_var_without_rhs y; try ( rewrite <- H in * ); clear y H ];
+    (* if H was deleted, we pose `H: True` to keep the name so that eg if `H` is `Hp3`,
+       the next hypothesis will be named `Hp4`, and later, the `Hp3: True` will be deleted,
+       so there will be a gap in the naming (no `Hp3`, `Hp4` directly follows `Hp2`), which
+       makes it more obvious while debugging that an equation was deleted *)
+    pose proof Coq.Init.Logic.I as H
+  | _ => idtac
+  end.
+
+Ltac fwd_subst_maybe_slightly_faster H :=
   match type of H with
   | ?x = ?y =>
     (* subst picks the first suitable equality from the top, so we move H at top *)
