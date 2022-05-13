@@ -38,6 +38,7 @@ HI_COMPAT_FILES := \
 	$(SRCDIR)/coqutil/Word/Bitwidth64.v \
 	$(SRCDIR)/coqutil/Word/Bitwidth.v \
 	$(SRCDIR)/coqutil/Word/Interface.v \
+	$(SRCDIR)/coqutil/Z/bitblast.v \
 	$(SRCDIR)/coqutil/Z/div_mod_to_equations.v \
 	$(SRCDIR)/coqutil/Z/div_to_equations.v \
 	$(SRCDIR)/coqutil/Z/Lia.v \
