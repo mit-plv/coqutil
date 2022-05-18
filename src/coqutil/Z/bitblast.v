@@ -111,6 +111,7 @@ Module Z.
   (* 3 kinds of rewrite lemmas to turn (Z.testbit (Z.some_op ...)) into a boolean expression: *)
 
   (* 1) lemmas without any hypotheses (these are our favorites) *)
+  #[global]
   Hint Rewrite
        Z.lor_spec
        Z.lxor_spec
@@ -118,9 +119,11 @@ Module Z.
        Z.ldiff_spec
        Z.testbit_0_l
     : z_bitwise_no_hyps.
+  #[global]
   Hint Rewrite <-Z.ones_equiv : z_bitwise_no_hyps.
 
   (* 2) lemmas which have linear arithmetic hypotheses (good if we can solve the hypotheses) *)
+  #[global]
   Hint Rewrite
        Z.shiftl_spec_low
        Z.shiftl_spec_alt
@@ -142,6 +145,7 @@ Module Z.
   (* 3) lemmas where we move some or all linear algebra preconditions into the conclusion
      by turning them into a boolean test
      (used as a fallback to make sure the bitblaster knows that it's worth case-destructing) *)
+  #[global]
   Hint Rewrite
        Z.shiftl_spec'
        Z.shiftr_spec'
