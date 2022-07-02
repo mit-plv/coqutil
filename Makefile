@@ -58,7 +58,7 @@ ALL_VS ?= $(filter-out $(EXCLUDEFILES),$(shell find $(SRCDIR) -type f -name '*.v
 ALL_VOS := $(patsubst %.v,%.vo,$(ALL_VOS))
 
 _CoqProject:
-	printf -- '-R $(SRCDIR)/coqutil/ coqutil\n' > _CoqProject
+	printf -- '-R $(SRCDIR)/coqutil/ coqutil\n-arg -w -arg unsupported-attributes\n' > _CoqProject
 
 all: Makefile.coq.all $(ALL_VS)
 	$(MAKE) -f Makefile.coq.all
