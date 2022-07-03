@@ -1,6 +1,7 @@
 name: Update tested branch
 
 on:
+  workflow_dispatch:
   schedule:
     # run at 06:59 UTC each day
     - cron:  '59 6 * * *'
