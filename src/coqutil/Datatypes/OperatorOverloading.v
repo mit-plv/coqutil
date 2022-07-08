@@ -49,10 +49,12 @@ Global Hint Mode Addition ! ! - - - - : typeclass_instances.
 Notation "a + b" := (infer! Addition a b) (only parsing) : oo_scope.
 
 Class Subtraction{A B R: Type}(a: A)(b: B)(r: R) := {}.
-(* Note: a and b are not really outputs, but we still mark them as outputs so that
-   (@Subtraction Z Z _ ?evar1 ?evar2 _) can be resolved with (Z.mul ?evar1 ?evar2) *)
 Global Hint Mode Subtraction ! ! - - - - : typeclass_instances.
 Notation "a - b" := (infer! Subtraction a b) (only parsing) : oo_scope.
+
+Class Division{A B R: Type}(a: A)(b: B)(r: R) := {}.
+Global Hint Mode Division ! ! - - - - : typeclass_instances.
+Notation "a / b" := (infer! Division a b) (only parsing) : oo_scope.
 
 Notation "a =? b" := (infer! BoolSpec (a = b) (a <> b))
   (at level 70, only parsing) : oo_scope.
@@ -143,6 +145,19 @@ Notation "a - b" := (Z.sub a b) (only printing) : oo_scope.
 #[export] Instance SubWord{width: Z}{word: word.word width}(a b: word):
   Subtraction a b (word.sub a b) := {}.
 Notation "a - b" := (word.sub a b) (only printing) : oo_scope.
+
+
+#[export] Instance DivNat(a b: nat): Division a b (Nat.div a b) := {}.
+Notation "a / b" := (Nat.div a b) (only printing) : oo_scope.
+
+#[export] Instance DivN(a b: N): Division a b (N.div a b) := {}.
+Notation "a / b" := (N.div a b) (only printing) : oo_scope.
+
+#[export] Instance DivZ(a b: Z): Division a b (Z.div a b) := {}.
+Notation "a / b" := (Z.div a b) (only printing) : oo_scope.
+
+(* No division on word for the moment because we'd have to decide between
+   signed or unsigned division *)
 
 
 Require Import coqutil.Decidable. (* already defines several BoolSpec instances *)
