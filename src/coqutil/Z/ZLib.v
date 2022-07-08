@@ -127,13 +127,12 @@ Module Z.
   Qed.
 
   Lemma div_mul_undo_le: forall a b,
-      0 <= a ->
       0 < b ->
       a / b * b <= a.
   Proof.
     intros.
     pose proof (Zmod_eq_full a b) as P.
-    pose proof (Z.mod_bound_pos a b) as Q.
+    pose proof (Z.mod_pos_bound a b) as Q.
     blia.
   Qed.
 
