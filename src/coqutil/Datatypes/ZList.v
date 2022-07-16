@@ -1,11 +1,12 @@
 Require Import coqutil.Datatypes.Inhabited.
 Require Coq.Lists.List coqutil.Datatypes.List.
-Require Import Coq.ZArith.ZArith.
+Require Import Coq.ZArith.ZArith. Local Open Scope Z_scope.
+Require Import Coq.micromega.Lia.
 
 Module List.
   (* Notation instead of Definition so that lia sees the Z.of_nat and
      knows it's nonnegative *)
-  Notation zlen l := (Z.of_nat (List.length l)).
+  Notation len l := (Z.of_nat (List.length l)).
 
   Section WithA.
     Import List.ListNotations.
@@ -28,13 +29,53 @@ Module List.
     Definition set(l: list A)(i: Z)(x: A): list A :=
       upto i l ++ [x] ++ from (i + 1) l.
 
+    Definition repeatz(x: A)(n: Z): list A := List.repeat x (Z.to_nat n).
+
+    Lemma len_from: forall (l: list A) i,
+        0 <= i < len l ->
+        len (from i l) = len l - i.
+    Proof. intros. unfold from. rewrite List.skipn_length. lia. Qed.
+
+    Lemma len_upto: forall (l: list A) i,
+        0 <= i < len l ->
+        len (upto i l) = i.
+    Proof. intros. unfold upto. rewrite List.firstn_length. lia. Qed.
+
+    Lemma len_set: forall (l: list A) i x,
+        0 <= i < len l ->
+        len (set l i x) = len l.
+    Proof.
+      intros. unfold set, upto, from.
+      rewrite 2List.app_length, List.skipn_length, List.firstn_length. cbn. lia.
+    Qed.
+
+    Lemma repeatz_0: forall (x: A), repeatz x 0 = nil.
+    Proof. intros. reflexivity. Qed.
+
+    Lemma len_repeatz: forall (x: A) (n: Z), 0 <= n -> len (repeatz x n) = n.
+    Proof. intros. unfold repeatz. rewrite List.repeat_length. lia. Qed.
+
+    Lemma from_beginning: forall (l: list A) i, i <= 0 -> from i l = l.
+    Proof. intros. unfold from. replace (Z.to_nat i) with O by lia. reflexivity. Qed.
+
+    Lemma upto_beginning: forall (l: list A) i, i <= 0 -> upto i l = nil.
+    Proof. intros. unfold upto. replace (Z.to_nat i) with O by lia. reflexivity. Qed.
+
+    Lemma from_pastend: forall (l: list A) i, len l <= i -> from i l = nil.
+    Proof. intros. unfold from. apply List.skipn_all2. lia. Qed.
+
+    Lemma upto_pastend: forall (l: list A) i, len l <= i -> upto i l = l.
+    Proof. intros. unfold upto. apply List.firstn_all2. lia. Qed.
+
   End WithA.
 End List.
 
 Module ZListNotations.
   Declare Scope zlist_scope.
 
-  Notation len l := (List.zlen l).
+  (* Notation instead of Definition so that lia sees the Z.of_nat and
+     knows it's nonnegative *)
+  Notation len l := (Z.of_nat (List.length l)).
 
   Notation "a [ i ]" := (List.get i a)
     (at level 8, i at level 99, left associativity, format "a [ i ]") : zlist_scope.
