@@ -32,12 +32,12 @@ Module List.
     Definition repeatz(x: A)(n: Z): list A := List.repeat x (Z.to_nat n).
 
     Lemma len_from: forall (l: list A) i,
-        0 <= i < len l ->
+        0 <= i <= len l ->
         len (from i l) = len l - i.
     Proof. intros. unfold from. rewrite List.skipn_length. lia. Qed.
 
     Lemma len_upto: forall (l: list A) i,
-        0 <= i < len l ->
+        0 <= i <= len l ->
         len (upto i l) = i.
     Proof. intros. unfold upto. rewrite List.firstn_length. lia. Qed.
 
