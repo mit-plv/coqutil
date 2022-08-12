@@ -68,43 +68,109 @@ Module List.
     Proof. intros. unfold upto. apply List.firstn_all2. lia. Qed.
 
   End WithA.
+
+  Module ZIndexNotations.
+    Declare Scope zlist_scope.
+
+    (* Notation instead of Definition so that lia sees the Z.of_nat and
+       knows it's nonnegative *)
+    Notation len l := (Z.of_nat (List.length l)).
+
+    Notation "a [ i ]" := (List.get i a)
+      (at level 8, i at level 99, left associativity, format "a [ i ]") : zlist_scope.
+
+    Notation "l [ i := x ]" := (List.set l i x)
+      (at level 8, i at level 99, left associativity,
+       format "l [ i  :=  x ]") : zlist_scope.
+
+    Notation "a [: i ]" := (List.upto i a)
+      (at level 8, i at level 99, left associativity, format "a [: i ]")
+    : zlist_scope.
+
+    Notation "a [ i :]" := (List.from i a)
+      (at level 8, i at level 99, left associativity, format "a [ i :]")
+    : zlist_scope.
+
+    (* Note: i needs to be at level <= 99 to avoid conflict with type annotation, and all
+       other notations starting with `_ [ _` must therefore also put i at that same level. *)
+    Notation "a [ i : j ]" := (List.from i (List.upto j a))
+      (at level 8, i at level 99, left associativity, format "a [ i  :  j ]")
+    : zlist_scope.
+
+    (* Now, `f [x]` means "list f at index x", so it can't mean "function f applied to
+       singleton list x" any more, so we need to use a different notation for list liteals.
+       Note, though, that this breaks parsing of Ltac like `tac1; [tac2|]`, and separating
+       the bracket and bar into two tokens would bring the notation in conflict with
+       index notations again. *)
+    Notation "[| x |]" := (cons x nil) (format "[| x |]"): zlist_scope.
+    Notation "[| x ; y ; .. ; z |]" :=
+      (cons x (cons y .. (cons z nil) .. )) (format "[| x ;  y ;  .. ;  z |]") : zlist_scope.
+
+    (* Redefined common list notations that we leave unchanged, but don't want to import
+       from standard library because that one also gives us [ _ ; _ ; .. ; _ ] *)
+    Notation "h :: t" := (cons h t) : zlist_scope.
+    Notation "a ++ b" := (app a b) : zlist_scope.
+  End ZIndexNotations.
+
+  Section WithAAndZNotations.
+    Import ZIndexNotations. Open Scope zlist_scope.
+
+    Context [A: Type].
+
+    (* Merging adjacent list slices:
+       1) Turn all slices into the canonical format a[i:j]
+       2) Apply merge_adjacent_slices *)
+
+    Lemma from_upto_comm: forall (l: list A) (i j: Z),
+        0 <= i ->
+        0 <= j ->
+        l[i:][:j] = l[i : i+j].
+    Proof.
+      intros. unfold List.from, List.upto.
+      rewrite List.firstn_skipn_comm. f_equal. f_equal. lia.
+    Qed.
+
+    Lemma from_from: forall (l: list A) (i j: Z),
+        0 <= i ->
+        0 <= j ->
+        l[i:][j:] = l[i+j:].
+    Proof.
+      intros. unfold List.from, List.upto.
+      rewrite List.skipn_skipn. f_equal. lia.
+    Qed.
+
+    Lemma from_canon: forall (l: list A) (i: Z),
+        l[i:] = l[i:len(l)].
+    Proof.
+      unfold List.from, List.upto. intros.
+      replace (Z.to_nat (Z.of_nat (List.length l))) with (List.length l) by lia.
+      rewrite List.firstn_all.
+      reflexivity.
+    Qed.
+
+    Lemma upto_canon: forall (l: list A) (i: Z),
+        l[:i] = l[0:i].
+    Proof.
+      unfold List.from, List.upto. intros.
+      replace (Z.to_nat (Z.of_nat (List.length l))) with (List.length l) by lia.
+      reflexivity.
+    Qed.
+
+    Lemma merge_adjacent_slices: forall (l: list A) (i j k: Z),
+        i <= j <= k ->
+        l[i:j] ++ l[j:k] = l[i:k].
+    Proof.
+      intros. unfold List.from, List.upto.
+      rewrite <- (List.firstn_skipn (Z.to_nat j - Z.to_nat i)
+                    (List.skipn (Z.to_nat i) (List.firstn (Z.to_nat k) l))).
+      rewrite List.firstn_skipn_comm.
+      rewrite List.skipn_skipn.
+      rewrite List.firstn_firstn.
+      repeat match goal with
+             | |- @eq (list _) _ _ => f_equal
+             end.
+      all: lia.
+    Qed.
+
+  End WithAAndZNotations.
 End List.
-
-Module ZListNotations.
-  Declare Scope zlist_scope.
-
-  (* Notation instead of Definition so that lia sees the Z.of_nat and
-     knows it's nonnegative *)
-  Notation len l := (Z.of_nat (List.length l)).
-
-  Notation "a [ i ]" := (List.get i a)
-    (at level 8, i at level 99, left associativity, format "a [ i ]") : zlist_scope.
-
-  Notation "l [ i := x ]" := (List.set l i x)
-    (at level 8, i at level 99, left associativity,
-     format "l [ i  :=  x ]") : zlist_scope.
-
-  Notation "a [: i ]" := (List.upto i a)
-    (at level 8, i at level 99, left associativity, format "a [: i ]")
-  : zlist_scope.
-
-  Notation "a [ i :]" := (List.from i a)
-    (at level 8, i at level 99, left associativity, format "a [ i :]")
-  : zlist_scope.
-
-  (* Note: i needs to be at level <= 99 to avoid conflict with type annotation, and all
-     other notations starting with `_ [ _` must therefore also put i at that same level. *)
-  Notation "a [ i : j ]" := (List.from i (List.upto j a))
-    (at level 8, i at level 99, left associativity, format "a [ i  :  j ]")
-  : zlist_scope.
-
-  (* Now, `f [x]` means "list f at index x", so it can't mean "function f applied to
-     singleton list x" any more, so we need to use a different notation for list liteals.
-     Note, though, that this breaks parsing of Ltac like `tac1; [tac2|]`, and separating
-     the bracket and bar into two tokens would bring the notation in conflict with
-     index notations again. *)
-  Notation "[| x |]" := (cons x nil) (format "[| x |]"): zlist_scope.
-  Notation "[| x ; y ; .. ; z |]" :=
-    (cons x (cons y .. (cons z nil) .. )) (format "[| x ;  y ;  .. ;  z |]") : zlist_scope.
-
-End ZListNotations.
