@@ -76,7 +76,7 @@ Module List.
        knows it's nonnegative *)
     Notation len l := (Z.of_nat (List.length l)).
 
-    Notation "a [ i ]" := (List.get i a)
+    Notation "a [ i ]" := (List.get a i)
       (at level 8, i at level 99, left associativity, format "a [ i ]") : zlist_scope.
 
     Notation "l [ i := x ]" := (List.set l i x)
