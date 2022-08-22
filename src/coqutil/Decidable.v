@@ -11,13 +11,51 @@ Require Coq.Strings.String.
 
 Existing Class BoolSpec.
 
-Lemma BoolSpec_true P Q x (H : BoolSpec P Q x) : autoforward (x = true) P.
+Global Instance BoolSpec_true P Q x (H : BoolSpec P Q x) : autoforward (x = true) P.
 Proof. intro; subst. inversion H; auto. Qed.
 
-Lemma BoolSpec_false P Q x (H : BoolSpec P Q x) : autoforward (x = false) Q.
+Global Instance BoolSpec_false P Q x (H : BoolSpec P Q x) : autoforward (x = false) Q.
 Proof. intro; subst. inversion H; auto. Qed.
 
-#[global] Hint Resolve BoolSpec_true BoolSpec_false : typeclass_instances.
+(* Advantage of BoolSpec over Bool.reflect and sumbool:
+   BoolSpec lives in Prop, (while the other two live in Set), so terms intended for
+   computation can't accidentally match over it, so we won't have problems that
+   computation will try to normalize proofs.
+
+   Advantage of BoolSpec (and sumbool too) over Bool.reflect:
+   BoolSpec can carry a custom, prettified Prop for the false case, instead of just ~P,
+   which is useful to obtain pretty Props when destructing nested bool conditions.
+   Instances andb_BoolSpec, orb_BoolSpec and negb_BoolSpec enable the prettification
+   of nested expressions, and instances like eg Z.eqb_spec, Z.leb_spec, etc enable
+   prettification of the leaves of the expressions.
+
+   Given a boolean expression b, in order to prettify the two cases (b = true) and
+   (b = false) into two pretty Props, tactics (such as eg destr) can use
+   constr:(ltac:(typeclasses eauto) : BoolSpec _ _ b). *)
+
+Global Instance andb_BoolSpec(Pt Pf Qt Qf: Prop)(p q: bool)
+  (sp: BoolSpec Pt Pf p)(sq: BoolSpec Qt Qf q): BoolSpec (Pt /\ Qt) (Pf \/ Qf) (p && q).
+Proof. destruct sp; destruct sq; constructor; intuition auto. Qed.
+
+Global Instance orb_BoolSpec(Pt Pf Qt Qf: Prop)(p q: bool)
+  (sp: BoolSpec Pt Pf p)(sq: BoolSpec Qt Qf q): BoolSpec (Pt \/ Qt) (Pf /\ Qf) (p || q).
+Proof. destruct sp; destruct sq; constructor; intuition auto. Qed.
+
+Lemma negb_BoolSpec(Pt Pf: Prop)(p: bool){sp: BoolSpec Pt Pf p}: BoolSpec Pf Pt (negb p).
+Proof. destruct sp; constructor; intuition auto. Qed.
+Global Hint Extern 10 (BoolSpec ?Pf ?Pt ?p) =>
+  (* This match fails if p is an evar, no matter what `Hint Mode` we'll ever use.
+     Prevents infinite negb chains if ?p is an evar. *)
+  lazymatch p with
+  | negb ?q => refine (@negb_BoolSpec Pt Pf q _)
+  end
+: typeclass_instances.
+
+(* Fallback for the case where the outer nodes of a nested boolean condition can
+   be converted, but some leaves cannot.
+   Cost is 1000, so that other instances are always preferred *)
+Global Instance default_eq_BoolSpec(p: bool): BoolSpec (p = true) (p = false) p | 1000.
+Proof. destruct p; constructor; reflexivity. Qed.
 
 Notation EqDecider f := (forall x y, BoolSpec (x = y) (x <> y) (f x y)).
 
@@ -82,10 +120,21 @@ End String.
      String.eqb_spec
 : typeclass_instances.
 
-
 Goal forall x y, Nat.ltb x y = true -> x < y.
   intros.
   autoforward with typeclass_instances in H.
   assumption.
   all: fail "goals remaining".
+Abort.
+
+(* boolean condition prettification demo *)
+Goal forall (a b c: nat) (d: bool),
+    andb (a <? b) (negb (b <=? c) || (a <=? c) || d) = true.
+Proof.
+  intros.
+  match goal with
+  | |- ?x = _ => eassert (BoolSpec _ _ x) as B
+  end.
+  1: typeclasses eauto.
+  destruct B as [E|E].
 Abort.
