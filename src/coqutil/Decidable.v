@@ -1,4 +1,4 @@
-From coqutil Require Import sanity Tactics.autoforward.
+Require Import coqutil.sanity.
 Require Import Coq.Arith.PeanoNat.
 Require Import Coq.Arith.Compare_dec.
 Require Import Coq.ZArith.BinInt.
@@ -10,12 +10,6 @@ Require Coq.Strings.String.
 #[global] Hint Opaque Nat.ltb : typeclass_instances.
 
 Existing Class BoolSpec.
-
-Global Instance BoolSpec_true P Q x (H : BoolSpec P Q x) : autoforward (x = true) P.
-Proof. intro; subst. inversion H; auto. Qed.
-
-Global Instance BoolSpec_false P Q x (H : BoolSpec P Q x) : autoforward (x = false) Q.
-Proof. intro; subst. inversion H; auto. Qed.
 
 (* Advantage of BoolSpec over Bool.reflect and sumbool:
    BoolSpec lives in Prop, (while the other two live in Set), so terms intended for
@@ -119,13 +113,6 @@ End String.
      Z.ltb_spec
      String.eqb_spec
 : typeclass_instances.
-
-Goal forall x y, Nat.ltb x y = true -> x < y.
-  intros.
-  autoforward with typeclass_instances in H.
-  assumption.
-  all: fail "goals remaining".
-Abort.
 
 (* boolean condition prettification demo *)
 Goal forall (a b c: nat) (d: bool),

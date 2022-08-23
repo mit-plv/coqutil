@@ -1,5 +1,5 @@
-Require Import coqutil.Tactics.autoforward.
-Require Import coqutil.Decidable. (* adds hints to typeclass_instances needed by autoforward *)
+(* adds BoolSpec instances needed to destruct booleans into Props *)
+Require Import coqutil.Decidable.
 
 Ltac subst_after_destr_default H :=
   match type of H with
@@ -16,7 +16,11 @@ Ltac destr d :=
   match type of d with
   | _ => is_var d; destruct d
   | sumbool _ _ => destruct d
-  | _ => let E := fresh "E" in destruct d eqn: E;
-         try autoforward with typeclass_instances in E;
-         subst_after_destr E
+  | bool =>
+      let B := fresh "B" in eassert (BoolSpec _ _ d) as B by typeclasses eauto;
+      let tB := type of B in
+      tryif constr_eq tB (BoolSpec (d = true) (d = false) d)
+      then fail (* only the default BoolSpec was found, which is not interesting to us *)
+      else (let E := fresh "E" in destruct B as [E|E]; subst_after_destr E)
+  | _ => let E := fresh "E" in destruct d eqn: E; subst_after_destr E
   end.
