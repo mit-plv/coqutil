@@ -1828,6 +1828,18 @@ Module map.
       destr (get m2 k); firstorder congruence.
     Qed.
 
+    Lemma split_same_footprint m x y z t :
+      map.split m x z -> map.split m y t ->
+      (forall k, map.get x k = None <-> map.get y k = None) -> x = y.
+    Proof.
+      intros.
+      eapply map_ext; intros k; specialize (H1 k).
+      destruct get eqn:? at 2; [|rewrite H1; assumption].
+      pose proof get_split k _ _ _ H0 as Hy.
+      pose proof get_split k _ _ _ H as Hx.
+      intuition congruence.
+    Qed.
+
     Lemma shrink_disjoint_l: forall m1 m2 m1' mRest,
         disjoint m1 m2 ->
         split m1 m1' mRest ->
@@ -2069,6 +2081,29 @@ Module map.
                       rewrite get_put_dec in H
       end.
       destr (key_eqb k k0); subst; eauto; congruence.
+    Qed.
+
+    Lemma split_put_None m m1 m2 k v
+      (Hsplit : map.split m m1 m2)
+      (H : map.get m1 k = None)
+      : map.split (map.put m k v) m1 (map.put m2 k v).
+    Proof.
+      destruct Hsplit. subst m.
+      rewrite put_putmany_commute.
+      split; trivial.
+      eapply disjoint_put_r; trivial.
+    Qed.
+
+    Lemma split_put_Some m m1 m2 k v
+      (Hsplit : map.split m m1 m2)
+      V (H : map.get m2 k = Some V)
+      : map.split (map.put m k v) m1 (map.put m2 k v).
+    Proof.
+      eapply split_put_None; trivial.
+      destruct Hsplit. subst m.
+      cbv [map.disjoint] in *.
+      destruct (map.get m1 k) eqn:?; trivial.
+      case (H1 _ _ _ Heqo H).
     Qed.
 
     Lemma put_remove_same m k v :

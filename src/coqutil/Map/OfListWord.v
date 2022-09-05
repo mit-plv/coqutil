@@ -2,6 +2,9 @@ Require Import ZArith.
 Require Import Coq.Lists.List coqutil.Datatypes.List.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Map.Interface coqutil.Map.OfFunc.
+Require Import coqutil.Map.Properties.
+Require Import coqutil.Tactics.autoforward.
+Require Import coqutil.Tactics.Tactics.
 Import Interface.map MapKeys.map OfFunc.map.
 Require Import coqutil.Word.Interface coqutil.Word.Properties.
 
@@ -130,6 +133,64 @@ Module map.
       rewrite Properties.map.fold_singleton.
       f_equal; cbn [Z.of_nat].
       eapply word.unsigned_inj; rewrite word.unsigned_add; cbv [word.wrap]; rewrite word.unsigned_of_Z_0, Z.add_0_r, Z.mod_small; trivial; eapply word.unsigned_range.
+    Qed.
+
+    Import ListNotations.
+    Local Notation "xs $@ a" := (of_list_word_at a xs) (at level 10, format "xs $@ a").
+    Local Open Scope Z_scope.
+    Local Coercion Z.of_nat : nat >-> Z.
+    Local Coercion word.unsigned : word.rep >-> Z.
+    Lemma of_list_word_at_cons b bs a :
+      (b :: bs)$@a = map.put (bs$@(word.add a (word.of_Z 1))) a b :> map.
+    Proof.
+      change (b::bs) with ([b]++bs).
+      rewrite of_list_word_at_app, of_list_word_singleton; cbn.
+      rewrite <-map.put_putmany_commute, map.putmany_empty_r. trivial.
+    Qed.
+
+    Lemma of_list_word_at_snoc b bs a
+      (H : length bs < 2 ^ width)
+      : (bs ++ [b])$@a = map.put (bs$@a) (word.add a (word.of_Z (length bs))) b :> map.
+    Proof.
+      rewrite of_list_word_at_app, of_list_word_singleton; cbn.
+      rewrite map.putmany_comm; cycle 1.
+      { intros k ? ?; rewrite map.get_put_dec.
+        destruct (@word.eqb _ _ _ _) eqn:Hbr;
+          autoforward with typeclass_instances in Hbr;
+          rewrite ?map.get_empty, get_of_list_word_at; inversion 1; subst.
+        intro HX.
+        rewrite word.word_sub_add_l_same_l in HX.
+        eapply List.nth_error_Some_bound_index in HX.
+        rewrite word.unsigned_of_Z in HX; cbv [word.wrap] in HX.
+        rewrite Z.mod_small in HX by Lia.lia; Lia.lia. }
+      rewrite <-map.put_putmany_commute, map.putmany_empty_r. trivial.
+    Qed.
+
+    Lemma remove_head_of_list_word_at_cons b bs a
+      (H : length bs < 2^width) :
+      map.remove ((b :: bs)$@a) a = bs$@(word.add a (word.of_Z 1)) :> map.
+    Proof.
+      rewrite of_list_word_at_cons, map.remove_put_same, map.remove_not_in; trivial.
+      rewrite get_of_list_word_at. eapply List.nth_error_None.
+      enough (word.unsigned (word.sub a (word.add a (word.of_Z 1))) =2^width-1) by Lia.lia.
+      rewrite word.unsigned_sub, word.unsigned_add, word.unsigned_of_Z_1; cbv [word.wrap].
+      rewrite Zdiv.Zminus_mod_idemp_r.
+      replace (a - (a + 1)) with (Z.opp 1) by Lia.lia.
+      rewrite Zdiv.Z_mod_nz_opp_full; rewrite ?Z.mod_small; ssplit; trivial; try Lia.lia.
+      all : enough (2^1 <= 2^width) by Lia.lia; pose proof word.width_pos.
+      all : eapply Z.pow_le_mono_r; Lia.lia.
+    Qed.
+
+    Lemma remove_last_of_list_word_at_snoc b bs a
+      (H : length bs < 2 ^ width)
+      a' (Ha' : a' = word.add a (word.of_Z (length bs)))
+      : map.remove ((bs ++ [b])$@a) a' = bs$@a :> map.
+    Proof.
+      subst a'.
+      rewrite of_list_word_at_snoc, map.remove_put_same, map.remove_not_in; trivial.
+      rewrite get_of_list_word_at; eapply List.nth_error_None.
+      rewrite word.word_sub_add_l_same_l.
+      rewrite word.unsigned_of_Z; cbv [word.wrap]; rewrite Z.mod_small; Lia.lia.
     Qed.
   End __.
 End map.
