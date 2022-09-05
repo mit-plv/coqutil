@@ -113,6 +113,10 @@ Module byte.
     apply unsigned_range.
   Qed.
 
+  Lemma of_Z_unsigned b:
+    byte.of_Z (byte.unsigned b) = b.
+  Proof. eapply unsigned_inj. rewrite unsigned_of_Z. rewrite wrap_unsigned. trivial. Qed.
+
   (* FIXME isn't this defined somewhere already? *)
   Definition and (b1 b2: byte) := byte.of_Z (Z.land (byte.unsigned b1) (byte.unsigned b2)).
   Definition xor a b := byte.of_Z (Z.lxor (byte.unsigned a) (byte.unsigned b)).
