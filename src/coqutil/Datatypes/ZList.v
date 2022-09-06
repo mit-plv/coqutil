@@ -4,12 +4,9 @@ Require Import Coq.ZArith.ZArith. Local Open Scope Z_scope.
 Require Import Coq.micromega.Lia.
 
 Module List.
-  (* Notation instead of Definition so that lia sees the Z.of_nat and
-     knows it's nonnegative *)
-  Notation len l := (Z.of_nat (List.length l)).
-
   Section WithA.
     Import List.ListNotations.
+    Local Notation len l := (Z.of_nat (List.length l)) (only parsing).
 
     Context [A: Type].
 
@@ -73,8 +70,12 @@ Module List.
     Declare Scope zlist_scope.
 
     (* Notation instead of Definition so that lia sees the Z.of_nat and
-       knows it's nonnegative *)
-    Notation len l := (Z.of_nat (List.length l)).
+       knows it's nonnegative.
+       Separate notations for parsing/printing because we can't put the parsing
+       notation in a scope: https://github.com/coq/coq/issues/16464 *)
+    Notation len l := (Z.of_nat (List.length l)) (only parsing).
+    Notation "'len' l" := (Z.of_nat (List.length l))
+      (at level 10, only printing) : zlist_scope.
 
     Notation "a [ i ]" := (List.get a i)
       (at level 8, i at level 99, left associativity, format "a [ i ]") : zlist_scope.
