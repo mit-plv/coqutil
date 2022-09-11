@@ -1291,6 +1291,13 @@ Module map.
       eapply get_of_list_In_NoDup; eauto.
     Qed.
 
+    Lemma of_list_tuples: forall m, map.of_list (map.tuples m) = m.
+    Proof.
+      unfold map.tuples. intro m. eapply map.fold_spec.
+      - reflexivity.
+      - intros. simpl. subst. reflexivity.
+    Qed.
+
     Lemma getmany_of_list_injective_NoDup: forall m ks vs,
         map.injective m ->
         List.NoDup ks ->
