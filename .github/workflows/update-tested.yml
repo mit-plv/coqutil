@@ -27,25 +27,7 @@ jobs:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: '8.14.0'
-    - uses: samuelgruetter/check-ci-success@master
-      with:
-        repo_owner: 'mit-plv'
-        repo_name: 'coqutil'
-        branch_name: 'master'
-        check_name: '8.13.1'
-    - uses: samuelgruetter/check-ci-success@master
-      with:
-        repo_owner: 'mit-plv'
-        repo_name: 'coqutil'
-        branch_name: 'master'
-        check_name: '8.12.2'
-    - uses: samuelgruetter/check-ci-success@master
-      with:
-        repo_owner: 'mit-plv'
-        repo_name: 'coqutil'
-        branch_name: 'master'
-        check_name: '8.11.2'
+        check_name: 'v8.15'
     - uses: samuelgruetter/check-ci-success@master
       with:
         repo_owner: 'mit-plv'
