@@ -33,7 +33,7 @@ Goal forall a b c: nat, b = a -> c = b -> a = c.
 Proof.
   intros.
   foreach_hyp (fun h tp => try (symmetry in $h)).
-  etransitivity. 1: exact H. exact H0.
+  etransitivity > [ exact H | exact H0 ].
 Abort.
 
 Local Set Default Proof Mode "Classic".
