@@ -25,9 +25,9 @@ Ltac _foreach_var :=
     ltac1:(f h body tp |- f h body tp)
       f1 (Ltac1.of_ident h2) (Ltac1.of_constr body2) (Ltac1.of_constr tp2))).
 
-Tactic Notation "foreach_hyp" tactic(f) := _foreach_hyp f.
+Tactic Notation "foreach_hyp" tactic0(f) := _foreach_hyp f.
 
-Tactic Notation "foreach_var" tactic(f) := _foreach_var f.
+Tactic Notation "foreach_var" tactic0(f) := _foreach_var f.
 
 Goal forall a b c: nat, b = a -> c = b -> a = c.
 Proof.
