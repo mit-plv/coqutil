@@ -1018,7 +1018,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       (firstn (n + k) (l1 ++ l2) = l1 ++ (firstn k l2)).
   Proof.
     intros; subst.
-    rewrite firstn_app, firstn_all2, Minus.minus_plus; simpl; (reflexivity || lia).
+    rewrite firstn_app, firstn_all2, Nat.add_comm, Nat.add_sub; simpl; (reflexivity || lia).
   Qed.
 
   Lemma skipn_app_r :
@@ -1037,7 +1037,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       skipn k l2.
   Proof.
     intros; subst.
-    rewrite skipn_app, skipn_all, Minus.minus_plus; simpl; (reflexivity || lia).
+    rewrite skipn_app, skipn_all, Nat.add_comm, Nat.add_sub; simpl; (reflexivity || lia).
   Qed.
 
   Lemma assoc_app_cons (l1 l2: list A) (a: A) :
@@ -1786,7 +1786,7 @@ Module Import Nat.
 
   Ltac div_up_t :=
     cbv [div_up]; zify;
-    rewrite ?Zdiv.div_Zdiv, ?Zdiv.mod_Zmod in * by Lia.lia;
+    rewrite ?Znat.Nat2Z.inj_div, ?Znat.Nat2Z.inj_mod in * by Lia.lia;
     Z.div_mod_to_equations; Lia.nia.
 
   Local Ltac t := div_up_t.
