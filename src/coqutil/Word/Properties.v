@@ -170,6 +170,22 @@ Module word.
       - eauto using eqb_false.
     Qed.
 
+    Lemma ltu_spec(a b: word):
+      BoolSpec (unsigned a < unsigned b) (unsigned b <= unsigned a) (ltu a b).
+    Proof.
+      rewrite word.unsigned_ltu.
+      destruct (unsigned a <? unsigned b) eqn: E; constructor;
+        [ eapply Z.ltb_lt in E | eapply Z.ltb_ge in E ]; exact E.
+    Qed.
+
+    Lemma lts_spec(a b: word):
+      BoolSpec (signed a < signed b) (signed b <= signed a) (lts a b).
+    Proof.
+      rewrite word.signed_lts.
+      destruct (signed a <? signed b) eqn: E; constructor;
+        [ eapply Z.ltb_lt in E | eapply Z.ltb_ge in E ]; exact E.
+    Qed.
+
     Lemma eq_or_neq (k1 k2 : word) : k1 = k2 \/ k1 <> k2.
     Proof. destruct (word.eqb k1 k2) eqn:H; [eapply eqb_true in H | eapply eqb_false in H]; auto. Qed.
 
@@ -504,7 +520,7 @@ End word.
 
 Require Import coqutil.Decidable.
 
-#[global] Existing Instance word.eqb_spec.
+#[global] Existing Instances word.eqb_spec word.ltu_spec word.lts_spec.
 
 
 (* Ring Helpers: *)
