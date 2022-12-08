@@ -1,20 +1,20 @@
 Require Import Ltac2.Ltac2.
 
-Ltac2 foreach_hyp(f: ident -> constr -> unit) :=
+Ltac2 foreach_hyp(f: ident -> constr -> unit) := Control.enter (fun _ =>
   List.iter (fun p => let (h, obody, tp) := p in
                       match obody with
                       | Some _ => ()
                       | None => f h tp
                       end)
-    (Control.hyps ()).
+    (Control.hyps ())).
 
-Ltac2 foreach_var(f: ident -> constr -> constr -> unit) :=
+Ltac2 foreach_var(f: ident -> constr -> constr -> unit) := Control.enter (fun _ =>
   List.iter (fun p => let (h, obody, tp) := p in
                       match obody with
                       | Some body => f h body tp
                       | None => ()
                       end)
-    (Control.hyps ()).
+    (Control.hyps ())).
 
 Ltac _foreach_hyp :=
   ltac2:(f1 |- foreach_hyp (fun h2 tp2 =>
@@ -51,4 +51,14 @@ Proof.
                             end).
   clear y.
   etransitivity. 1: exact H. exact H0.
+Abort.
+
+Goal forall a b c: nat, a = b -> a = b /\ b = a.
+Proof.
+  intros. split.
+  all: foreach_hyp (fun h tp => lazymatch tp with
+                                | _ = _ => pose proof (eq_sym h)
+                                | _ => idtac
+                                end).
+  all: assumption.
 Abort.
