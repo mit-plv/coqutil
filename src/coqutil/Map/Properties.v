@@ -1636,7 +1636,15 @@ Module map.
                | |- context[if key_eqb ?x ?y then _ else _] => destr (key_eqb x y)
                end;
           try congruence.
-   Qed.
+    Qed.
+
+    Lemma remove_many_remove_commute: forall m k ks,
+        remove_many (remove m k) ks = remove (remove_many m ks) k.
+    Proof.
+      intros. eapply map_ext. intro k'.
+      rewrite ?get_remove_many_dec, ?get_remove_dec, ?get_remove_many_dec.
+      destr (key_eqb k k'). 2: reflexivity. destr (List.find (key_eqb k') ks); reflexivity.
+    Qed.
 
     Lemma zipped_lookup_Some_in : forall (ks: list key) (vs: list value) (k: key) (v: value),
         zipped_lookup ks vs k = Some v ->
