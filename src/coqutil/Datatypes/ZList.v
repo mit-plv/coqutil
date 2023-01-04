@@ -46,6 +46,9 @@ Module List.
       rewrite 2List.app_length, List.skipn_length, List.firstn_length. cbn. lia.
     Qed.
 
+    Lemma len_app: forall (l1 l2: list A), len (l1 ++ l2) = len l1 + len l2.
+    Proof. intros. rewrite List.app_length. lia. Qed.
+
     Lemma repeatz_0: forall (x: A), repeatz x 0 = nil.
     Proof. intros. reflexivity. Qed.
 
@@ -171,6 +174,25 @@ Module List.
              | |- @eq (list _) _ _ => f_equal
              end.
       all: lia.
+    Qed.
+
+    Lemma upto_app_discard_r: forall (xs ys: list A) i,
+        i <= len xs ->
+        (xs ++ ys)[:i] = xs[:i].
+    Proof.
+      unfold upto. intros. rewrite List.firstn_app.
+      replace (Z.to_nat i - length xs)%nat with O by lia.
+      change (List.firstn 0 ys) with (@nil A).
+      apply List.app_nil_r.
+    Qed.
+
+    Lemma from_app_discard_l: forall (xs ys: list A) i,
+        len xs <= i ->
+        (xs ++ ys)[i:] = ys[i - len xs :].
+    Proof.
+      unfold from. intros. rewrite List.skipn_app.
+      rewrite List.skipn_all2 by lia. simpl.
+      f_equal. lia.
     Qed.
 
   End WithAAndZNotations.
