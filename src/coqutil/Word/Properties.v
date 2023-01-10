@@ -485,6 +485,15 @@ Module word.
     Lemma mul_assoc: forall (x y z: word), word.mul x (word.mul y z) = word.mul (word.mul x y) z.
     Proof. intros. ring. Qed.
 
+    Lemma add_0_l: forall x, word.add (word.of_Z 0) x = x. Proof. intros. ring. Qed.
+    Lemma add_0_r: forall x, word.add x (word.of_Z 0) = x. Proof. intros. ring. Qed.
+    Lemma sub_0_l: forall x, word.sub (word.of_Z 0) x = word.opp x. Proof. intros. ring. Qed.
+    Lemma sub_0_r: forall x, word.sub x (word.of_Z 0) = x. Proof. intros. ring. Qed.
+    Lemma mul_0_l: forall x, word.mul (word.of_Z 0) x = word.of_Z 0. Proof. intros. ring. Qed.
+    Lemma mul_0_r: forall x, word.mul x (word.of_Z 0) = word.of_Z 0. Proof. intros. ring. Qed.
+    Lemma mul_1_l: forall x, word.mul (word.of_Z 1) x = x. Proof. intros. ring. Qed.
+    Lemma mul_1_r: forall x, word.mul x (word.of_Z 1) = x. Proof. intros. ring. Qed.
+
     Lemma of_Z_inj_mod: forall x y,
         x mod 2 ^ width = y mod 2 ^ width ->
         word.of_Z x = word.of_Z y.

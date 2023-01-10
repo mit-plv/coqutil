@@ -12,13 +12,6 @@ Section Lemmas. Local Set Default Proof Using "All".
 
   Add Ring wring: (@word.ring_theory width word word_ok).
 
-  Lemma add_0_l: forall x, word.add (word.of_Z 0) x = x. Proof. intros. ring. Qed.
-  Lemma add_0_r: forall x, word.add x (word.of_Z 0) = x. Proof. intros. ring. Qed.
-  Lemma mul_0_l: forall x, word.mul (word.of_Z 0) x = word.of_Z 0. Proof. intros. ring. Qed.
-  Lemma mul_0_r: forall x, word.mul x (word.of_Z 0) = word.of_Z 0. Proof. intros. ring. Qed.
-  Lemma mul_1_l: forall x, word.mul (word.of_Z 1) x = x. Proof. intros. ring. Qed.
-  Lemma mul_1_r: forall x, word.mul x (word.of_Z 1) = x. Proof. intros. ring. Qed.
-
   Lemma sextend_width_nop: forall (w v: Z),
     w = width ->
     word.of_Z (BitOps.signExtend w v) = word.of_Z v.
@@ -64,12 +57,12 @@ Ltac simpl_Zcsts :=
 
 Ltac simpl_word_exprs_getEq OK t :=
   match t with
-  | context[ @word.add ?wi ?wo (word.of_Z 0) ?x ] => constr:(@add_0_l wi wo OK x)
-  | context[ @word.add ?wi ?wo ?x (word.of_Z 0) ] => constr:(@add_0_r wi wo OK x)
-  | context[ @word.mul ?wi ?wo (word.of_Z 0) ?x ] => constr:(@mul_0_l wi wo OK x)
-  | context[ @word.mul ?wi ?wo ?x (word.of_Z 0) ] => constr:(@mul_0_r wi wo OK x)
-  | context[ @word.mul ?wi ?wo (word.of_Z 1) ?x ] => constr:(@mul_1_l wi wo OK x)
-  | context[ @word.mul ?wi ?wo ?x (word.of_Z 1) ] => constr:(@mul_1_r wi wo OK x)
+  | context[ @word.add ?wi ?wo (word.of_Z 0) ?x ] => constr:(@word.add_0_l wi wo OK x)
+  | context[ @word.add ?wi ?wo ?x (word.of_Z 0) ] => constr:(@word.add_0_r wi wo OK x)
+  | context[ @word.mul ?wi ?wo (word.of_Z 0) ?x ] => constr:(@word.mul_0_l wi wo OK x)
+  | context[ @word.mul ?wi ?wo ?x (word.of_Z 0) ] => constr:(@word.mul_0_r wi wo OK x)
+  | context[ @word.mul ?wi ?wo (word.of_Z 1) ?x ] => constr:(@word.mul_1_l wi wo OK x)
+  | context[ @word.mul ?wi ?wo ?x (word.of_Z 1) ] => constr:(@word.mul_1_r wi wo OK x)
   | context[ word.of_Z (BitOps.signExtend ?w ?v)] => constr:(@sextend_width_nop _ _ OK w v)
   end.
 
