@@ -17,7 +17,6 @@ Section LittleEndian. Local Set Default Proof Using "All".
     | S n => fun bs => Z.lor (byte.unsigned (pair._1 bs))
                              (Z.shiftl (combine_deprecated n (pair._2 bs)) 8)
     end.
-  #[deprecated(note="Use coqutil.Word.LittleEndianList.le_combine.")]
   Notation combine := combine_deprecated (only parsing).
 
   Fixpoint split_deprecated (n : nat) (w : Z) : tuple byte n :=
@@ -25,7 +24,6 @@ Section LittleEndian. Local Set Default Proof Using "All".
     | O => tt
     | S n => pair.mk (byte.of_Z w) (split_deprecated n (Z.shiftr w 8))
     end.
-  #[deprecated(note="Use coqutil.Word.LittleEndianList.le_split.")]
   Notation split := split_deprecated (only parsing).
 
   Lemma combine_split (n : nat) (z : Z) :
@@ -105,9 +103,7 @@ Section LittleEndian. Local Set Default Proof Using "All".
   Qed.
 
 End LittleEndian.
-#[deprecated(note="Use coqutil.Word.LittleEndianList.le_combine.")]
 Notation combine := combine_deprecated (only parsing).
-#[deprecated(note="Use coqutil.Word.LittleEndianList.le_split.")]
 Notation split := split_deprecated (only parsing).
 
 Require Import coqutil.Word.LittleEndianList.
