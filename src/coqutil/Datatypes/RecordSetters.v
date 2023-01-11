@@ -56,19 +56,55 @@ Global Hint Extern 1 (@Setter ?R ?E ?getter) => setter R E getter : typeclass_in
    from its argument type, which we don't want/need here. *)
 Definition constant{E: Type}(newValue: E): E -> E := fun _ => newValue.
 
-Module Export OCamlLikeNotations.
+(* The syntax for one (potentially nested) record field update is shared between
+   different notations (further below) that apply such updates to records. *)
+
+Declare Custom Entry field_update.
+Notation "proj := v" := (mk_update proj (constant v))
+  (in custom field_update at level 1, proj constr at level 1, v constr at level 99,
+   format "'[  ' proj  :=  '/' v ']'").
+Notation "proj ::= f" := (mk_update proj f)
+  (in custom field_update at level 1, proj constr at level 1, f constr at level 99,
+   format "'[  ' proj  ::=  '/' f ']'").
+Notation "proj0 -> proj1 -> .. -> projN := v" :=
+  (mk_update proj0 (apply_update (mk_update proj1 ..
+                     (apply_update (mk_update projN (constant v))) ..)))
+  (in custom field_update at level 1,
+   proj0 constr at level 1, proj1 constr at level 1, projN constr at level 1,
+   v constr at level 99,
+   format "'[  ' proj0 -> proj1 -> .. -> projN  :=  '/' v ']'").
+Notation "proj0 -> proj1 -> .. -> projN ::= f" :=
+  (mk_update proj0 (apply_update (mk_update proj1 ..
+                     (apply_update (mk_update projN f)) ..)))
+  (in custom field_update at level 1,
+   proj0 constr at level 1, proj1 constr at level 1, projN constr at level 1,
+   f constr at level 99,
+   format "'[  ' proj0 -> proj1 -> .. -> projN  ::=  '/' f ']'").
+
+Module DoubleBraceUpdate.
+  Declare Scope double_brace_record_update.
+  Open Scope double_brace_record_update.
+
+  (* Note: associativity is not really needed, because several updates can
+     be put into the same {{ ... }}, but some other notations (eg mylist[index])
+     at level 8 require that level 8 is left associative, and if we say
+     nothing here, it seems to default to right associativity, even though
+     Print Grammar constr prints LEFTA (https://github.com/coq/coq/issues/17103). *)
+  Notation "x {{ u }}" := (apply_update u x)
+     (at level 8, left associativity, u custom field_update at level 1,
+      format "x {{ '[hv ' u ']' }}") : double_brace_record_update.
+
+  Notation "x {{ u ; .. ; v ; w }}" :=
+     (apply_update w (apply_update v .. (apply_update u x) .. ))
+     (at level 8, left associativity, u custom field_update at level 1,
+      v custom field_update at level 1, w custom field_update at level 1,
+      format "x {{ '[hv ' u ;  '/' .. ;  '/' v ;  '/' w ']' }}")
+      : double_brace_record_update.
+End DoubleBraceUpdate.
+
+Module OCamlLikeNotations.
   Declare Scope ocaml_like_record_set.
   Open Scope ocaml_like_record_set.
-
-  Declare Custom Entry field_update.
-  Notation "proj := v" := (mk_update proj (constant v))
-    (in custom field_update at level 1, proj constr at level 99, v constr at level 99,
-     format "'[  ' proj  :=  '/' v ']'")
-    : ocaml_like_record_set.
-  Notation "proj ::= f" := (mk_update proj f)
-    (in custom field_update at level 1, proj constr at level 99, f constr at level 99,
-     format "'[  ' proj  ::=  '/' f ']'")
-    : ocaml_like_record_set.
 
   Notation "{ x 'with' u }" := (apply_update u x)
      (at level 0, x at level 99, u custom field_update at level 1,
@@ -84,7 +120,24 @@ End OCamlLikeNotations.
 Require Coq.Program.Basics.
 Notation compose := Coq.Program.Basics.compose. (* selective import *)
 
-Module AdditionalNotations.
+Module UpdaterNotations.
+  Declare Scope updater.
+  Open Scope updater.
+
+  Notation "'{!' u }" := (apply_update u)
+     (at level 0, u custom field_update at level 1,
+      format "'{!'  u  }")
+    : updater.
+
+  Notation "'{!' u ; v ; .. ; w }" :=
+     (compose (apply_update w) .. (compose (apply_update v) (apply_update u)) ..)
+     (at level 0, u custom field_update at level 1, v custom field_update at level 1,
+      w custom field_update at level 1,
+      format "'{!'  '[' u ;  '/' v ;  '/' .. ;  '/' w  ']' }")
+    : updater.
+End UpdaterNotations.
+
+Module TriangleBracketNotations.
   Declare Scope record_set.
   Open Scope record_set.
 
@@ -94,18 +147,7 @@ Module AdditionalNotations.
      (at level 8, u custom field_update at level 1, left associativity, format "x <| u |>")
      : record_set.
 
-  Notation "'{!' u }" := (apply_update u)
-     (at level 0, u custom field_update at level 1,
-      format "'{!'  u  }")
-    : record_set.
-
-  Notation "'{!' u ; v ; .. ; w }" :=
-     (compose (apply_update w) .. (compose (apply_update v) (apply_update u)) ..)
-     (at level 0, u custom field_update at level 1, v custom field_update at level 1,
-      w custom field_update at level 1,
-      format "'{!'  '[' u ;  '/' v ;  '/' .. ;  '/' w  ']' }")
-    : record_set.
-End AdditionalNotations.
+End TriangleBracketNotations.
 
 Require Import Ltac2.Ltac2.
 Require Ltac2.Option.
@@ -511,7 +553,6 @@ Ltac srefl :=
   end.
 
 Module RecordSetterTests.
-  Import AdditionalNotations.
 
   Record foo(A: Type)(n: nat) := {
     fieldA: A;
@@ -531,73 +572,108 @@ Module RecordSetterTests.
   Example testFoo(b: bool): foo nat 2 :=
     {| fieldA := 3; fieldB := eq_refl; fieldC := b |}.
 
-  Goal forall b, fieldA (testFoo b)<|fieldA := 3|> = 3. intros. reflexivity. Qed.
+  Section DoubleBraceUpdateTest.
+    Import DoubleBraceUpdate.
 
-  (*
-  Check _<|S := 3|>.
-  Fail Check (testFoo true)<|S := 3|>.
-  Fail Goal forall (g: foo nat 2 -> nat), (testFoo true)<|g := 3|> = testFoo true.
-  *)
+    Goal forall r: foo (foo nat 4) 2,
+        (id r){{fieldA->fieldA ::= Nat.add 1;
+                fieldA->fieldC := r.(fieldC) }}.(fieldA).(fieldA) =
+          S r.(fieldA).(fieldA).
+    Proof. intros. reflexivity. Qed.
 
-  Goal forall b,
-      { testFoo b with fieldC := true; fieldC := false; fieldA ::= Nat.add 2 } =
-      { testFoo b with fieldA ::= Nat.add 1; fieldC := false; fieldA ::= Nat.add 1 }.
-  Proof.
-    intros. unfold apply_update. unfold constant. cbn. srefl.
-  Qed.
+    Goal forall b,
+        (testFoo b){{fieldC := true; fieldC := false; fieldA ::= Nat.add 2}} =
+        (testFoo b){{fieldA ::= Nat.add 1; fieldC := false; fieldA ::= Nat.add 1}}.
+    Proof. intros. reflexivity. Qed.
+  End DoubleBraceUpdateTest.
 
-  Check (fun b => {! fieldC := false } (testFoo b)).
-  Check (fun b => {! fieldC := false; fieldC := true } (testFoo b)).
-  Check (fun b => {! fieldC := false; fieldC := true; fieldA ::= Nat.add 2 } (testFoo b)).
+  Section OCamlLikeNotationsTest.
+    Import OCamlLikeNotations.
 
-  Goal forall b,
-      {! fieldC := false; fieldC := true; fieldA ::= Nat.add 2 } (testFoo b) =
-      {! fieldA ::= Nat.add 1; fieldC := true; fieldA ::= Nat.add 1 } (testFoo b).
-  Proof.
-    intros. unfold apply_update. unfold constant, compose. cbn. srefl.
-  Qed.
+    Goal forall b,
+        { testFoo b with fieldC := true; fieldC := false; fieldA ::= Nat.add 2 } =
+        { testFoo b with fieldA ::= Nat.add 1; fieldC := false; fieldA ::= Nat.add 1 }.
+    Proof.
+      intros. unfold apply_update. unfold constant. cbn. srefl.
+    Qed.
 
-  Goal forall r: foo (foo nat 4) 2,
-  { r with fieldA ::= {! fieldA ::= Nat.add 1 } }.(fieldA).(fieldA) = S r.(fieldA).(fieldA).
-  Proof. intros. reflexivity. Qed.
+    Goal forall r: foo (foo nat 4) 2,
+        { r with fieldA := { r.(fieldA) with fieldA ::= Nat.add 1 } }.(fieldA).(fieldA) =
+          S r.(fieldA).(fieldA).
+    Proof. intros. reflexivity. Qed.
 
-  Goal forall r: foo (foo nat 4) 2,
-      { r with fieldA := { r.(fieldA) with fieldA ::= Nat.add 1 } }.(fieldA).(fieldA) =
-        S r.(fieldA).(fieldA).
-  Proof. intros. reflexivity. Qed.
+    Goal forall r: foo (foo nat 4) 2,
+        { r with fieldA->fieldA ::= Nat.add 1 }.(fieldA).(fieldA) =
+          S r.(fieldA).(fieldA).
+    Proof. intros. reflexivity. Qed.
 
-  Goal forall f: foo bool 1, fieldA { f with fieldC ::= andb true } = fieldA f.
-  Proof. record.simp. intros. srefl. Qed.
+    Goal forall f: foo bool 1, fieldA { f with fieldC ::= andb true } = fieldA f.
+    Proof. record.simp. intros. srefl. Qed.
 
-  Goal forall b, {| fieldD := true; fieldE := testFoo b |}.(fieldE).(fieldC) = b.
-  Proof. record.simp. unfold testFoo. record.simp. intros. srefl. Qed.
+    Goal forall b, {| fieldD := true; fieldE := testFoo b |}.(fieldE).(fieldC) = b.
+    Proof. record.simp. unfold testFoo. record.simp. intros. srefl. Qed.
 
-  Goal forall b, { testFoo b with fieldA ::= (Nat.add 12) }
-                 = {| fieldA := 12 + 3; fieldB := eq_refl; fieldC := b |}.
-  Proof. unfold testFoo. record.simp. intros. srefl. Qed.
+    Goal forall b, { testFoo b with fieldA ::= (Nat.add 12) }
+                   = {| fieldA := 12 + 3; fieldB := eq_refl; fieldC := b |}.
+    Proof. unfold testFoo. record.simp. intros. srefl. Qed.
 
-  Goal compose (compose (Nat.add 1) (Nat.add 2)) (compose (Nat.add 3) (Nat.add 4)) 5 =
-         1 + (2 + (3 + (4 + 5))).
-  Proof. record.simp. srefl. Qed.
+    Goal compose (compose (Nat.add 1) (Nat.add 2)) (compose (Nat.add 3) (Nat.add 4)) 5 =
+           1 + (2 + (3 + (4 + 5))).
+    Proof. record.simp. srefl. Qed.
 
-  Goal forall b: bool, { {| fieldD := b; fieldE := testFoo true |}
-                         with fieldD ::= (fun old => andb old old) }
-                       = {| fieldD := andb b b; fieldE := testFoo true |}.
-  Proof. record.simp. intros. srefl. Qed.
+    Goal forall b: bool, { {| fieldD := b; fieldE := testFoo true |}
+                           with fieldD ::= (fun old => andb old old) }
+                         = {| fieldD := andb b b; fieldE := testFoo true |}.
+    Proof. record.simp. intros. srefl. Qed.
 
-  Goal forall b, { { testFoo b with fieldA := 3 } with fieldA ::= Nat.add 4 }
-                 = { testFoo b with fieldA := 4 + 3 }.
-  Proof. record.simp. intros. srefl. Qed.
+    Goal forall b, { { testFoo b with fieldA := 3 } with fieldA ::= Nat.add 4 }
+                   = { testFoo b with fieldA := 4 + 3 }.
+    Proof. record.simp. intros. srefl. Qed.
 
-  Goal forall b, fieldB { testFoo b with fieldA ::= (Nat.add 12) } = eq_refl.
-  Proof. record.simp. unfold testFoo. record.simp. intros. srefl. Qed.
+    Goal forall b, fieldB { testFoo b with fieldA ::= (Nat.add 12) } = eq_refl.
+    Proof. record.simp. unfold testFoo. record.simp. intros. srefl. Qed.
 
-  Goal forall b, fieldB (testFoo b) = eq_refl.
-  Proof. unfold testFoo. record.simp. intros. srefl. Qed.
+    Goal forall b, fieldB (testFoo b) = eq_refl.
+    Proof. unfold testFoo. record.simp. intros. srefl. Qed.
 
-  Goal forall b, fieldB (testFoo b) <> eq_refl -> False.
-  Proof. unfold testFoo. intros. record.simp. apply H. srefl. Qed.
+    Goal forall b, fieldB (testFoo b) <> eq_refl -> False.
+    Proof. unfold testFoo. intros. record.simp. apply H. srefl. Qed.
 
-  Goal forall b, fieldB (testFoo b) <> eq_refl -> False.
-  Proof. unfold testFoo. record.simp. intros. apply H. srefl. Qed.
+    Goal forall b, fieldB (testFoo b) <> eq_refl -> False.
+    Proof. unfold testFoo. record.simp. intros. apply H. srefl. Qed.
+  End OCamlLikeNotationsTest.
+
+  Section UpdaterNotationsTest.
+    Import UpdaterNotations.
+
+    Check (fun b => {! fieldC := false } (testFoo b)).
+    Check (fun b => {! fieldC := false; fieldC := true } (testFoo b)).
+    Check (fun b => {! fieldC := false; fieldC := true; fieldA ::= Nat.add 2 } (testFoo b)).
+
+    Goal forall b,
+        {! fieldC := false; fieldC := true; fieldA ::= Nat.add 2 } (testFoo b) =
+        {! fieldA ::= Nat.add 1; fieldC := true; fieldA ::= Nat.add 1 } (testFoo b).
+    Proof.
+      intros. unfold apply_update. unfold constant, compose. cbn. srefl.
+    Qed.
+
+    Import OCamlLikeNotations.
+
+    Goal forall r: foo (foo nat 4) 2,
+        { r with fieldA ::= {! fieldA ::= Nat.add 1 } }.(fieldA).(fieldA) =
+          S r.(fieldA).(fieldA). (* printed back using fieldA->fieldA notation in update *)
+    Proof. intros. reflexivity. Qed.
+  End UpdaterNotationsTest.
+
+  Section TriangleBracketNotationsTest.
+    Import TriangleBracketNotations.
+
+    Goal forall b, fieldA (testFoo b)<|fieldA := 3|> = 3. intros. reflexivity. Qed.
+
+    (*
+    Check _<|S := 3|>.
+    Fail Check (testFoo true)<|S := 3|>.
+    Fail Goal forall (g: foo nat 2 -> nat), (testFoo true)<|g := 3|> = testFoo true.
+    *)
+  End TriangleBracketNotationsTest.
 End RecordSetterTests.
