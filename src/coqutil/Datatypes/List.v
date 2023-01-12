@@ -453,6 +453,15 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     : i < length xs.
   Proof. apply (nth_error_Some xs i). congruence. Qed.
 
+  Lemma nth_error_expose: forall n (l: list A) x,
+      List.nth_error l n = Some x ->
+      l = List.firstn n l ++ x :: List.skipn (S n) l.
+  Proof.
+    induction n; intros; (destruct l; [discriminate | simpl in H]).
+    - inversion H. subst. reflexivity.
+    - specialize (IHn _ _ H). rewrite IHn at 1. reflexivity.
+  Qed.
+
   Lemma nth_nil: forall i (d: A), List.nth i [] d = d.
   Proof. intros. cbn. destruct i; reflexivity. Qed.
 
