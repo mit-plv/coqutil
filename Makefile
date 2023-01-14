@@ -1,41 +1,52 @@
-default_target: all
+default_target: notest
 
-.PHONY: clean force all install uninstall validate
+.PHONY: clean force all notest test install uninstall validate
 
 # absolute paths so that emacs compile mode knows where to find error
 # use cygpath -m because Coq on Windows cannot handle cygwin paths
-SRCDIR := $(shell cygpath -m "$$(pwd)" 2>/dev/null || pwd)/src
+ABS_ROOT_DIR := $(shell cygpath -m "$$(pwd)" 2>/dev/null || pwd)
+SRC_DIR := $(ABS_ROOT_DIR)/src
+TEST_DIR := $(ABS_ROOT_DIR)/test
 
 COQC ?= "$(COQBIN)coqc"
 COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
 
-ALL_VS ?= $(filter-out $(EXCLUDEFILES),$(shell find $(SRCDIR) -type f -name '*.v'))
-ALL_VOS := $(patsubst %.v,%.vo,$(ALL_VOS))
+SRC_VS ?= $(shell find $(SRC_DIR) -type f -name '*.v')
+TEST_VS ?= $(shell find $(TEST_DIR) -type f -name '*.v')
 
 _CoqProject:
-	printf -- '-R $(SRCDIR)/coqutil/ coqutil\n-arg -w -arg unsupported-attributes\n' > _CoqProject
+	printf -- '-R $(SRC_DIR)/coqutil/ coqutil\n-arg -w -arg unsupported-attributes\n' > _CoqProject
 
-all: Makefile.coq.all $(ALL_VS)
-	$(MAKE) -f Makefile.coq.all
+all: test
+
+notest: Makefile.coq.notest $(SRC_VS)
+	$(MAKE) -f Makefile.coq.notest
+
+test: Makefile.coq.test $(SRC_VS) $(TEST_VS)
+	$(MAKE) -f Makefile.coq.test
 
 COQ_MAKEFILE := $(COQBIN)coq_makefile -f _CoqProject -docroot coqutil $(COQMF_ARGS)
 
-Makefile.coq.all: force _CoqProject
-	@echo "Generating Makefile.coq.all"
-	@$(COQ_MAKEFILE) $(ALL_VS) -o Makefile.coq.all
+Makefile.coq.notest: force _CoqProject
+	@echo "Generating Makefile.coq.notest"
+	@$(COQ_MAKEFILE) $(SRC_VS) -o Makefile.coq.notest
+
+Makefile.coq.test: force _CoqProject
+	@echo "Generating Makefile.coq.test"
+	@$(COQ_MAKEFILE) $(SRC_VS) $(TEST_VS) -o Makefile.coq.test
 
 force:
 
-clean:: Makefile.coq.all
-	$(MAKE) -f Makefile.coq.all clean
+clean:: Makefile.coq.test
+	$(MAKE) -f Makefile.coq.test clean
 	find . -type f \( -name '*~' -o -name '*.aux' -o -name '.lia.cache' -o -name '.nia.cache' \) -delete
-	rm -f Makefile.coq.all Makefile.coq.all.conf _CoqProject
+	rm -f Makefile.coq.notest Makefile.coq.notest.conf Makefile.coq.test Makefile.coq.test.conf _CoqProject
 
 install::
-	$(MAKE) -f Makefile.coq.all install
+	$(MAKE) -f Makefile.coq.test install
 
 uninstall::
-	$(MAKE) -f Makefile.coq.all uninstall
+	$(MAKE) -f Makefile.coq.test uninstall
 
 validate::
-	$(MAKE) -f Makefile.coq.all validate
+	$(MAKE) -f Makefile.coq.test validate
