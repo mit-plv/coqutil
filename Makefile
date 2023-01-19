@@ -1,4 +1,4 @@
-default_target: notest
+default_target: test
 
 .PHONY: clean force all notest test install uninstall validate
 
@@ -42,11 +42,11 @@ clean:: Makefile.coq.test
 	find . -type f \( -name '*~' -o -name '*.aux' -o -name '.lia.cache' -o -name '.nia.cache' \) -delete
 	rm -f Makefile.coq.notest Makefile.coq.notest.conf Makefile.coq.test Makefile.coq.test.conf _CoqProject
 
-install::
-	$(MAKE) -f Makefile.coq.test install
+install:: Makefile.coq.notest
+	$(MAKE) -f Makefile.coq.notest install
 
-uninstall::
-	$(MAKE) -f Makefile.coq.test uninstall
+uninstall:: Makefile.coq.notest
+	$(MAKE) -f Makefile.coq.notest uninstall
 
-validate::
-	$(MAKE) -f Makefile.coq.test validate
+validate:: Makefile.coq.notest
+	$(MAKE) -f Makefile.coq.notest validate

@@ -65,3 +65,5 @@ jobs:
     - name: validate
       run: make TIMED=1 validate COQCHKFLAGS="-o"
       if: matrix.env.SKIP_VALIDATE == '' && github.event_name != 'pull_request'
+    - name: install
+      run: make install
