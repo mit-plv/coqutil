@@ -376,6 +376,26 @@ Module word.
         destruct (Z.eqb_spec (  signed x) (  signed y)) as [?e|?];
         try (apply unsigned_inj in e || apply signed_inj in e); congruence.
     Qed.
+
+  Lemma word_and_comm:
+     forall x y : word, word.and x y = word.and y x.
+  Proof.
+    intros. eapply unsigned_inj. rewrite 2unsigned_and_nowrap. apply Z.land_comm.
+  Qed.
+
+  Lemma word_or_comm:
+    forall x y : word, word.or x y = word.or y x.
+  Proof.
+    intros. eapply unsigned_inj. rewrite 2unsigned_or_nowrap. apply Z.lor_comm.
+  Qed.
+
+  Lemma word_xor_comm:
+    forall x y : word, word.xor x y = word.xor y x.
+  Proof.
+    intros. eapply unsigned_inj. rewrite 2unsigned_xor_nowrap. apply Z.lxor_comm.
+  Qed.
+
+
   End WithWord.
 
   Section WordConvenienceKitchenSink. Local Set Default Proof Using "All".
