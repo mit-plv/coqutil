@@ -525,6 +525,13 @@ Module record.
     if simp_hyps_bool_progress () then ()
     else Control.backtrack_tactic_failure "no simplification opportunities".
 
+  Ltac2 simp_hyp(h: ident) :=
+    let tp := Constr.type (Control.hyp h) in
+    match record.simp_term_check tp with
+    | Some tp' => change $tp' in $h
+    | None => ()
+    end.
+
   Ltac2 simp_goal_bool_progress () :=
     match simp_term_check (Control.goal ()) with
     | Some g => change $g; true
@@ -541,6 +548,25 @@ Module record.
     if progr_h || progr_g then ()
     else Control.backtrack_tactic_failure "no simplification opportunities".
 
+  (* Using
+     Tactic Notation "my_tactic_name" ident(H) := _my_tactic_name H.
+     instead might be cleaner, but that doesn't work if my_tactic_name
+     is inside a module and we want to use it as myModule.my_tactic_name *)
+  Ltac2 ltac1_to_ident(h: Ltac1.t) :=
+    match Ltac1.to_ident h with
+    | Some i => i
+    | None =>
+        match Ltac1.to_constr h with
+        | Some c =>
+            match Constr.Unsafe.kind c with
+            | Constr.Unsafe.Var i => i
+            | _ => Control.throw_invalid_argument "not an ident nor a var"
+            end
+        | None => Control.throw_invalid_argument "not an ident nor a var"
+        end
+    end.
+
+  Ltac simp_hyp := ltac2:(h |- Control.enter (fun _ => simp_hyp (ltac1_to_ident h))).
   Ltac simp_hyps := ltac2:(Control.enter simp_hyps).
   Ltac simp_goal := ltac2:(Control.enter simp_goal).
   Ltac simp := ltac2:(Control.enter simp).
