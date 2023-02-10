@@ -201,7 +201,7 @@ Module List.
     Proof.
       unfold get, from, upto.
       induction xs; intros;
-        [ destruct H; simpl in H0; lia | idtac ].
+        [ destruct H; simpl in H0; lia | ].
       simpl in H.
       rewrite Zpos_P_of_succ_nat in H.
       destruct (Z_dec i 0) as [[Hi | Hi] | Hi].
@@ -210,14 +210,14 @@ Module List.
         rewrite List.firstn_cons.
         replace (Z.to_nat i) with (S (Z.to_nat (i-1))) by lia.
         rewrite List.skipn_cons.
-        rewrite IHxs; [idtac | lia].
+        rewrite IHxs; [ | lia].
         destruct (i-1 <? 0) eqn:E; [lia | clear E].
         destruct (i <? 0) eqn:E; [lia | clear E].
         simpl. reflexivity.
       - subst. simpl. reflexivity.
     Qed.
 
-    Lemma list_split: forall (xs : list A) i,
+    Lemma split_at_index: forall (xs : list A) i,
         0 <= i <= len xs ->
         xs = xs[:i] ++ xs[i:].
     Proof.
@@ -228,7 +228,7 @@ Module List.
       rewrite upto_pastend; easy.
     Qed.
 
-    Lemma list_split3: forall {inh: inhabited A} (xs : list A) i,
+    Lemma expose_nth: forall {inh: inhabited A} (xs : list A) i,
         0 <= i < len xs ->
         xs = xs[:i] ++ [| xs[i] |] ++ xs[i+1:].
     Proof.
@@ -237,8 +237,31 @@ Module List.
       rewrite (from_canon xs (i+1)).
       rewrite merge_adjacent_slices by lia.
       rewrite <- from_canon.
-      apply list_split.
+      apply split_at_index.
       lia.
+    Qed.
+
+    Lemma len_sized_slice: forall (xs : list A) i size,
+        size >= 0 ->
+        0 <= i <= len xs ->
+        0 <= i+size <= len xs ->
+        len xs[i : i+size] = size.
+    Proof.
+      intros.
+      rewrite <- from_upto_comm by lia.
+      rewrite len_upto; auto.
+      unfold from. rewrite List.length_skipn. lia.
+    Qed.
+
+    Lemma len_indexed_slice: forall (xs : list A) i j,
+        0 <= i <= len xs ->
+        0 <= j <= len xs ->
+        i <= j ->
+        len xs[i : j] = j-i.
+    Proof.
+      intros.
+      replace j with (i + (j-i)) by lia.
+      rewrite len_sized_slice; lia.
     Qed.
 
   End WithAAndZNotations.
