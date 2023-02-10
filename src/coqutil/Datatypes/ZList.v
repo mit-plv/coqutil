@@ -195,5 +195,51 @@ Module List.
       f_equal. lia.
     Qed.
 
+    Lemma from_upto_get: forall {inh: inhabited A} (xs : list A) i,
+        0 <= i < len xs ->
+        xs[i:i+1] = [| xs[i] |].
+    Proof.
+      unfold get, from, upto.
+      induction xs; intros;
+        [ destruct H; simpl in H0; lia | idtac ].
+      simpl in H.
+      rewrite Zpos_P_of_succ_nat in H.
+      destruct (Z_dec i 0) as [[Hi | Hi] | Hi].
+      - exfalso. lia.
+      - replace (Z.to_nat (i+1)) with (S (Z.to_nat ((i-1)+1))) by lia.
+        rewrite List.firstn_cons.
+        replace (Z.to_nat i) with (S (Z.to_nat (i-1))) by lia.
+        rewrite List.skipn_cons.
+        rewrite IHxs; [idtac | lia].
+        destruct (i-1 <? 0) eqn:E; [lia | clear E].
+        destruct (i <? 0) eqn:E; [lia | clear E].
+        simpl. reflexivity.
+      - subst. simpl. reflexivity.
+    Qed.
+
+    Lemma list_split: forall (xs : list A) i,
+        0 <= i <= len xs ->
+        xs = xs[:i] ++ xs[i:].
+    Proof.
+      intros.
+      rewrite from_canon, upto_canon.
+      rewrite merge_adjacent_slices by auto.
+      rewrite from_beginning by easy.
+      rewrite upto_pastend; easy.
+    Qed.
+
+    Lemma list_split3: forall {inh: inhabited A} (xs : list A) i,
+        0 <= i < len xs ->
+        xs = xs[:i] ++ [| xs[i] |] ++ xs[i+1:].
+    Proof.
+      intros.
+      rewrite <- from_upto_get by auto.
+      rewrite (from_canon xs (i+1)).
+      rewrite merge_adjacent_slices by lia.
+      rewrite <- from_canon.
+      apply list_split.
+      lia.
+    Qed.
+
   End WithAAndZNotations.
 End List.
