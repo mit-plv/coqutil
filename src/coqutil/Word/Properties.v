@@ -38,6 +38,9 @@ Module word.
     Lemma unsigned_inj x y (H : unsigned x = unsigned y) : x = y.
     Proof. rewrite <-(of_Z_unsigned x), <-(of_Z_unsigned y). apply f_equal, H. Qed.
 
+    Lemma unsigned_inj' x y (H : x <> y) : unsigned x <> unsigned y.
+    Proof. intros. intro C. apply H. apply unsigned_inj. exact C. Qed.
+
     Lemma unsigned_of_Z_nowrap x:
       0 <= x < 2 ^ width -> word.unsigned (word.of_Z x) = x.
     Proof.
@@ -354,6 +357,9 @@ Module word.
       autorewrite with word_laws z_bitwise_signed z_bitwise_no_hyps z_bitwise_with_hyps.
       destruct (Z.ltb_spec i width); auto.
     Qed.
+
+    Lemma signed_inj' x y (H : x <> y) : signed x <> signed y.
+    Proof. intros. intro C. apply H. apply signed_inj. exact C. Qed.
 
     Lemma of_Z_signed: forall x: word, of_Z (signed x) = x.
     Proof.
