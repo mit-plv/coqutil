@@ -1,7 +1,7 @@
-From coqutil Require Import sanity.
-From coqutil Require Import HList.
-From coqutil Require List.
-From coqutil Require Import Datatypes.PropSet.
+Require Import coqutil.sanity.
+Require Import coqutil.Datatypes.HList.
+Require Import coqutil.Datatypes.List.
+Require Import coqutil.Datatypes.PropSet.
 
 Module map.
   Class map {key value} := mk {

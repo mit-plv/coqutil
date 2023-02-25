@@ -1,4 +1,5 @@
 Require Import Ltac2.Ltac2.
+Require coqutil.Ltac2Lib.List.
 
 Ltac2 foreach_hyp(f: ident -> constr -> unit) := Control.enter (fun _ =>
   List.iter (fun p => let (h, obody, tp) := p in
@@ -15,15 +16,6 @@ Ltac2 foreach_var(f: ident -> constr -> constr -> unit) := Control.enter (fun _ 
                       | None => ()
                       end)
     (Control.hyps ())).
-
-(* TODO upstream?*)
-Module List.
-  Ltac2 rec iter_until (f : 'a -> bool) (ls : 'a list) :=
-    match ls with
-    | [] => false
-    | l :: ls => if f l then true else iter_until f ls
-    end.
-End List.
 
 Ltac2 foreach_hyp_in_list_until(f: ident -> constr -> bool) :=
   List.iter_until (fun p => let (h, obody, tp) := p in
