@@ -140,6 +140,9 @@ Ltac contrad H :=
   | False => case H
   end.
 
+Ltac destr_with_one_subgoal H x :=
+  destr x; try (discriminate H || contrad H); [fwd_subst H].
+
 Ltac fwd_step :=
   match goal with
   | H: ?T |- _ => is_destructible_and T; destr_and H
@@ -160,8 +163,11 @@ Ltac fwd_step :=
     let h := head_of_app RHS in is_constructor h; rewrite E
   | H: context[match ?x with _ => _ end], E: ?x = ?RHS |- _ =>
     let h := head_of_app RHS in is_constructor h; rewrite E in H; fwd_subst H
-  | H: context[match ?x with _ => _ end] |- _ =>
-    destr x; try (discriminate H || contrad H); [fwd_subst H]
+  | H: match ?x with _ => _ end      |- _ => destr_with_one_subgoal H x
+  | H: match ?x with _ => _ end =  _ |- _ => destr_with_one_subgoal H x
+  | H: match ?x with _ => _ end <> _ |- _ => destr_with_one_subgoal H x
+  | H: _ =  match ?x with _ => _ end |- _ => destr_with_one_subgoal H x
+  | H: _ <> match ?x with _ => _ end |- _ => destr_with_one_subgoal H x
   | H: _ |- _ => autoforward with typeclass_instances in H; fwd_subst H
   | |- _ => progress fwd_rewrites
   end.
