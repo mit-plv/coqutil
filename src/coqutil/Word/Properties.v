@@ -61,6 +61,8 @@ Module word.
     Let width_nonneg_context : 0 <= width. apply width_nonneg. Qed.
     Lemma modulus_pos : 0 < 2^width. apply Z.pow_pos_nonneg; firstorder idtac. Qed.
     Let modulus_pos_section_context := modulus_pos.
+    Lemma modulus_nonzero: 2 ^ width <> 0.
+    Proof. eapply Z.pow_nonzero. 2: eapply width_nonneg. cbv. discriminate. Qed.
 
     Lemma unsigned_range x : 0 <= unsigned x < 2^width.
     Proof. rewrite <-wrap_unsigned. mia. Qed.
@@ -131,6 +133,8 @@ Module word.
     Proof. bitwise. Qed.
     Lemma unsigned_ndn_nowrap x y : unsigned (ndn x y) = Z.ldiff (unsigned x) (unsigned y).
     Proof. bitwise. Qed.
+    Lemma unsigned_not_nowrap x : unsigned (not x) = Z.lxor (Z.ones width) (unsigned x).
+    Proof. bitwise. Qed.
     Lemma unsigned_sru_nowrap x y (H:unsigned y < width) : unsigned (sru x y) = Z.shiftr (unsigned x) (unsigned y).
     Proof.
       pose proof unsigned_range y.
@@ -139,6 +143,24 @@ Module word.
       rewrite <-(wrap_unsigned x).
       Z.bitblast.
     Qed.
+
+    Ltac unsigned_nowrap :=
+      match goal with
+      | |- _ = ?op (word.unsigned ?x) (word.unsigned ?y) =>
+          pose proof (unsigned_range x);
+          pose proof (unsigned_range y)
+      end;
+      unfold wrap; apply Z.mod_small; blia.
+
+    Lemma unsigned_add_nowrap x y (H : unsigned x + unsigned y < 2 ^ width):
+      unsigned (add x y) = unsigned x + unsigned y.
+    Proof. rewrite unsigned_add. unsigned_nowrap. Qed.
+    Lemma unsigned_sub_nowrap x y (H : 0 <= unsigned x - unsigned y):
+      unsigned (sub x y) = unsigned x - unsigned y.
+    Proof. rewrite unsigned_sub. unsigned_nowrap. Qed.
+    Lemma unsigned_mul_nowrap x y (H : unsigned x * unsigned y < 2 ^ width):
+      unsigned (mul x y) = unsigned x * unsigned y.
+    Proof. rewrite unsigned_mul. unsigned_nowrap. Qed.
 
     Lemma testbit_wrap z i : Z.testbit (wrap z) i = ((i <? width) && Z.testbit z i)%bool.
     Proof. cbv [wrap]. Z.rewrite_bitwise; trivial. Qed.
