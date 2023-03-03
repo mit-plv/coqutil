@@ -63,6 +63,7 @@ Module word.
     Let modulus_pos_section_context := modulus_pos.
     Lemma modulus_nonzero: 2 ^ width <> 0.
     Proof. eapply Z.pow_nonzero. 2: eapply width_nonneg. cbv. discriminate. Qed.
+    Let modulus_nonzero_context := modulus_nonzero.
 
     Lemma unsigned_range x : 0 <= unsigned x < 2^width.
     Proof. rewrite <-wrap_unsigned. mia. Qed.
@@ -161,6 +162,16 @@ Module word.
     Lemma unsigned_mul_nowrap x y (H : unsigned x * unsigned y < 2 ^ width):
       unsigned (mul x y) = unsigned x * unsigned y.
     Proof. rewrite unsigned_mul. unsigned_nowrap. Qed.
+
+    Lemma unsigned_opp_nowrap x (H : unsigned x <> 0):
+      unsigned (opp x) = 2 ^ width - unsigned x.
+    Proof.
+      rewrite unsigned_opp. unfold wrap.
+      rewrite Z.mod_opp_l_nz; rewrite ?Z.mod_small by apply unsigned_range; auto.
+    Qed.
+    Lemma unsigned_opp_0 x (H : unsigned x = 0):
+      unsigned (opp x) = 0.
+    Proof. rewrite unsigned_opp. rewrite H. reflexivity. Qed.
 
     Lemma testbit_wrap z i : Z.testbit (wrap z) i = ((i <? width) && Z.testbit z i)%bool.
     Proof. cbv [wrap]. Z.rewrite_bitwise; trivial. Qed.
