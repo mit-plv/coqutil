@@ -36,6 +36,12 @@ Proof. cbv. congruence. Abort.
 (* Note: won't parse if we remove the space after the colon *)
 Goal forall (error: (list nat)), nil = (error: (list nat)). Abort.
 
+Definition of_Success {A} (a : result A) : if a then A else unit :=
+  match a with
+  | Success x => x
+  | _ => tt
+  end.
+
 Module result.
   Definition of_option{A: Type}(o: option A): result A :=
     match o with
