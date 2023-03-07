@@ -242,25 +242,28 @@ Module List.
     Qed.
 
     Lemma len_sized_slice: forall (xs : list A) i size,
-        size >= 0 ->
-        0 <= i <= len xs ->
-        0 <= i+size <= len xs ->
-        len xs[i : i+size] = size.
+        0 <= size /\ 0 <= i /\ i + size <= len xs ->
+        len xs[i:][:size] = size.
     Proof.
       intros.
-      rewrite <- from_upto_comm by lia.
       rewrite len_upto; auto.
       unfold from. rewrite List.length_skipn. lia.
     Qed.
 
+    Lemma len_add_sized_slice: forall (xs : list A) i size,
+        0 <= size /\ 0 <= i /\ i + size <= len xs ->
+        len xs[i : i+size] = size.
+    Proof.
+      intros. rewrite <- from_upto_comm by lia. apply len_sized_slice; lia.
+    Qed.
+
     Lemma len_indexed_slice: forall (xs : list A) i j,
-        0 <= i <= len xs ->
-        0 <= j <= len xs ->
-        i <= j ->
+        0 <= i /\ i <= j /\ j <= len xs ->
         len xs[i : j] = j-i.
     Proof.
       intros.
       replace j with (i + (j-i)) by lia.
+      rewrite <- from_upto_comm by lia.
       rewrite len_sized_slice; lia.
     Qed.
 
