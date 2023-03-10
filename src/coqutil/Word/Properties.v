@@ -451,6 +451,13 @@ Module word.
         cbv [wrap]; rewrite Zdiv.Zminus_mod_idemp_l; f_equal; blia.
     Qed.
 
+    Lemma add_sub_r_same_r x y : word.add x (word.sub y x) = y.
+    Proof.
+      eapply word.unsigned_inj.
+      rewrite <- (wrap_unsigned y),  unsigned_add, unsigned_sub; cbv [wrap].
+      rewrite <-Z.add_opp_r, Zplus_mod_idemp_r; f_equal; blia.
+    Qed.
+
     Lemma decrement_nonzero_lt x (H : word.unsigned x <> 0) :
       word.unsigned (word.sub x (word.of_Z 1)) < word.unsigned x.
     Proof.
