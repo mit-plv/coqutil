@@ -1,28 +1,51 @@
 Require Import Ltac2.Ltac2.
 Require coqutil.Ltac2Lib.List.
 
-Ltac2 foreach_hyp(f: ident -> constr -> unit) := Control.enter (fun _ =>
-  List.iter (fun p => let (h, obody, tp) := p in
-                      match obody with
-                      | Some _ => ()
-                      | None => f h tp
-                      end)
-    (Control.hyps ())).
-
-Ltac2 foreach_var(f: ident -> constr -> constr -> unit) := Control.enter (fun _ =>
-  List.iter (fun p => let (h, obody, tp) := p in
-                      match obody with
-                      | Some body => f h body tp
-                      | None => ()
-                      end)
-    (Control.hyps ())).
-
 Ltac2 foreach_hyp_in_list_until(f: ident -> constr -> bool) :=
   List.iter_until (fun p => let (h, obody, tp) := p in
                             match obody with
                             | Some _ => false
                             | None => f h tp
                             end).
+
+Ltac2 foreach_var_in_list_until(f: ident -> constr -> constr -> bool) :=
+  List.iter_until (fun p => let (h, obody, tp) := p in
+                            match obody with
+                            | Some body => f h body tp
+                            | None => false
+                            end).
+
+Ltac2 foreach_hyp_downwards(f: ident -> constr -> unit) :=
+  Control.enter (fun _ =>
+    let _ := foreach_hyp_in_list_until
+               (fun h tp => f h tp; false)
+               (Control.hyps ())
+    in ()).
+
+Ltac2 foreach_hyp_upwards(f: ident -> constr -> unit) :=
+  Control.enter (fun _ =>
+    let _ := foreach_hyp_in_list_until
+               (fun h tp => f h tp; false)
+               (List.rev (Control.hyps ()))
+    in ()).
+
+Ltac2 foreach_var_downwards(f: ident -> constr -> constr -> unit) :=
+  Control.enter (fun _ =>
+    let _ := foreach_var_in_list_until
+               (fun h b tp => f h b tp; false)
+               (Control.hyps ())
+    in ()).
+
+Ltac2 foreach_var_upwards(f: ident -> constr -> constr -> unit) :=
+  Control.enter (fun _ =>
+    let _ := foreach_var_in_list_until
+               (fun h b tp => f h b tp; false)
+               (List.rev (Control.hyps ()))
+    in ()).
+
+Ltac2 foreach_hyp f := foreach_hyp_downwards f.
+
+Ltac2 foreach_var f := foreach_var_downwards f.
 
 Ltac2 foreach_hyp_in_list_until_marker
   (marker: constr)(f: ident -> constr -> unit)
@@ -36,6 +59,24 @@ Ltac2 foreach_hyp_upto_marker(marker: constr)(f: ident -> constr -> unit) :=
 
 Ltac2 foreach_hyp_downto_marker(marker: constr)(f: ident -> constr -> unit) :=
   foreach_hyp_in_list_until_marker marker f (Control.hyps ()).
+
+Ltac _foreach_hyp_downwards :=
+  ltac2:(f1 |- foreach_hyp_downwards (fun h2 tp2 =>
+    ltac1:(f h tp |- f h tp) f1 (Ltac1.of_ident h2) (Ltac1.of_constr tp2))).
+
+Ltac _foreach_var_downwards :=
+  ltac2:(f1 |- foreach_var_downwards (fun h2 body2 tp2 =>
+    ltac1:(f h body tp |- f h body tp)
+      f1 (Ltac1.of_ident h2) (Ltac1.of_constr body2) (Ltac1.of_constr tp2))).
+
+Ltac _foreach_hyp_upwards :=
+  ltac2:(f1 |- foreach_hyp_upwards (fun h2 tp2 =>
+    ltac1:(f h tp |- f h tp) f1 (Ltac1.of_ident h2) (Ltac1.of_constr tp2))).
+
+Ltac _foreach_var_upwards :=
+  ltac2:(f1 |- foreach_var_upwards (fun h2 body2 tp2 =>
+    ltac1:(f h body tp |- f h body tp)
+      f1 (Ltac1.of_ident h2) (Ltac1.of_constr body2) (Ltac1.of_constr tp2))).
 
 Ltac _foreach_hyp :=
   ltac2:(f1 |- foreach_hyp (fun h2 tp2 =>
@@ -53,6 +94,14 @@ Ltac _foreach_hyp_upto_marker :=
 Ltac _foreach_hyp_downto_marker :=
   ltac2:(marker1 f1 |- foreach_hyp_downto_marker (Option.get (Ltac1.to_constr marker1))
     (fun h2 tp2 => ltac1:(f h tp |- f h tp) f1 (Ltac1.of_ident h2) (Ltac1.of_constr tp2))).
+
+Tactic Notation "foreach_hyp_downwards" tactic0(f) := _foreach_hyp_downwards f.
+
+Tactic Notation "foreach_var_downwards" tactic0(f) := _foreach_var_downwards f.
+
+Tactic Notation "foreach_hyp_upwards" tactic0(f) := _foreach_hyp_upwards f.
+
+Tactic Notation "foreach_var_upwards" tactic0(f) := _foreach_var_upwards f.
 
 Tactic Notation "foreach_hyp" tactic0(f) := _foreach_hyp f.
 
