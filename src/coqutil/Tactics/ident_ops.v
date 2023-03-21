@@ -1,5 +1,5 @@
 Require Import Ltac2.Ltac2. Set Default Proof Mode "Classic".
-Require coqutil.Ltac2Lib.Ident.
+Require coqutil.Ltac2Lib.Ident coqutil.Ltac2Lib.Control.
 
 Ltac _ident_starts_with := ltac2:(prefix i |-
   if Ident.starts_with (Option.get (Ltac1.to_ident prefix)) (Option.get (Ltac1.to_ident i))
@@ -19,6 +19,14 @@ Ltac _exact_append_ident := ltac2:(x y |-
 Tactic Notation "exact_append_ident" ident(x) ident(y) :=
   _exact_append_ident x y.
 
+Ltac _ident_is_above := ltac2:(i1 i2 |-
+  if Control.ident_is_above
+       (Option.get (Ltac1.to_ident i1))
+       (Option.get (Ltac1.to_ident i2))
+  then () else Control.backtrack_tactic_failure "hyp not above other hyp").
+
+Tactic Notation "ident_is_above" ident(i1) ident(i2) := _ident_is_above i1 i2.
+
 Goal True.
   assert_succeeds (idtac; ident_starts_with __a __ab).
   assert_succeeds (idtac; ident_starts_with x123 x123).
@@ -31,4 +39,10 @@ Goal forall (foo baz foobar: nat), True.
   intros.
   pose ltac:(exact_append_ident foo bar).
   assert_fails (idtac; pose ltac:(exact_append_ident foo baz)).
+Abort.
+
+Goal forall (a b c d: nat), True.
+  intros.
+  assert_succeeds (idtac; ident_is_above b c).
+  assert_fails (idtac; ident_is_above c b).
 Abort.
