@@ -1,6 +1,30 @@
 Require Import Coq.ZArith.ZArith.
 Require Import Coq.micromega.Lia.
 
+Ltac is_lia_bool p :=
+  lazymatch p with
+  | Z.eqb _ _ => idtac
+  | Z.ltb _ _ => idtac
+  | Z.leb _ _ => idtac
+  | Z.gtb _ _ => idtac
+  | Z.geb _ _ => idtac
+  | andb ?a ?b => is_lia_bool a; is_lia_bool b
+  | orb ?a ?b => is_lia_bool a; is_lia_bool b
+  | negb ?a => is_lia_bool a
+  | false => idtac
+  | true => idtac
+  (* Note: boolean operations on nat and N don't seem to be directly supported,
+     as the tests below show *)
+  | _ => fail "The term" p "is not LIA bool"
+  end.
+
+Goal forall (a b c: Z), (a < b < c)%Z -> true = (b <? c)%Z /\ (b > a)%Z.
+Proof. intros. lia. Abort.
+Goal forall (a b c: nat), (a < b < c)%nat -> (b <? c)%nat = true /\ (b > a)%nat.
+Proof. intros. Fail lia. Abort.
+Goal forall (a b c: N), (a < b < c)%N -> (b <? c)%N = true /\ (b > a)%N.
+Proof. intros. Fail lia. Abort.
+
 (* Note: running is_lia before lia is not always what you want, because lia can also
    solve contradictory goals where the conclusion is not LIA *)
 Ltac is_lia P :=
@@ -15,6 +39,7 @@ Ltac is_lia P :=
   | ?A -> ?B => is_lia A; is_lia B
   | not ?A => is_lia A
   | False => idtac
+  | @eq bool ?a ?b => is_lia_bool a; is_lia_bool b
   | @eq nat _ _ => idtac
   | (_ < _)%nat => idtac
   | (_ <= _)%nat => idtac
@@ -28,6 +53,15 @@ Ltac is_lia P :=
   | True => idtac
   | _ => fail "The term" P "is not LIA"
   end.
+
+Goal forall (a b c: Z), (a < b < c)%Z -> true = (b <? c)%Z /\ (b > a)%Z.
+Proof.
+  intros.
+  lazymatch goal with
+  | |- ?g => is_lia g
+  end.
+  lia.
+Abort.
 
 (* We have encountered cases where lia is insanely slower than omega,
    (https://github.com/coq/coq/issues/9848), but not the other way. *)
