@@ -59,7 +59,7 @@ Goal forall (a b: nat), a + a = b -> b - (a + a) = 0.
   intros.
   replace (a + a) with b by (symmetry; exact H).
   replace (b - b) with 0.
-  1: reflexivity.
+  { reflexivity. }
 Abort.
 
 (* Still missing (https://github.com/coq/coq/issues/14289):
