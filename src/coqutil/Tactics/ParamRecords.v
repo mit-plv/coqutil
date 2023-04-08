@@ -1,5 +1,5 @@
 Require Import Ltac2.Ltac2.
-Require Ltac2.Option coqutil.Ltac2Lib.Msg.
+Require Import Ltac2.Printf.
 
 Ltac2 constructor_of_record(r: Std.reference) :=
   match r with
@@ -56,10 +56,8 @@ Ltac2 simpl_param_projections () := Control.enter (fun () =>
         else if Int.equal n 3 then ltac1:( g |- simpl (g     _ _ _ _) in * ) getter
         else if Int.equal n 4 then ltac1:( g |- simpl (g   _ _ _ _ _) in * ) getter
         else if Int.equal n 5 then ltac1:( g |- simpl (g _ _ _ _ _ _) in * ) getter
-        else Control.throw (Invalid_argument (Some (Msg.concat
-                 [Message.of_string "Records with ";
-                  Message.of_int n;
-                  Message.of_string " parameters are not supported"])))
+        else Control.throw (Invalid_argument (Some
+               (fprintf "Records with %i parameters are not supported" n)))
       ) (field_names ctor)
     | None => ()
     end) (Env.expand [@parameters])).
