@@ -4,6 +4,10 @@ Require Import Ltac2.Constr.
 
 Ltac2 Type exn ::= [ Not_unfoldable ].
 
+(* Beware: Ltac2's Std.eval_cbv does not match Ltac1's `eval cbv in`!
+   https://github.com/coq/coq/issues/14303
+   Might be simplifiable, or need an update, once this issue is resolved. *)
+
 Ltac2 rec rdelta0(progrss: bool)(consts: bool)(vars: bool)(x: constr): constr :=
   let oref := match Unsafe.kind x with
               | Unsafe.Constant cst _ => if consts then Some (Std.ConstRef cst) else None
@@ -11,7 +15,11 @@ Ltac2 rec rdelta0(progrss: bool)(consts: bool)(vars: bool)(x: constr): constr :=
               | _ => None
               end in
   match oref with
-  | Some ref => rdelta0 false consts vars (Std.eval_cbv_delta [ref] x)
+  | Some ref =>
+      let x' := Std.eval_cbv_delta [ref] x in
+      if Constr.equal x x' then
+        if progrss then Control.zero Not_unfoldable else x
+      else rdelta0 false consts vars x'
   | None => if progrss then Control.zero Not_unfoldable else x
   end.
 
