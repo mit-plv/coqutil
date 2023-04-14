@@ -15,6 +15,24 @@ Ltac list_length l :=
   | cons _ ?tail => let r := list_length tail in constr:(S r)
   end.
 
+Ltac list_length_option l :=
+  lazymatch l with
+  | nil => constr:(Some O)
+  | cons _ ?t =>
+      lazymatch list_length_option t with
+      | Some ?r => constr:(Some (S r))
+      | None => constr:(@None nat)
+      end
+  | _ => constr:(@None nat)
+  end.
+
+(* only works if l1 is made up of just cons and nil *)
+Ltac prepend_concrete_list l1 l2 :=
+  lazymatch l1 with
+  | cons ?h ?t => let r := prepend_concrete_list t l2 in constr:(cons h r)
+  | nil => l2
+  end.
+
 (** Multimatch: *)
 
 Ltac index_and_element_of xs :=
