@@ -292,15 +292,25 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma list_diff_length: forall (l1 l2: list E),
-      length (list_diff eeq l1 l2) <= length l1. 
+      length (list_diff eeq l1 l2) <= length l1.
   Proof.
-    intros. induction l1. 
+    intros. induction l1.
     - cbn. rewrite list_diff_empty_l. auto.
     - cbn. rewrite list_diff_cons.
       destruct (find (eeq a) l2) eqn:F.
       + auto.
-      + cbn. blia. 
-  Qed. 
+      + cbn. blia.
+  Qed.
 
-
+  Lemma of_list_list_diff: forall (l1 l2: list E),
+      of_list (list_diff eeq l1 l2) = diff (of_list l1) (of_list l2).
+  Proof.
+    intros.
+    extensionality e. apply propositional_extensionality.
+    unfold of_list, diff, elem_of.
+    unfold iff.
+    split.
+    - apply invert_In_list_diff.
+    - intros. destr H. apply In_list_diff; assumption.
+  Qed.
 End ListSetProofs.
