@@ -14,7 +14,7 @@ Module map.
       (H:forall k' v', get m k' = Some v' -> f k = f k' -> get m k = get m k')
       : get (map_keys f m) (f k) = get m k.
     Proof.
-      revert dependent k.
+      generalize dependent k.
       cbv [map_keys].
       refine (fold_spec (fun m r => forall k,
         (forall k' v', get m k' = Some v' -> f k = f k' -> get m k = get m k') ->

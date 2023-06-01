@@ -302,7 +302,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
   Proof. induction n; auto. Qed.
   Lemma skipn_all n (xs : list A) (H : le (length xs) n) : skipn n xs = nil.
   Proof.
-    revert dependent xs; induction n, xs; cbn; auto; try blia; [].
+    generalize dependent xs; induction n, xs; cbn; auto; try blia; [].
     intros; rewrite IHn; trivial; blia.
   Qed.
 
@@ -431,7 +431,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     (H : forall i, nth_error xs i = nth_error ys i)
     : xs = ys.
   Proof.
-    revert dependent ys; induction xs; intros;
+    generalize dependent ys; induction xs; intros;
       pose proof H O as HO;
       destruct ys; cbn in HO; inversion HO; trivial.
     f_equal; eapply IHxs; exact (fun i => H (S i)).
@@ -994,7 +994,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       idx < length xs ->
       nth idx' (replace_nth idx xs v) d = v.
   Proof.
-    intros; subst; revert dependent idx; revert dependent xs.
+    intros; subst; generalize dependent idx; generalize dependent xs.
     induction xs; cbn; intros idx Hlt.
     - inversion Hlt.
     - destruct idx; simpl.
