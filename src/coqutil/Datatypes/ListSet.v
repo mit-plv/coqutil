@@ -226,7 +226,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       In x (list_diff eeq l1 l2) ->
       In x l1.
   Proof.
-    intros. revert dependent l1. induction l2; simpl; intros.
+    intros. generalize dependent l1. induction l2; simpl; intros.
     - assumption.
     - eapply IHl2 in H. unfold list_diff in H. eapply In_removeb_weaken; eassumption.
   Qed.
@@ -241,7 +241,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       NoDup l1 ->
       NoDup (list_diff eeq l1 l2).
   Proof.
-    intros. revert dependent l1. induction l2; simpl; intros.
+    intros. generalize dependent l1. induction l2; simpl; intros.
     - assumption.
     - eapply IHl2. eapply NoDup_removeb. assumption.
   Qed.
@@ -251,7 +251,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
                                    then list_diff eeq l1 l2
                                    else x :: list_diff eeq l1 l2.
   Proof.
-    intros. revert dependent l1.
+    intros. generalize dependent l1.
     induction l2; simpl; intros.
     - reflexivity.
     - destr (eeq a x).

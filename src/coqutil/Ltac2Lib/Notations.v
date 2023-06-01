@@ -65,7 +65,7 @@ Abort.
 (* Still missing (https://github.com/coq/coq/issues/14289):
    - firstorder
    - intuition (and tauto)
-   - revert dependent
+   - generalize dependent
    - unshelve
    - cycle
    - notation for Std.rename, or always use Std.rename?

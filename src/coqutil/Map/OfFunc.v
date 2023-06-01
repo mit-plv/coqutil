@@ -19,7 +19,7 @@ Module map.
     Lemma get_of_func_In k support (Hs : List.In k support)
       : get (of_func support) k = f k.
     Proof.
-      revert dependent support.
+      generalize dependent support.
       induction support.
       { firstorder idtac. }
       { destruct (key_eq_dec a k); intros [|]; subst;
@@ -32,7 +32,7 @@ Module map.
     Lemma get_of_func_Some_In k support v (H:get (of_func support) k = Some v)
       : List.In k support.
     Proof.
-      revert dependent support.
+      generalize dependent support.
       induction support.
       { cbn. rewrite get_empty. discriminate. }
       { destruct (key_eq_dec a k); subst; cbn [List.In of_func]; eauto.
