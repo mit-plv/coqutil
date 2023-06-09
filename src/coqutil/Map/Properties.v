@@ -1801,7 +1801,7 @@ Module map.
         }
         eapply (fold_spec (fun m2 res => fold f true m2 = true <-> extends m1 m2) f true).
         - unfold extends. split; intros.
-          + rewrite get_empty in *. discriminate.
+          + rewrite get_empty in H0. discriminate.
           + apply fold_empty.
         - intros. rewrite fold_put. 3: assumption. 2: exact f_comm.
           unfold f at 1. split; intros.
@@ -1809,7 +1809,7 @@ Module map.
             destr (get m1 k). 2: discriminate.
             apply proj1 in H0. specialize (H0 eq_refl).
             destr (value_eqb v0 v). 2: discriminate.
-            unfold extends in *. intros. rewrite get_put_dec in *. destr (key_eqb k x).
+            unfold extends in *. intros. rewrite get_put_dec in H2. destr (key_eqb k x).
             * inversion H2. subst. assumption.
             * eapply H0. assumption.
           + apply proj2 in H0. unfold extends in *.
