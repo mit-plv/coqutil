@@ -1771,6 +1771,81 @@ Module map.
         destr (get ksvs k0). 2: contradiction. clear. eauto.
     Qed.
 
+    Section ComputableComparison.
+      Context (value_eqb: value -> value -> bool) {value_eqb_dec: EqDecider value_eqb}.
+
+      Definition extendsb(m1: map): map -> bool :=
+        fold (fun (res: bool) k2 v2 => if res then match get m1 k2 with
+                                                   | Some v1 => value_eqb v1 v2
+                                                   | None => false
+                                                   end
+                                       else false) true.
+
+      Lemma extendsb_spec: forall m1 m2, extendsb m1 m2 = true <-> extends m1 m2.
+      Proof.
+        unfold extendsb. intro m1.
+        lazymatch goal with
+        | |- forall _, fold ?F _ _ = _ <-> _ => set (f := F)
+        end.
+        assert (f_comm: forall r0 k1 v1 k2 v2,
+                   f (f r0 k1 v1) k2 v2 = f (f r0 k2 v2) k1 v1). {
+          subst f. intros. cbv beta.
+          repeat match goal with
+                 | |- context[match ?x with _ => _ end] =>
+                     lazymatch x with
+                     | context[match _ with _ => _ end] => fail
+                     | _ => destr x
+                     end
+                 end;
+            reflexivity.
+        }
+        eapply (fold_spec (fun m2 res => fold f true m2 = true <-> extends m1 m2) f true).
+        - unfold extends. split; intros.
+          + rewrite get_empty in *. discriminate.
+          + apply fold_empty.
+        - intros. rewrite fold_put. 3: assumption. 2: exact f_comm.
+          unfold f at 1. split; intros.
+          + destr (fold f true m). 2: discriminate.
+            destr (get m1 k). 2: discriminate.
+            apply proj1 in H0. specialize (H0 eq_refl).
+            destr (value_eqb v0 v). 2: discriminate.
+            unfold extends in *. intros. rewrite get_put_dec in *. destr (key_eqb k x).
+            * inversion H2. subst. assumption.
+            * eapply H0. assumption.
+          + apply proj2 in H0. unfold extends in *.
+            rewrite H0.
+            2: {
+              intros. eapply H1. rewrite get_put_dec. destr (key_eqb k x). 2: assumption.
+              exfalso. congruence.
+            }
+            erewrite H1.
+            2: {
+              rewrite map.get_put_same. reflexivity.
+            }
+            destr (value_eqb v v). 1: reflexivity. exfalso; congruence.
+      Qed.
+
+      Definition eqb(m1 m2: map): bool := andb (extendsb m1 m2) (extendsb m2 m1).
+
+      Lemma eqb_spec m1 m2: BoolSpec (m1 = m2) (m1 <> m2) (eqb m1 m2).
+      Proof.
+        destr (eqb m1 m2); unfold eqb.
+        - destruct E as [E21 E12].
+          eapply extendsb_spec in E12. eapply extendsb_spec in E21.
+          constructor. eapply map_ext. unfold extends in *. intros.
+          destr (get m1 k).
+          + specialize E12 with (1 := E). congruence.
+          + destr (get m2 k). 2: reflexivity.
+            specialize E21 with (1 := E0).
+            exfalso. congruence.
+        - constructor. intro C. subst m2.
+          assert (extends m1 m1) as R. {
+            intros k v G. exact G.
+          }
+          eapply extendsb_spec in R. rewrite R in E. destruct E; congruence.
+      Qed.
+    End ComputableComparison.
+
     Lemma not_in_of_list_zip_to_get_None (ks: list key) (vs: list value) (ksvs: map) (k: key):
         map.of_list_zip ks vs = Some ksvs ->
         ~ List.In k ks ->
