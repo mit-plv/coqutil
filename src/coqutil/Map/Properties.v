@@ -1585,32 +1585,6 @@ Module map.
         apply putmany_assoc.
     Qed.
 
-    (* This is a helper function used to explain the behavior of putmany_of_list_zip.
-       Not recommended for actual use. *)
-    Fixpoint zipped_lookup (keys: list key) (values: list value) (k: key) : option value :=
-      match keys, values with
-      | nil, nil => None
-      | cons k0 keys0, cons v0 values0 =>
-        match zipped_lookup keys0 values0 k with
-        | Some v => Some v
-        | None => if key_eqb k0 k then Some v0 else None
-        end
-      | _, _ => None
-      end.
-
-    Lemma zipped_lookup_None_notin: forall (ks: list key) (vs: list value) k,
-        zipped_lookup ks vs k = None ->
-        List.length ks = List.length vs ->
-        ~ List.In k ks.
-    Proof.
-      induction ks as [|k ks]; cbn; intros; destruct vs as [|v vs]; try discriminate.
-      - auto.
-      - cbn in *. inversion H0.
-        destr (zipped_lookup ks vs k0). 1: discriminate.
-        destr (key_eqb k k0). 1: discriminate.
-        intro C. destruct C as [C | C]. 1: congruence. unfold not in IHks. eauto.
-    Qed.
-
     Definition remove_many (m : map) (ks : list key) : map :=
       List.fold_right (fun k res => map.remove res k) m ks.
 
@@ -1646,16 +1620,6 @@ Module map.
       destr (key_eqb k k'). 2: reflexivity. destr (List.find (key_eqb k') ks); reflexivity.
     Qed.
 
-    Lemma zipped_lookup_Some_in : forall (ks: list key) (vs: list value) (k: key) (v: value),
-        zipped_lookup ks vs k = Some v ->
-        List.In k ks.
-    Proof.
-      induction ks as [|k0 ks]; cbn; intros; destruct vs as [|v0 vs]; try discriminate.
-      destr (key_eqb k0 k). 1: auto.
-      right. destr (zipped_lookup ks vs k). 2: discriminate. apply Option.eq_of_eq_Some in H.
-      subst. eauto.
-    Qed.
-
     Lemma get_remove_many_Some_notin :
         forall (ks: list key) (k: key) v (m: map),
           map.get (remove_many m ks) k = Some v ->
@@ -1665,6 +1629,42 @@ Module map.
       - auto.
       - rewrite get_remove_dec in H. destr (key_eqb a k). 1: discriminate.
         intro C. destruct C. 1: congruence. unfold not in IHks. eauto.
+    Qed.
+
+    (* This is a helper function used to explain the behavior of putmany_of_list_zip.
+       Not recommended for actual use. *)
+    Fixpoint zipped_lookup (keys: list key) (values: list value) (k: key) : option value :=
+      match keys, values with
+      | nil, nil => None
+      | cons k0 keys0, cons v0 values0 =>
+        match zipped_lookup keys0 values0 k with
+        | Some v => Some v
+        | None => if key_eqb k0 k then Some v0 else None
+        end
+      | _, _ => None
+      end.
+
+    Lemma zipped_lookup_None_notin: forall (ks: list key) (vs: list value) k,
+        zipped_lookup ks vs k = None ->
+        List.length ks = List.length vs ->
+        ~ List.In k ks.
+    Proof.
+      induction ks as [|k ks]; cbn; intros; destruct vs as [|v vs]; try discriminate.
+      - auto.
+      - cbn in *. inversion H0.
+        destr (zipped_lookup ks vs k0). 1: discriminate.
+        destr (key_eqb k k0). 1: discriminate.
+        intro C. destruct C as [C | C]. 1: congruence. unfold not in IHks. eauto.
+    Qed.
+
+    Lemma zipped_lookup_Some_in : forall (ks: list key) (vs: list value) (k: key) (v: value),
+        zipped_lookup ks vs k = Some v ->
+        List.In k ks.
+    Proof.
+      induction ks as [|k0 ks]; cbn; intros; destruct vs as [|v0 vs]; try discriminate.
+      destr (key_eqb k0 k). 1: auto.
+      right. destr (zipped_lookup ks vs k). 2: discriminate. apply Option.eq_of_eq_Some in H.
+      subst. eauto.
     Qed.
 
     (* This lemma is useful as a helper lemma for other lemmas because it completely
