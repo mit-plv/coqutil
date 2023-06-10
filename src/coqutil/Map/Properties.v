@@ -2420,3 +2420,6 @@ Module map.
 
   End WithTwoMaps.
 End map.
+
+#[global] Hint Opaque map.eqb : typeclass_instances.
+#[export] Existing Instance map.eqb_spec.
