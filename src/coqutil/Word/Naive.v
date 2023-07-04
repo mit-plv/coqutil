@@ -14,13 +14,13 @@ Section WithWidth. Local Set Default Proof Using "All".
   Context {width : Z}.
   Let wrap_value z := z mod (2^width).
   Let swrap_value z := wrap_value (z + 2 ^ (width - 1)) - 2 ^ (width - 1).
-  Record rep := mk { unsigned : Z ; _unsigned_in_range : wrap_value unsigned = unsigned }.
+  Record rep : Set := mk { unsigned : Z ; _unsigned_in_range : wrap_value unsigned = unsigned }.
 
   Definition wrap (z:Z) : rep :=
     mk (wrap_value z) (minimize_eq_proof Z.eq_dec (Zdiv.Zmod_mod z _)).
   Definition signed w := swrap_value (unsigned w).
 
-  Record special_cases := {
+  Record special_cases : Set := {
     div_by_zero: Z -> Z;
     mod_by_zero: Z -> Z;
     adjust_too_big_shift_amount: Z -> Z;
