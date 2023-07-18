@@ -27,6 +27,16 @@ Ltac _ident_is_above := ltac2:(i1 i2 |-
 
 Tactic Notation "ident_is_above" ident(i1) ident(i2) := _ident_is_above i1 i2.
 
+(* we bake in Fresh.in_goal because Ltac1's fresh called inside a continuation
+   will also avoid the ident passed to the continuation, which might be more safe
+   than desired and result in name0 instead of just name *)
+Ltac _with_unprimed_fresh := ltac2:(i k |-
+  let upf := Fresh.in_goal (Ident.unprime (Option.get (Ltac1.to_ident i))) in
+  ltac1:(k res |- k res) k (Ltac1.of_ident upf)).
+
+Tactic Notation "with_unprimed_fresh" ident(i) tactic0(k) :=
+  _with_unprimed_fresh i k.
+
 Goal True.
   assert_succeeds (idtac; ident_starts_with __a __ab).
   assert_succeeds (idtac; ident_starts_with x123 x123).
@@ -46,3 +56,31 @@ Goal forall (a b c d: nat), True.
   assert_succeeds (idtac; ident_is_above b c).
   assert_fails (idtac; ident_is_above c b).
 Abort.
+
+Goal forall (myname: nat), (exists myname', S myname' = myname) -> myname <> O.
+Proof.
+  intros.
+  lazymatch type of H with
+  | exists v, _ => with_unprimed_fresh v (fun f => destruct H as [f H])
+  end.
+  subst myname. congruence.
+Succeed Qed. Abort.
+
+Goal forall (b: nat), (exists myname', S myname' = b) -> b <> O.
+Proof.
+  intros.
+  lazymatch type of H with
+  | exists v, _ => with_unprimed_fresh v (fun f => destruct H as [f H])
+  end.
+  subst b. congruence.
+Succeed Qed. Abort.
+
+Goal forall (b: nat), (exists noprime, S noprime = b) -> b <> O.
+Proof.
+  intros.
+  lazymatch type of H with
+  | exists v, _ => with_unprimed_fresh v (fun f => destruct H as [f H])
+  end.
+  pose noprime as ok. (* note: not unnecessarily named noprime0 *)
+  congruence.
+Succeed Qed. Abort.

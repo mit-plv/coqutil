@@ -38,3 +38,22 @@ Ltac2 starts_with(prefix: string)(s: string) :=
               then loop (Int.add i 1)
               else false in
   loop 0.
+
+Ltac2 of_list(l: char list): string :=
+  let buf := String.make (List.length l) (Char.of_int 0) in
+  let rec loop(i: int)(chars: char list): unit :=
+    match chars with
+    | c :: cs => String.set buf i c; loop (Int.add i 1) cs
+    | [] => ()
+    end in
+  loop 0 l;
+  buf.
+
+Ltac2 to_list(s: string): char list :=
+  let l := String.length s in
+  let rec loop(i: int): char list :=
+    if Int.equal i l then [] else String.get s i :: loop (Int.add i 1) in
+  loop 0.
+
+Ltac2 filter(f: char -> bool)(s: string): string :=
+  of_list (List.filter f (to_list s)).
