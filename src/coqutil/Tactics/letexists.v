@@ -1,5 +1,9 @@
+(* This hook can be overridden with ::= *)
+Ltac expose_exists_for_letexists :=
+  hnf. (* NOTE: jgross says hnf is fragile but idk how else to get ?P *)
+
 Ltac letexists_ v :=
-  hnf; (* NOTE: jgross says hnf is fragile but idk how else to get ?P *)
+  expose_exists_for_letexists;
   lazymatch goal with
   | |- exists x, ?P =>
     let x' := fresh x in
@@ -11,7 +15,7 @@ Tactic Notation "letexists" :=
   letexists _.
 
 Ltac letexists_as v x' :=
-  hnf; (* NOTE: jgross says hnf is fragile but idk how else to get ?P *)
+  expose_exists_for_letexists;
   lazymatch goal with
   | |- exists x, ?P =>
     refine (let x' := v in ex_intro (fun x => P) x' _)
