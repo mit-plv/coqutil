@@ -929,7 +929,7 @@ Module map.
       unfold map.getmany_of_tuple, HList.tuple.option_all, HList.tuple.map.
       match goal with
       | |- match ?e with _ => _ end = _ =>
-        replace e with (Some (PrimitivePair.pair._1 vs)) by exact G1
+        replace e with (Some (PrimitivePair.pair._1 vs)) by (symmetry;exact G1)
       end.
       match goal with
       | |- match ?e with _ => _ end = _ =>
@@ -937,7 +937,7 @@ Module map.
       end.
       match goal with
       | |- match ?e with _ => _ end = _ =>
-        replace e with (Some (PrimitivePair.pair._2 vs)) by exact G2
+        replace e with (Some (PrimitivePair.pair._2 vs)) by (symmetry;exact G2)
       end.
       reflexivity.
     Qed.
