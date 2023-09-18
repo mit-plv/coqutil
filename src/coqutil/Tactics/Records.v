@@ -65,7 +65,7 @@ Ltac2 unfold_if_getter(g: constr) :=
   | Constr.Unsafe.Constant r _ =>
     let getter_lambda := Std.eval_unfold [(Std.ConstRef r, Std.AllOccurrences)] h in
     match Constr.Unsafe.kind (strip_lambdas getter_lambda) with
-    | Constr.Unsafe.Proj _ v =>
+    | Constr.Unsafe.Proj _ _ v =>
       match Constr.Unsafe.kind v with
       | Constr.Unsafe.Rel i => if Int.equal i 1 then () else sfail "not a getter because not proj from Rel 1"
       | _ => sfail "not a getter because not proj from Rel"
