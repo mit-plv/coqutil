@@ -362,7 +362,7 @@ Module record.
 
   (* In-place-apply f to all elements of array a for which it returns Some,
      and return true iff at least one returned Some *)
-  Ltac2 rec transform_array(f: 't -> 'u option)(i: int)(a: 't array) :=
+  Ltac2 rec transform_array(f: 't -> 't option)(i: int)(a: 't array) :=
     if Int.ge i (Array.length a) then false
     else match f (Array.get a i) with
          | Some v => Array.set a i v; transform_array f (Int.add i 1) a; true
