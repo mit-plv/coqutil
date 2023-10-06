@@ -129,6 +129,7 @@ Ltac apply_lambda_to_destructed_tuple tupName lam :=
   | (fun _ _ _ => _) =>
       lazymatch lam with
       | (fun y: ?T => @?body y) =>
+          let p := fresh "p" in
           constr:(match tupName with
                   | (p, y) => ltac:(let innerlam := eval cbv beta in (body y) in
                                     let r := apply_lambda_to_destructed_tuple p innerlam in
@@ -170,6 +171,7 @@ Ltac pattern_tuple_in_term e t :=
   let f := pattern_tuple_in_term_as_separate_args e t in
   let f' := reverse_fun_args f in
   let tTup := type of t in
+  let p := fresh "p" in
   constr:((fun p: tTup =>
              ltac:(let res := apply_lambda_to_destructed_tuple p f' in exact res)) t).
 
