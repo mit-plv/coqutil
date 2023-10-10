@@ -176,23 +176,61 @@ Module List.
       all: lia.
     Qed.
 
+    (* Note: the symmetric version of this lemma, ie
+         forall (i j: Z) (l: list A), i <= j -> l[:i][:j] = l[:i]
+       is a special case of List.upto_pastend *)
+    Lemma upto_upto_subsume: forall (i j: Z) (l: list A), j <= i -> l[:i][:j] = l[:j].
+    Proof. unfold List.upto. intros. rewrite List.firstn_firstn. f_equal. lia. Qed.
+
+    Lemma upto_app: forall (i: Z) (l1 l2 : list A),
+        List.upto i (l1 ++ l2) = List.upto i l1 ++ List.upto (i - len l1) l2.
+    Proof. unfold List.upto. intros. rewrite List.firstn_app. f_equal. f_equal. lia. Qed.
+
+    (* 3 specializations of upto_app: *)
     Lemma upto_app_discard_r: forall (xs ys: list A) i,
         i <= len xs ->
         (xs ++ ys)[:i] = xs[:i].
     Proof.
-      unfold upto. intros. rewrite List.firstn_app.
-      replace (Z.to_nat i - length xs)%nat with O by lia.
-      change (List.firstn 0 ys) with (@nil A).
+      intros. rewrite upto_app. rewrite (upto_beginning ys) by lia.
       apply List.app_nil_r.
     Qed.
+    Lemma upto_app_pushdown_r: forall (xs ys: list A) i,
+        len xs <= i ->
+        (xs ++ ys)[:i] = xs ++ ys[: i - len xs].
+    Proof.
+      intros. rewrite upto_app. rewrite upto_pastend by assumption. reflexivity.
+    Qed.
+    Lemma upto_app_eq_l: forall (xs ys: list A) i,
+        len xs = i ->
+        (xs ++ ys)[:i] = xs.
+    Proof.
+      intros. rewrite upto_app. rewrite upto_pastend by lia.
+      rewrite (upto_beginning ys) by lia. apply List.app_nil_r.
+    Qed.
 
+    Lemma from_app: forall (i: Z) (l1 l2 : list A),
+        List.from i (l1 ++ l2) = List.from i l1 ++ List.from (i - len l1) l2.
+    Proof. unfold List.from. intros. rewrite List.skipn_app. f_equal. f_equal. lia. Qed.
+
+    (* 3 specializations of from_app: *)
     Lemma from_app_discard_l: forall (xs ys: list A) i,
         len xs <= i ->
         (xs ++ ys)[i:] = ys[i - len xs :].
     Proof.
-      unfold from. intros. rewrite List.skipn_app.
-      rewrite List.skipn_all2 by lia. simpl.
-      f_equal. lia.
+      intros. rewrite from_app. rewrite from_pastend by assumption. reflexivity.
+    Qed.
+    Lemma from_app_pushdown_l: forall (xs ys: list A) i,
+        i <= len xs ->
+        (xs ++ ys)[i:] = xs[i:] ++ ys.
+    Proof.
+      intros. rewrite from_app. rewrite (from_beginning ys) by lia. reflexivity.
+    Qed.
+    Lemma from_app_eq_r: forall (xs ys: list A) i,
+        len xs = i ->
+        (xs ++ ys)[i:] = ys.
+    Proof.
+      intros. rewrite from_app. rewrite from_pastend by lia.
+      rewrite (from_beginning ys) by lia. reflexivity.
     Qed.
 
     Lemma from_upto_get: forall {inh: inhabited A} (xs : list A) i,
