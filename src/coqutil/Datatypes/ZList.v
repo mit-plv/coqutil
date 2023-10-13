@@ -256,14 +256,9 @@ Module List.
     Qed.
 
     Lemma split_at_index: forall (xs : list A) i,
-        0 <= i <= len xs ->
         xs = xs[:i] ++ xs[i:].
     Proof.
-      intros.
-      rewrite from_canon, upto_canon.
-      rewrite merge_adjacent_slices by auto.
-      rewrite from_beginning by easy.
-      rewrite upto_pastend; easy.
+      intros. unfold List.from, List.upto. symmetry. apply List.firstn_skipn.
     Qed.
 
     Lemma expose_nth: forall {inh: inhabited A} (xs : list A) i,
@@ -276,7 +271,6 @@ Module List.
       rewrite merge_adjacent_slices by lia.
       rewrite <- from_canon.
       apply split_at_index.
-      lia.
     Qed.
 
     Lemma len_sized_slice: forall (xs : list A) i size,
