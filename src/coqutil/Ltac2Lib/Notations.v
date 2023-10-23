@@ -44,13 +44,13 @@ Goal True.
   pose proof (plus_n_Sm 3 1) as Q.
 Abort.
 
-Ltac2 replace0(old: constr)(new: constr)
+Ltac2 replace0(old: unit -> constr)(new: unit -> constr)
               (cl: Std.clause option)(tac: (unit -> unit) option) :=
-  Std.replace old new (default_on_concl cl) tac.
+  Control.enter (fun _ => Std.replace (old ()) (new ()) (default_on_concl cl) tac).
 
 Ltac2 Notation "replace"
-  old(constr)
-  "with" new(constr)
+  old(thunk(constr))
+  "with" new(thunk(constr))
   cl(opt(clause))
   tac(opt(seq("by", thunk(tactic)))) :=
   replace0 old new cl tac.
@@ -60,6 +60,14 @@ Goal forall (a b: nat), a + a = b -> b - (a + a) = 0.
   replace (a + a) with b by (symmetry; exact H).
   replace (b - b) with 0.
   { reflexivity. }
+Abort.
+
+Goal forall (a b f1 f2: nat),
+    b = a + a ->
+    f1 * (a + a) = f1 * b /\
+    (a + a) * f2 = b * f2.
+Proof.
+  intros; split; replace (a + a) with b by assumption; reflexivity.
 Abort.
 
 (* Still missing (https://github.com/coq/coq/issues/14289):
