@@ -35,6 +35,10 @@ Ltac2 pose_proof_as(pf: constr)(id: ident): unit :=
   ltac1:(p i |- pose proof p as i) (Ltac1.of_constr pf) (Ltac1.of_ident id).
 Ltac2 Notation "pose" "proof" pf(constr) "as" id(ident) := pose_proof_as pf id.
 
+Ltac2 Notation "rename" ids(list1(seq(ident, "into", ident), ",")) := Std.rename ids.
+
+Ltac2 Notation "clearbody" ids(list1(ident)) := Std.clearbody ids.
+
 Goal True.
   epose proof (@eq_refl nat _).
   epose proof (plus_n_Sm _ 1) as P.
@@ -70,11 +74,19 @@ Proof.
   intros; split; replace (a + a) with b by assumption; reflexivity.
 Abort.
 
+Goal forall (a b c: nat), a = b /\ b = c.
+  intros; split; rename a into aa, b into c, c into b.
+Abort.
+
+Goal forall b, let x := 1 in let y := b in x + y = 4 /\ x - y = 2.
+  intros; split; clearbody x y.
+Abort.
+
 (* Still missing (https://github.com/coq/coq/issues/14289):
    - firstorder
    - intuition (and tauto)
    - generalize dependent
    - unshelve
    - cycle
-   - notation for Std.rename, or always use Std.rename?
+   - notation for Std.transitivity
 *)
