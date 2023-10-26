@@ -1,4 +1,5 @@
 Require Import Ltac2.Ltac2.
+Require coqutil.Ltac2Lib.List.
 
 Ltac2 fold_hyps_downwards(f: 'a -> ident -> constr -> 'a)(start: 'a) :=
   List.fold_left (fun acc p => let (h, obody, tp) := p in
@@ -6,7 +7,7 @@ Ltac2 fold_hyps_downwards(f: 'a -> ident -> constr -> 'a)(start: 'a) :=
                                | Some _ => acc
                                | None => f acc h tp
                                end)
-    (Control.hyps ()) start.
+    start (Control.hyps ()).
 
 Ltac2 fold_hyps_upwards(f: 'a -> ident -> constr -> 'a)(start: 'a) :=
   List.fold_right (fun p acc => let (h, obody, tp) := p in
@@ -14,7 +15,7 @@ Ltac2 fold_hyps_upwards(f: 'a -> ident -> constr -> 'a)(start: 'a) :=
                                 | Some _ => acc
                                 | None => f acc h tp
                                 end)
-    start (Control.hyps ()).
+    (Control.hyps ()) start.
 
 Ltac2 rec fold_left_cont(f: 'a -> 'e -> ('a -> unit) -> unit)(l: 'e list)(start: 'a)
   (k: 'a -> unit) :=
