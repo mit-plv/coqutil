@@ -3,45 +3,52 @@
    with one n-tuple argument.
    Useful for lemmas that take predicates with a variable number of ghost vars. *)
 
-Ltac return_type_of_arrow t :=
-  lazymatch t with
-  | _ -> ?b => return_type_of_arrow b
-  | _ => t
+Ltac peel_off_arrow_lhss n t :=
+  lazymatch n with
+  | O => t
+  | S ?m => lazymatch t with
+            | _ -> ?b => peel_off_arrow_lhss m b
+            | _ => fail "expected arrow, got" t
+            end
   end.
 
-Ltac reverse_arg_arrows_rec t acc :=
-  lazymatch t with
-  | ?a -> ?b =>
-      lazymatch t with
-      | forall x, _ =>
-          (* if the argument has a name, x will be bound to that name,
-             and used to name the argument in the result, otherwise,
-             x will not get bound by this lazymatch, and a fresh x
-             will be the name in the result *)
-          reverse_arg_arrows_rec b (forall x: a, acc)
-      end
+Ltac reverse_arg_arrows_rec n t acc :=
+  lazymatch n with
+  | O => acc
+  | S ?m => lazymatch t with
+            | ?a -> ?b =>
+                lazymatch t with
+                | forall x, _ =>
+                    (* if the argument has a name, x will be bound to that name,
+                       and used to name the argument in the result, otherwise,
+                       x will not get bound by this lazymatch, and a fresh x
+                       will be the name in the result *)
+                    reverse_arg_arrows_rec m b (forall x: a, acc)
+                end
+            | _ => fail "expected arrow, got" t
+            end
   | _ => acc
   end.
 
-Ltac reverse_arg_arrows t :=
-  let r := return_type_of_arrow t in
-  reverse_arg_arrows_rec t r.
+Ltac reverse_arg_arrows n t :=
+  let r := peel_off_arrow_lhss n t in
+  reverse_arg_arrows_rec n t r.
 
-Goal forall (T1 T2 T3: Type), True.
+Goal forall (T1 T2 T3 mem: Type), True.
   intros.
-  let t := constr:(T1 -> T2 -> T3 -> Prop) in
-  let r := reverse_arg_arrows t in
+  let t := constr:(T1 -> T2 -> T3 -> mem -> Prop) in
+  let r := reverse_arg_arrows 3 t in
   lazymatch r with
-  | T3 -> T2 -> T1 -> Prop => idtac
+  | T3 -> T2 -> T1 -> mem -> Prop => idtac
   end.
 Abort.
 
-Ltac apply_loop f :=
-  lazymatch type of f with
-  | _ -> _ => lazymatch goal with
-              | x: _ |- _ => move x at top; apply_loop (f x)
-              end
-  | _ => exact f
+Ltac apply_loop n f :=
+  lazymatch n with
+  | O => exact f
+  | S ?m => lazymatch goal with
+            | x: _ |- _ => move x at top; apply_loop m (f x)
+            end
   end.
 
 Ltac name_preserving_intro :=
@@ -50,36 +57,46 @@ Ltac name_preserving_intro :=
   | |- forall _, _ => intro
   end.
 
-Goal forall (T1 T2 T3: Type) (x: T1) (y: T2) (z: T3) (f: T1 -> T2 -> T3 -> Prop), True.
+(* given a nat n, runs (tac 0; tac 1; ..; tac (n-1)) *)
+Ltac doN n tac :=
+  lazymatch n with
+  | O => idtac
+  | S ?m => doN m tac; tac m
+  end.
+
+Goal forall (T1 T2 T3 mem: Type) (x: T1) (y: T2) (z: T3)
+            (f: T1 -> T2 -> T3 -> mem -> Prop), True.
   intros.
-  unshelve epose (_: forall (z: T3), T2 -> T1 -> Prop) as rev. {
-    repeat name_preserving_intro.
-    apply_loop f.
+  unshelve epose (_: forall (z: T3), T2 -> T1 -> mem -> Prop) as rev. {
+    doN 3 ltac:(fun _ => name_preserving_intro).
+    apply_loop 3 f.
   }
 Abort.
 
-Goal forall (T1 T2 T3: Type) (f: T1 -> T2 -> T3 -> Prop), True.
+Goal forall (T1 T2 T3 mem: Type) (f: T1 -> T2 -> T3 -> mem -> Prop), True.
   intros.
-  unshelve epose (_: T3 -> T2 -> T1 -> Prop) as rev. {
-    repeat name_preserving_intro.
-    apply_loop f.
+  unshelve epose (_: T3 -> T2 -> T1 -> mem -> Prop) as rev. {
+    doN 3 ltac:(fun _ => name_preserving_intro).
+    apply_loop 3 f.
   }
 Abort.
 
-Ltac reverse_fun_args f :=
+Ltac reverse_fun_args n f :=
   let t := type of f in
-  let tR := reverse_arg_arrows t in
-  let r := constr:(ltac:(repeat name_preserving_intro; apply_loop f) : tR) in
+  let tR := reverse_arg_arrows n t in
+  let r := constr:(ltac:(doN n ltac:(fun _ => name_preserving_intro); apply_loop n f) : tR) in
   let res := eval cbv beta in r in (* remove cast and beta redex *)
   res.
 
-Goal forall (T1 T2 T3: Type) (f: T1 -> T2 -> T3 -> Prop), True.
+Goal forall (T1 T2 T3 mem: Type) (f: T1 -> T2 -> T3 -> mem -> Prop), True.
   intros.
-  let f' := reverse_fun_args f in pose f'. (* automatic x names *)
-  let r := reverse_fun_args (fun a b c: nat => a + b + c) in pose r. (* original names *)
+  (* automatic x names: *)
+  let f' := reverse_fun_args 3 f in pose f'.
+  (* original names *)
+  let r := reverse_fun_args 3 (fun (a b c: nat) (m: mem) => a + b = c /\ m = m) in pose r.
   assert (forall x y z: nat, True). {
     intros.
-    let r := reverse_fun_args (fun x y z: nat => x + x + y + y + z + z) in pose r.
+    let r := reverse_fun_args 3 (fun x y z: nat => x + x + y + y + z + z) in pose r.
     (* original names which shadow existing names -- an intended feature! *)
 Abort.
 
@@ -125,8 +142,9 @@ Abort.
 
 (* outermost lambda binder becomes outermost let binder *)
 Ltac apply_lambda_to_destructed_tuple tupName lam :=
-  lazymatch lam with
-  | (fun _ _ _ => _) =>
+  let t := type of tupName in
+  lazymatch t with
+  | prod (prod _ _) _ =>
       lazymatch lam with
       | (fun y: ?T => @?body y) =>
           let p := fresh "p" in
@@ -136,7 +154,7 @@ Ltac apply_lambda_to_destructed_tuple tupName lam :=
                                     exact r)
                   end)
       end
-  | (fun _ _ => _) =>
+  | prod _ _ =>
       lazymatch lam with
       | (fun (x: ?T) (y: ?U) => @?body x y) =>
           constr:(match tupName with
@@ -145,9 +163,10 @@ Ltac apply_lambda_to_destructed_tuple tupName lam :=
       end
   end.
 
-Goal forall p: nat * nat * nat * nat, True.
+Goal forall (mem: Type) (p: nat * nat * nat * nat), True.
   intros.
-  let r := apply_lambda_to_destructed_tuple p (fun a b c d: nat => a + b + c = d) in
+  let r := apply_lambda_to_destructed_tuple p
+             (fun (a b c d: nat) (m: mem) => a + b + c = d /\ m = m) in
   pose r.
 Abort.
 
@@ -158,7 +177,7 @@ Proof.
   let t := constr:((d, a, b + c)) in
   let f := pattern_tuple_in_term_as_separate_args tp t in
   pose f;
-  let f' := reverse_fun_args f in
+  let f' := reverse_fun_args 3 f in
   pose f';
   let tTup := type of t in
   let r := constr:(fun p: tTup =>
@@ -167,9 +186,16 @@ Proof.
   change (r t) in H.
 Abort.
 
+Ltac tuple_size tup :=
+  lazymatch tup with
+  | pair ?p _ => let r := tuple_size p in constr:(S r)
+  | _ => constr:(S O)
+  end.
+
 Ltac pattern_tuple_in_term e t :=
   let f := pattern_tuple_in_term_as_separate_args e t in
-  let f' := reverse_fun_args f in
+  let n := tuple_size t in
+  let f' := reverse_fun_args n f in
   let tTup := type of t in
   let p := fresh "p" in
   constr:((fun p: tTup =>
@@ -184,6 +210,13 @@ Ltac pattern_tuple_in_goal t :=
   lazymatch goal with
   | |- ?g => let g' := pattern_tuple_in_term g t in change g'
   end.
+
+Goal forall (s1 s2: list nat), True.
+Proof.
+  intros.
+  let r := pattern_tuple_in_term (fun (foo: nat) => app s1 (app s2 (cons foo nil)))
+             (s1, s2) in pose r.
+Abort.
 
 Goal forall (l l': list nat) (n: nat),
     l = l' ->
