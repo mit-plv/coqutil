@@ -31,9 +31,11 @@ Ltac2 append (s1 : string) (s2 : string) :=
   concat [s1; s2].
 
 Ltac2 starts_with(prefix: string)(s: string) :=
+  let prefixLen := String.length prefix in
+  let sLen := String.length s in
   let rec loop i :=
-    if Int.le (String.length prefix) i then true
-    else if Int.le (String.length s) i then false
+    if Int.le prefixLen i then true
+    else if Int.le sLen i then false
          else if Char.equal (String.get prefix i) (String.get s i)
               then loop (Int.add i 1)
               else false in
