@@ -1,3 +1,5 @@
+Require coqutil.Ltac2Lib.List.
+
 Ltac eta X :=
   let s := constr:(ltac:(
         let x := fresh "x" in
@@ -519,7 +521,7 @@ Module record.
       match simp_term_check tp with
       | Some tp' => change $tp' in $x; true
       | None => progr
-      end) (Control.hyps ()) false.
+      end) false (Control.hyps ()).
 
   Ltac2 simp_hyps () :=
     if simp_hyps_bool_progress () then ()

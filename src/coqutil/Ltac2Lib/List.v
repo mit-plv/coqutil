@@ -58,3 +58,21 @@ Ltac2 rec span(p: 'a -> bool)(xs: 'a list) :=
   | [] => ([], [])
   | h :: t => if p h then let (tk, dr) := span p t in (h :: tk, dr) else ([], xs)
   end.
+
+(* For compat between Coq before and after 8.19 (coq/coq#18197)
+
+   NB: these are the 8.19 version of the API so once <8.19 compat is
+   dropped they can just be deleted and references moved to the stdlib
+   versions. *)
+
+Ltac2 rec fold_right (f : 'a -> 'b -> 'b) (ls : 'a list) (a : 'b) : 'b :=
+  match ls with
+  | [] => a
+  | l :: ls => f l (fold_right f ls a)
+  end.
+
+Ltac2 rec fold_left (f : 'a -> 'b -> 'a) (a : 'a) (xs : 'b list) : 'a :=
+  match xs with
+  | [] => a
+  | x :: xs => fold_left f (f a x) xs
+  end.

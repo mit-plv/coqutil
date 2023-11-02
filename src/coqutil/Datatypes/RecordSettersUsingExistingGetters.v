@@ -11,6 +11,7 @@ Require Import Coq.Program.Basics.
 Require Import Ltac2.Ltac2.
 Require Import Ltac2.Bool.
 Require Import coqutil.Ltac2Lib.Constr.
+Require coqutil.Ltac2Lib.List.
 Require Import coqutil.Tactics.RecordEta.
 Set Default Proof Mode "Classic".
 
@@ -471,7 +472,7 @@ Module record.
       match simp_term_check tp with
       | Some tp' => change $tp' in $x; true
       | None => progr
-      end) (Control.hyps ()) false.
+      end) false (Control.hyps ()).
 
   Ltac2 simp_hyps () :=
     if simp_hyps_bool_progress () then ()

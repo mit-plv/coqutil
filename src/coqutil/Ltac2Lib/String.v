@@ -1,8 +1,8 @@
 Require Import Ltac2.Ltac2.
-Require coqutil.Ltac2Lib.Char.
+Require coqutil.Ltac2Lib.Char coqutil.Ltac2Lib.List.
 
 Ltac2 concat (ss : string list) : string :=
-  let l := List.fold_right Int.add 0 (List.map String.length ss) in
+  let l := List.fold_left Int.add 0 (List.map String.length ss) in
   let ret := String.make l (Char.of_int 0) in
   let rec loop (i : int) (ss : string list) : unit :=
     match ss with
