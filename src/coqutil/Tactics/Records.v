@@ -44,11 +44,13 @@ Ltac2 unfold_if_getter(g: constr) :=
   | Constr.Unsafe.Constant r _ =>
     let getter_lambda := Std.eval_unfold [(Std.ConstRef r, Std.AllOccurrences)] h in
     match Constr.Unsafe.kind (strip_lambdas getter_lambda) with
-    | Constr.Unsafe.Proj _ v =>
+    (* TODO reactivate once we only use Coq >= 8.19
+    | Constr.Unsafe.Proj _ _ v =>
       match Constr.Unsafe.kind v with
       | Constr.Unsafe.Rel i => if Int.equal i 1 then () else sfail "not a getter because not proj from Rel 1"
       | _ => sfail "not a getter because not proj from Rel"
       end
+    *)
     | Constr.Unsafe.Case _ _ _ _ branches =>
       if Int.equal (Array.length branches) 1 then
         let b := Array.get branches 0 in
@@ -128,7 +130,8 @@ Goal forall (x y: nat),
     TestRecordField (Build_TestRecord unit 0 tt tt) = tt.
 Proof.
   intros. simpl_getters_applied_to_constructors.
-  match goal with
+  (* TODO reactivate once we only use Coq >= 8.19 *)
+  Fail match goal with
   | |- ?G => constr_eq G constr:(x = x /\ x = x /\ (@eq (tuple nat O) tt tt))
   end.
 Abort.
