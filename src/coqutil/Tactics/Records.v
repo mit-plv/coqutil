@@ -2,27 +2,6 @@ Require Import Ltac2.Ltac2.
 Require Ltac2.Option.
 Set Default Proof Mode "Classic".
 
-(* TODO 8.14 replace by Constr.is_evar *)
-Ltac2 is_evar(c: constr) :=
-  match Constr.Unsafe.kind c with
-  | Constr.Unsafe.Evar _ _ => true
-  | _ => false
-  end.
-
-(* TODO 8.14 replace by Constr.is_ind *)
-Ltac2 is_ind(c: constr) :=
-  match Constr.Unsafe.kind c with
-  | Constr.Unsafe.Ind _ _ => true
-  | _ => false
-  end.
-
-(* TODO 8.14 replace by Constr.is_constructor *)
-Ltac2 is_constructor(c: constr) :=
-  match Constr.Unsafe.kind c with
-  | Constr.Unsafe.Constructor _ _ => true
-  | _ => false
-  end.
-
 Ltac2 sfail(s: string) := Control.zero (Tactic_failure (Some (Message.of_string s))).
 Ltac2 ufail () := Control.zero (Tactic_failure None).
 
@@ -109,8 +88,8 @@ Ltac2 change_x_with_y(x : constr)(y : constr) :=
 Ltac2 simpl_getter_applied_to_constructor(a: constr) :=
   lazy_match! a with
   | ?g ?v =>
-    if is_constructor (head v) then
-      if is_ind (head (Constr.type v)) then
+    if Constr.is_constructor (head v) then
+      if Constr.is_ind (head (Constr.type v)) then
         let ug := unfold_if_getter g in
         let r := eval cbv beta iota in ($ug $v) in
         (* Note: if `change` has no effect, it might be due to COQBUG https://github.com/coq/coq/issues/14084 *)
