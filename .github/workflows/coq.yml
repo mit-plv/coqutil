@@ -13,14 +13,10 @@ jobs:
       fail-fast: false
       matrix:
         env:
-        - { COQ_VERSION: "master", COQ_PACKAGE: "coq libcoq-core-ocaml-dev"         , SKIP_VALIDATE: "1", PPA: "ppa:jgross-h/coq-master-daily", EXTRA_GH_REPORTIFY: "--warnings" }
-        - { COQ_VERSION: "v8.15" , COQ_PACKAGE: "coq libcoq-ocaml-dev"              , SKIP_VALIDATE: "1", PPA: "ppa:jgross-h/coq-8.15-daily" }
-        os: ['ubuntu-20.04']
-        include:
-        - env: { COQ_VERSION: "Ubuntu LTS", COQ_PACKAGE: "coq libcoq-ocaml-dev"     , SKIP_VALIDATE: "1", COQCHKEXTRAFLAGS: ""                      , PPA: "" }
-          os: 'ubuntu-22.04'
+        - { COQ_VERSION: "8.17.0", COQ_PACKAGE: "coq-8.17.0 libcoq-8.17.0-ocaml-dev", PPA: "ppa:jgross-h/many-coq-versions-ocaml-4-11" }
+        - { COQ_VERSION: "master", COQ_PACKAGE: "coq libcoq-core-ocaml-dev"         , PPA: "ppa:jgross-h/coq-master-daily" }
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env: ${{ matrix.env }}
     name: ${{ matrix.env.COQ_VERSION }}
 
