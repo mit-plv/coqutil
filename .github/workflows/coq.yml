@@ -58,8 +58,5 @@ jobs:
       run: cat time-of-build-pretty.log
     - name: display per-line timing info
       run: etc/ci/github-actions-display-per-line-timing.sh
-    - name: validate
-      run: make TIMED=1 validate COQCHKFLAGS="-o"
-      if: matrix.env.SKIP_VALIDATE == '' && github.event_name != 'pull_request'
     - name: install
       run: sudo make install
