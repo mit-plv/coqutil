@@ -1,16 +1,14 @@
 Require Import Ltac2.Ltac2 Ltac2.Std.
 Require Import coqutil.Ltac2Lib.Pervasives.
 
+Local Ltac2 Notation "red_flags" s(strategy) := s.
+
 (* Beware: Ltac2's Std.eval_cbv does not match Ltac1's `eval cbv in`!
    https://github.com/coq/coq/issues/14303 *)
 Ltac2 eval_cbv_delta(refs: reference list)(e: constr): constr :=
-  eval_cbv {
+  (* compat: rStrength is >=8.19 only *)
+  eval_cbv { (red_flags beta) with
      rBeta := false;
-     rMatch := false;
-     rFix := false;
-     rCofix := false;
-     rZeta := false;
-     rDelta := false; (* false = delta only on rConst*)
      rConst := refs
   } e.
 

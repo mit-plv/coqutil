@@ -155,6 +155,7 @@ Require Import Ltac2.Ltac2.
 Require Ltac2.Option.
 Require Import Ltac2.Bool.
 Require coqutil.Ltac2Lib.Constr.
+Require Import coqutil.Ltac2Lib.Std.
 
 Set Default Proof Mode "Classic".
 
@@ -212,16 +213,7 @@ Module record.
                         end in
     match Constr.Unsafe.kind h with
     | Constr.Unsafe.Constant cst _ =>
-        let flags := {
-            Std.rBeta := false;
-            Std.rMatch := false;
-            Std.rFix := false;
-            Std.rCofix := false;
-            Std.rZeta := false;
-            Std.rDelta := false; (* false = delta only on rConst*)
-            Std.rConst := [Std.ConstRef cst]
-          } in
-        let unfolded_h := Std.eval_cbv flags h in
+        let unfolded_h := eval_cbv_delta [Std.ConstRef cst] h in
         match strip_n_lambdas nparams unfolded_h with
         | Some l => unfolded_getter_proj_index l
         | None => None
