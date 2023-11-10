@@ -186,15 +186,21 @@ Proof.
   change (r t) in H.
 Abort.
 
-Ltac tuple_size tup :=
+Ltac pair_size tup :=
   lazymatch tup with
-  | pair ?p _ => let r := tuple_size p in constr:(S r)
+  | pair ?p _ => let r := pair_size p in constr:(S r)
+  | _ => constr:(S O)
+  end.
+
+Ltac prod_size tp :=
+  lazymatch tp with
+  | prod ?p _ => let r := prod_size p in constr:(S r)
   | _ => constr:(S O)
   end.
 
 Ltac pattern_tuple_in_term e t :=
   let f := pattern_tuple_in_term_as_separate_args e t in
-  let n := tuple_size t in
+  let n := pair_size t in
   let f' := reverse_fun_args n f in
   let tTup := type of t in
   let p := fresh "p" in
