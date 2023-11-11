@@ -28,7 +28,7 @@ jobs:
         repo_owner: 'mit-plv'
         repo_name: 'coqutil'
         branch_name: 'master'
-        check_name: 'v8.15'
+        check_name: 'v8.17'
         github_token: ${{ secrets.GITHUB_TOKEN }}
     - uses: samuelgruetter/check-ci-success@master
       with:
