@@ -23,20 +23,6 @@ jobs:
         branch_name: 'master'
         check_name: 'master'
         github_token: ${{ secrets.GITHUB_TOKEN }}
-    - uses: samuelgruetter/check-ci-success@master
-      with:
-        repo_owner: 'mit-plv'
-        repo_name: 'coqutil'
-        branch_name: 'master'
-        check_name: 'v8.17'
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-    - uses: samuelgruetter/check-ci-success@master
-      with:
-        repo_owner: 'mit-plv'
-        repo_name: 'coqutil'
-        branch_name: 'master'
-        check_name: 'Ubuntu LTS'
-        github_token: ${{ secrets.GITHUB_TOKEN }}
     - run: echo "This step runs after the python script"
     - run: git fetch origin master
     - run: git log --oneline --max-count=10
