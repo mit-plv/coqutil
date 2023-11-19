@@ -1,4 +1,4 @@
-default_target: test
+.DEFAULT_GOAL := test
 
 .PHONY: clean force all notest test install uninstall validate
 
