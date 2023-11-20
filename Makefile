@@ -15,7 +15,7 @@ SRC_VS ?= $(shell find $(SRC_DIR) -type f -name '*.v')
 TEST_VS ?= $(shell find $(TEST_DIR) -type f -name '*.v')
 
 _CoqProject:
-	printf -- '-R $(SRC_DIR)/coqutil/ coqutil\n-arg -w -arg unsupported-attributes\n' > _CoqProject
+	printf -- '-R %s/coqutil/ coqutil\n-arg -w -arg unsupported-attributes\n' '$(SRC_DIR)' > _CoqProject
 
 all: test
 
