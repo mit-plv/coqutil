@@ -1840,7 +1840,7 @@ Module Import Nat.
   Proof.
     intros; destruct (Nat.eq_dec n 0); subst; [ reflexivity | ].
     rewrite !div_up_eqn by lia.
-    rewrite <- Nat.add_mod_idemp_l by assumption.
+    rewrite <- Nat.Div0.add_mod_idemp_l by assumption.
     replace (a mod n)%nat; cbn [Nat.add Nat.eqb].
     rewrite (Nat.div_mod a n) by assumption.
     replace (a mod n)%nat; cbn [Nat.add Nat.eqb].
@@ -1858,8 +1858,8 @@ Module Import Nat.
     rewrite div_up_eqn by lia.
     split; intros Heq.
     - rewrite Heq; cbn; rewrite Nat.mul_add_distr_l, Nat.mul_0_r, Nat.add_0_r.
-      apply Nat.div_exact; assumption.
-    - replace a; rewrite Nat.mul_comm; apply Nat.mod_mul; assumption.
+      apply Nat.Div0.div_exact; assumption.
+    - replace a; rewrite Nat.mul_comm; apply Nat.Div0.mod_mul; assumption.
   Qed.
 
   Lemma div_up_exact_mod a b:
@@ -2030,8 +2030,8 @@ Section Chunk. Local Set Default Proof Using "All".
         * left; lia.
         * apply IHl; simpl; try lia.
           replace (ll mod k)%nat.
-          symmetry; rewrite <- Nat.add_mod_idemp_r at 1 by lia. (* FIXME why does ‘at 2’ not work? *)
-          rewrite Nat.mod_same by lia.
+          symmetry; rewrite <- Nat.Div0.add_mod_idemp_r at 1 by lia. (* FIXME why does ‘at 2’ not work? *)
+          rewrite Nat.Div0.mod_same by lia.
           reflexivity.
   Qed.
 

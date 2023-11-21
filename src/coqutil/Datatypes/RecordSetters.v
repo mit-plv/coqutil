@@ -666,9 +666,11 @@ Module RecordSetterTests.
   Section UpdaterNotationsTest.
     Import UpdaterNotations.
 
-    Check (fun b => {! fieldC := false } (testFoo b)).
-    Check (fun b => {! fieldC := false; fieldC := true } (testFoo b)).
-    Check (fun b => {! fieldC := false; fieldC := true; fieldA ::= Nat.add 2 } (testFoo b)).
+    Goal True.
+      pose (fun b => {! fieldC := false } (testFoo b)).
+      pose (fun b => {! fieldC := false; fieldC := true } (testFoo b)).
+      pose (fun b => {! fieldC := false; fieldC := true; fieldA ::= Nat.add 2 } (testFoo b)).
+    Abort.
 
     Goal forall b,
         {! fieldC := false; fieldC := true; fieldA ::= Nat.add 2 } (testFoo b) =

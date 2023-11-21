@@ -65,5 +65,5 @@ Goal forall my_var: nat, my_var = my_var.
   pose s.
   let s := constr_string_of_var my_var in
   pose s.
-  Time do 1000 (constr_string_of_var_cps my_var ltac:(fun s => pose s as X; clear X)). (* 0.25s *)
+  (*Time*) do 1000 (constr_string_of_var_cps my_var ltac:(fun s => pose s as X; clear X)). (* 0.25s *)
 Abort.
