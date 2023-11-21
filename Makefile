@@ -2,11 +2,8 @@
 
 .PHONY: clean force all notest test install uninstall validate
 
-# absolute paths so that emacs compile mode knows where to find error
-# use cygpath -m because Coq on Windows cannot handle cygwin paths
-ABS_ROOT_DIR := $(shell cygpath -m "$$(pwd)" 2>/dev/null || pwd)
-SRC_DIR := $(ABS_ROOT_DIR)/src
-TEST_DIR := $(ABS_ROOT_DIR)/test
+SRC_DIR := src
+TEST_DIR := test
 
 COQC ?= "$(COQBIN)coqc"
 COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
