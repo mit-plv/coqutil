@@ -33,7 +33,10 @@ Ltac2 constructor_of_record(t: constr) :=
 Ltac2 eta(t: constr) :=
   let (h, args) := match Constr.Unsafe.kind t with
                    | Constr.Unsafe.App h args => (h, args)
-                   | _ => (t, Array.empty ())
+                   | _ =>
+                       (* Array.make 0 instead of Array.empty for compat
+                          (<8.19 Array.empty takes unit argument) *)
+                       (t, Array.make 0 'Prop)
                    end in
   let ctor := constructor_of_record h in
   let getters := List.map (fun getterRef => mkApp (Env.instantiate getterRef) args)
