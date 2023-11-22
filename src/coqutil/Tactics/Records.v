@@ -14,7 +14,10 @@ Ltac2 head(c: constr) :=
 Ltac2 splitApp(c: constr) :=
   match Constr.Unsafe.kind c with
   | Constr.Unsafe.App f args => (f, args)
-  | _ => (c, Array.empty ())
+  | _ =>
+      (* Array.make 0 instead of Array.empty for compat
+         (<8.19 Array.empty takes unit argument) *)
+      (c, Array.make 0 'Prop)
   end.
 
 Ltac2 mkApp(c: constr)(args: constr array) :=
