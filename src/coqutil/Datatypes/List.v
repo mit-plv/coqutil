@@ -13,6 +13,16 @@ Definition zip [A B C] (f : A -> B -> C) xs ys :=
   let uncurry f '(x, y) := f x y in
   map (uncurry f) (combine xs ys).
 
+Section WithAAndB.
+  Context [A B : Type] (r : A -> B -> bool).
+  Fixpoint forallb2 (s : list A) (t : list B) {struct s} : bool :=
+    match s, t with
+    | [], [] => true
+    | x :: s0, y::t0 => r x y && forallb2 s0 t0
+    | _,_ => false
+    end.
+End WithAAndB.
+
 Section WithAAndEqDecider. Local Set Default Proof Using "All".
   Context {A : Type}. (* maximally inserted to make sure aeqb_dec is inferred *)
 
