@@ -1,10 +1,6 @@
-Require Import coqutil.sanity
-  coqutil.Datatypes.List
-  coqutil.Tactics.ProveInversion.
+Require Import coqutil.sanity.
 Require Export Coq.Bool.Bool.
-Import List.ListNotations.
 Import BoolNotations.
-Open Scope list.
 
 (****************
 Rewrites
