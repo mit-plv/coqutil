@@ -488,7 +488,6 @@ Section ListSetProofs. Local Set Default Proof Using "All".
     - eapply union_comm.
   Qed.
 
-
   Lemma superset_of_list_union_assoc:
     forall s1 s2a s2b s2c,
       subset (of_list s1)
@@ -530,7 +529,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
 
   Lemma sameset_union_diff_of_list:
     forall (l1 l2: list E),
-      sameset (union (of_list l1) (of_list l2)) (union (diff (of_list l1) (of_list l2) ) (of_list l2)).
+      sameset (union (of_list l1) (of_list l2)) (union (diff (of_list l1) (of_list l2)) (of_list l2)).
   Proof.
     intros.
     unfold sameset, of_list, subset, union, diff, elem_of.

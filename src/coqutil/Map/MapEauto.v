@@ -387,7 +387,6 @@ Section WithParams. Local Set Default Proof Using "All".
     set_solver_generic var.
    Qed.
 
-   
   Lemma agree_on_find:
     forall s l (m1 m2: stateMap),
       map.agree_on (PropSet.of_list (if (List.find (var_eqb s) l)

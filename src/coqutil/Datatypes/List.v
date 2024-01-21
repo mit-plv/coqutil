@@ -256,7 +256,6 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
     - eassumption.
   Qed.
 
-  
   Lemma find_eqb:
     forall (l: list A) s s',
       find (aeqb s) l = Some s' -> s = s'.
