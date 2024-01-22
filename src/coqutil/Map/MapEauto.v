@@ -279,103 +279,82 @@ Section WithParams. Local Set Default Proof Using "All".
       map.agree_on ks m1 m2 ->
       map.agree_on ks m2 m1.
   Proof. t. Qed.
-  
-  Ltac subset_union_solve :=
-    match goal  with
-    | |- subset (union _ _) _  => eapply subset_union_l; subset_union_solve
-    | |- subset _ (union _ _)  =>
-        try solve [ eapply subset_union_rl; subset_union_solve ]; try solve [ eapply subset_union_rr; subset_union_solve ]; idtac
-    | |- subset ?x ?x => solve [ eapply subset_refl ]
-    | |- _ => fail
-    end.
-  
-  Ltac agree_on_solve :=
-    match goal with
-    | H: map.agree_on ?s ?x ?y |-
-        map.agree_on _ ?x ?y =>
-        eapply agree_on_subset with (ks := s);
-        [ subset_union_solve | eapply H]
-    | H: map.agree_on ?s ?x ?y |-
-        map.agree_on _ ?y ?x =>
-        eapply agree_on_comm; agree_on_solve
-    | _ => idtac
-    end.
 
-   Lemma agree_on_union:
-     forall s0 s1 (m0 m1: stateMap),
-       map.agree_on (union s0 s1) m0 m1
+  Lemma agree_on_union:
+    forall s0 s1 (m0 m1: stateMap),
+      map.agree_on (union s0 s1) m0 m1
        <-> map.agree_on s0 m0 m1 /\ map.agree_on s1 m0 m1.
-   Proof.
-     intros. unfold iff; split; intros; t.
-   Qed.
-
-   Lemma agree_on_put:
-     forall a r s (mH mL: stateMap) mH' mL',
-       map.agree_on s mH mL ->
-       map.put mH a r = mH' ->
-       map.put mL a r = mL' ->
-       map.agree_on (union s (singleton_set a)) mH' mL'.
-   Proof.
-     intros.
-     rewrite <- H0, <- H1. 
-     t.
-   Qed.
-
-   Lemma agree_on_diff_put:
-     forall a r s (mH mL: stateMap),
-       map.agree_on (diff (PropSet.of_list s) (singleton_set a)) mH mL ->
-       map.agree_on (PropSet.of_list s) (map.put mH a r) (map.put mL a r).
-   Proof.
-     intros. t.
-   Qed.
-
-   Lemma agree_on_putmany_of_list_zip:
-     forall lk0 lv s (mH mL: stateMap) mH' mL',
-       map.agree_on s mH mL ->
-       map.putmany_of_list_zip lk0 lv mH = Some mH' ->
-       map.putmany_of_list_zip lk0 lv mL = Some mL' ->
-       map.agree_on (union s (PropSet.of_list lk0)) mH' mL'.
-   Proof.
-     induction lk0.
-     - intros. simpl in *.
-       destr lv; [ | discriminate ].
-       inversion H0. inversion H1.
-       rewrite <- H3, <- H4.
-       eapply agree_on_union.
-       split.
-       + t.
-       + unfold agree_on, PropSet.of_list, elem_of.
-         intros.
-         exfalso; eapply List.in_nil.
-         eassumption.
-     - intros.
-       destr lv; [ discriminate | ].
-       simpl in *.
-       cut (map.agree_on (union s (singleton_set a))
-              (map.put mH a v) (map.put mL a v)).
-       + intros.
-         eapply IHlk0 in H2.
-         2-3: eassumption.
-         eapply agree_on_subset.
-         2: eassumption.
-         set_solver_generic var.
-       + eapply agree_on_put.
-         * eassumption.
-         * reflexivity.
-         * reflexivity.
-   Qed.
+  Proof.
+    intros. unfold iff; split; intros; t.
+  Qed.
+  
+  Lemma agree_on_put:
+    forall a r s (mH mL: stateMap) mH' mL',
+      map.agree_on s mH mL ->
+      map.put mH a r = mH' ->
+      map.put mL a r = mL' ->
+      map.agree_on (union s (singleton_set a)) mH' mL'.
+  Proof.
+    intros.
+    rewrite <- H0, <- H1. 
+    t.
+  Qed.
+  
+  Lemma agree_on_diff_put:
+    forall a r s (mH mL: stateMap),
+      map.agree_on (diff (PropSet.of_list s) (singleton_set a)) mH mL ->
+      map.agree_on (PropSet.of_list s) (map.put mH a r) (map.put mL a r).
+  Proof.
+    intros. t.
+  Qed.
+  
+  Lemma agree_on_putmany_of_list_zip:
+    forall lk0 lv s (mH mL: stateMap) mH' mL',
+      map.agree_on s mH mL ->
+      map.putmany_of_list_zip lk0 lv mH = Some mH' ->
+      map.putmany_of_list_zip lk0 lv mL = Some mL' ->
+      map.agree_on (union s (PropSet.of_list lk0)) mH' mL'.
+  Proof.
+    induction lk0.
+    - intros. simpl in *.
+      destr lv; [ | discriminate ].
+      inversion H0. inversion H1.
+      rewrite <- H3, <- H4.
+      eapply agree_on_union.
+      split.
+      + t.
+      + unfold agree_on, PropSet.of_list, elem_of.
+        intros.
+        exfalso; eapply List.in_nil.
+        eassumption.
+    - intros.
+      destr lv; [ discriminate | ].
+      simpl in *.
+      cut (map.agree_on (union s (singleton_set a))
+             (map.put mH a v) (map.put mL a v)).
+      + intros.
+        eapply IHlk0 in H2.
+        2-3: eassumption.
+        eapply agree_on_subset.
+        2: eassumption.
+        set_solver_generic var.
+      + eapply agree_on_put.
+        * eassumption.
+        * reflexivity.
+        * reflexivity.
+  Qed.
    
-   Lemma agree_on_diff_putmany_of_list_zip:
-      forall o1 o2 v (l l': stateMap) lL lL',
+  Lemma agree_on_diff_putmany_of_list_zip:
+    forall o1 o2 v (l l': stateMap) lL lL',
       map.agree_on (diff (PropSet.of_list o1) (PropSet.of_list o2)) l lL
       -> map.putmany_of_list_zip o2 v l = Some l'
       -> map.putmany_of_list_zip o2 v lL = Some lL'
       -> map.agree_on (PropSet.of_list o1) l' lL'.
-   Proof.
-     intros.
-     eapply agree_on_subset.
-     2: eauto using agree_on_putmany_of_list_zip.
-     assert (forall l2 (x: var), (List.In x l2 \/ ~ (List.In x l2))).
+  Proof.
+    intros.
+    eapply agree_on_subset.
+    2: eauto using agree_on_putmany_of_list_zip.
+    assert (forall l2 (x: var), (List.In x l2 \/ ~ (List.In x l2))).
     { intros. eapply ListDec.In_decidable. unfold ListDec.decidable_eq.
       intros. destr (var_eqb x0 y).
       - unfold Decidable.decidable. left. reflexivity.
@@ -385,13 +364,13 @@ Section WithParams. Local Set Default Proof Using "All".
     unfold subset, elem_of.
     intros. unfold diff, union, of_list, elem_of.
     set_solver_generic var.
-   Qed.
-
+  Qed.
+  
   Lemma agree_on_find:
     forall s l (m1 m2: stateMap),
       map.agree_on (PropSet.of_list (if (List.find (var_eqb s) l)
-                    then l
-                    else s :: l)) m1 m2
+                                     then l
+                                     else s :: l)) m1 m2
       -> map.agree_on (PropSet.of_list (s :: nil)) m1 m2 /\
            map.agree_on (PropSet.of_list l) m1 m2.
   Proof.

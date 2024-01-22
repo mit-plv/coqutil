@@ -347,15 +347,6 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
         destr (eqb x x); congruence.
     Qed.
   End with_eqb.
-  
-  Ltac subset_union_solve :=
-    match goal  with
-    | |- subset (union _ _) _  => eapply subset_union_l; subset_union_solve
-    | |- subset _ (union _ _)  =>
-        try solve [ eapply subset_union_rl; subset_union_solve ]; try solve [ eapply subset_union_rr; subset_union_solve ]; idtac
-    | |- subset ?x ?x => solve [ eapply subset_refl ]
-    | |- _ => fail
-    end.
 End PropSetLemmas.
 
 Require Import Coq.Program.Tactics.

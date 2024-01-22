@@ -502,31 +502,6 @@ Section ListSetProofs. Local Set Default Proof Using "All".
     - eapply union_assoc.
   Qed.
   
-  Lemma subset_of_list_find_removeb:
-    forall a x l,
-      subset
-        (of_list
-           (if find (eeq a) (List.removeb eeq x l)
-            then List.removeb eeq x l
-            else a :: List.removeb eeq x l))
-        (of_list (if find (eeq a) l then l else a :: l)).
-  Proof.
-    intros.
-    destr (find (eeq a) l).
-    - destr (find (eeq a) (List.removeb eeq x l)).
-      + eapply subset_of_list_removeb.
-      + eapply subset_of_list_cons.
-        split.
-        * eapply existsb_find_some.
-          eassumption.
-        * eapply subset_of_list_removeb.
-    - destr (find (eeq a) (List.removeb eeq x l)).
-      + eapply superset_of_list_tail.
-        eapply subset_of_list_removeb.
-      + eapply subset_of_list_tail.
-        eapply subset_of_list_removeb.
-  Qed.
-
   Lemma sameset_union_diff_of_list:
     forall (l1 l2: list E),
       sameset (union (of_list l1) (of_list l2)) (union (diff (of_list l1) (of_list l2)) (of_list l2)).
