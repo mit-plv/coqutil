@@ -371,26 +371,20 @@ Section WithParams. Local Set Default Proof Using "All".
       map.agree_on (PropSet.of_list (if (List.find (var_eqb s) l)
                                      then l
                                      else s :: l)) m1 m2
-      -> map.agree_on (PropSet.of_list (s :: nil)) m1 m2 /\
-           map.agree_on (PropSet.of_list l) m1 m2.
+      -> map.agree_on (PropSet.of_list l) m1 m2 /\ map.get m1 s = map.get m2 s.
   Proof.
     intros.
     destr (List.find (var_eqb s) l).
     - split.
+      + eassumption. 
       + eapply List.find_some in E.
-        unfold map.agree_on, elem_of in *.
-        intros.
-        eapply List.in_inv in H0.
-        destr H0.
-        2: { exfalso. eapply List.in_nil; eassumption. }
-        rewrite H0 in *.
-        destr E; destr (var_eqb k v).
-        2: { exfalso. inversion H2. }
+        unfold map.agree_on, elem_of, singleton_set in *.
+        intros. destr E.
+        unfold PropSet.of_list in H.
+        destr (var_eqb s v).
+        2: { exfalso; inversion H1. }
         eauto.
-      + eassumption.
-    - eapply agree_on_cons in H.
-      destr H.
-      t.
+    - eauto using agree_on_cons. 
   Qed.
   
   Lemma agree_on_refl: forall k (m: stateMap),
