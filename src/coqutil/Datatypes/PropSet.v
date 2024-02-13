@@ -3,6 +3,7 @@ Require Import Coq.Classes.Morphisms.
 Require Import Coq.Classes.RelationClasses.
 Require Import Coq.Logic.PropExtensionality.
 Require Import Coq.Logic.FunctionalExtensionality.
+Require Import coqutil.Decidable.
 Require Import coqutil.Tactics.destr.
 
 Definition set(A: Type) := A -> Prop.
@@ -117,6 +118,12 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
     sameset (union s1 s2) (union s2 s1).
   Proof. firstorder idtac. Qed.
 
+  Lemma sameset_union (s1 s2 s1' s2': set E) :
+    sameset s1 s1' ->
+    sameset s2 s2' ->
+    sameset (union s1 s2) (union s1' s2').
+  Proof. firstorder idtac.  Qed.
+  
   Lemma union_assoc (s1 s2 s3 : set E) :
     sameset (union s1 (union s2 s3)) (union (union s1 s2) s3).
   Proof. firstorder idtac. Qed.
@@ -360,3 +367,51 @@ Ltac set_solver_generic E :=
 Goal forall T (l1 l2: list T) (e: T),
     subset (of_list (l2 ++ l1)) (union (of_list (e :: l1)) (of_list l2)).
 Proof. intros. set_solver_generic T. Qed.
+
+Section PropSetLemmasWithEqDecider. Local Set Default Proof Using "All".
+  Context {A: Type}.
+  Context {aeqb : A -> A -> bool} {aeqb_dec: EqDecider aeqb}.
+  Lemma subset_of_list_cons:
+   forall h t l,
+      subset (of_list (h::t)) (of_list l) <->
+      existsb (aeqb h) l = true /\ subset (of_list t) (of_list l).
+  Proof.
+    intros. 
+    unfold iff.
+    split.
+    - rewrite of_list_cons. intros.
+      repeat autounfold with unf_basic_set_defs unf_derived_set_defs in *; unfold elem_of in *.
+      intros. 
+      split.
+      + specialize (H h). eapply List.existsb_exists. exists h. split.
+        * eapply H. eapply or_introl. reflexivity.
+        * destr (aeqb h h); eauto.
+      + intros. auto.
+    - intros. destr H.
+      repeat autounfold with unf_basic_set_defs unf_derived_set_defs in *; unfold elem_of in *.
+      intros. eapply in_inv in H1.
+      eapply existsb_exists in H.
+      do 2 destr H.
+      destr (aeqb h x0).
+      { destr H1.
+        + rewrite <- H1. assumption.
+        + eauto.
+      }
+      { exfalso. inversion H2. }
+  Qed.
+  
+  Lemma existsb_of_list :
+    forall k keySet,
+      List.existsb (aeqb k) keySet = true <-> k \in PropSet.of_list keySet.
+  Proof.
+    intros; unfold iff; split.
+    - intros. eapply List.existsb_exists in H.
+      do 2 destr H. destr (aeqb k x).
+      2: { exfalso. inversion H0. }
+      eauto.
+    - intros. eapply List.existsb_exists.
+      exists k; simpl; split.
+      + unfold elem_of, PropSet.of_list in *; eauto.
+      + destr (aeqb k k); eauto.
+   Qed.
+End PropSetLemmasWithEqDecider. 

@@ -168,6 +168,20 @@ Section ListSetProofs. Local Set Default Proof Using "All".
         * simpl in *. intuition congruence.
   Qed.
 
+  Lemma subset_of_list_removeb:
+    forall (l: list E) s,
+      PropSet.subset (PropSet.of_list (List.removeb eeq s l))
+        (PropSet.of_list (l)).
+  Proof.
+    intros. rewrite of_list_removeb.
+    unfold PropSet.subset.
+    intros.
+    unfold PropSet.elem_of in H.
+    unfold PropSet.diff in H.
+    destr H.
+    eapply H.
+  Qed.
+  
   Lemma In_list_union_spec: forall (l1 l2 : list E) (x: E),
       In x (list_union eeq l1 l2) <-> In x l1 \/ In x l2.
   Proof.
@@ -291,6 +305,24 @@ Section ListSetProofs. Local Set Default Proof Using "All".
         * specialize IHl1 with (1 := H). destruct IHl1. auto.
   Qed.
 
+  Lemma In_list_diff_spec:
+    forall (l1 l2: list E) (x: E),
+      In x (list_diff eeq l1 l2) <-> In x l1 /\ (~ In x l2).
+  Proof.
+    intros. split.
+    - eapply invert_In_list_diff.
+    - intros. destr H. eauto 2 using In_list_diff.
+  Qed.
+  
+  Lemma of_list_list_diff: forall (l1 l2: list E),
+      of_list (list_diff eeq l1 l2) = diff (of_list l1) (of_list l2).
+  Proof.
+    intros.
+    extensionality e. apply propositional_extensionality.
+    unfold of_list, diff, elem_of.
+    apply In_list_diff_spec.
+  Qed.
+  
   Lemma list_diff_length: forall (l1 l2: list E),
       length (list_diff eeq l1 l2) <= length l1. 
   Proof.
@@ -302,5 +334,196 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       + cbn. blia. 
   Qed. 
 
+  Lemma subset_of_list_diff:
+    forall  l' (l: list E),
+      PropSet.subset (PropSet.of_list (list_diff eeq l l'))
+        (PropSet.of_list l).
+  Proof.
+    intros.
+    unfold subset.
+    intros.
+    unfold elem_of in *.
+    unfold of_list in *.
+    eapply In_list_diff_weaken.
+    eapply H.
+  Qed.
+  
+  Lemma superset_of_list_cons:
+    forall h t l,
+      PropSet.subset (PropSet.of_list l) (PropSet.of_list (h :: t)) <->
+      forallb (fun x => ((eeq h x) || (existsb (eeq x) t))%bool) l = true.
+  Proof.
+    intros.
+    unfold iff.
+    split.
+    - intros. eapply forallb_forall.
+      intros.
+      unfold subset, elem_of, of_list in H.
+      eapply H in H0.
+      eapply in_inv in H0.
+      destr H0.
+      { rewrite H0 in *. destr (eeq x x).
+        + eapply Bool.orb_true_l.
+        + exfalso. eapply E0. reflexivity.
+      }
+      { assert (existsb (eeq x) t = true).
+        { eapply existsb_exists.
+          exists x. split.
+          - assumption.
+          - destr (eeq x x); eauto.
+        }
+        rewrite H1.
+        eapply Bool.orb_true_r.
+      }
+    - intros.
+      unfold subset. intros.
+      unfold elem_of in *.
+      eapply of_list_cons.
+      unfold add.
+      unfold elem_of, union.
+      eapply forallb_forall with (x := x) in H.
+      + eapply Bool.orb_prop in H.
+        destr H.
+        * destr (eeq h x).
+          -- left. unfold elem_of, singleton_set. reflexivity.
+          -- inversion H.
+        * right. eapply existsb_exists in H.
+          do 2 destr H.
+          destr (eeq x x0).
+          -- unfold elem_of, of_list.
+             assumption.
+          -- inversion H1.
+      + unfold of_list in H0. assumption.
+  Qed.
+  
+  Lemma superset_of_list_tail:
+    forall h t (l: list E),
+      PropSet.subset (PropSet.of_list l) (PropSet.of_list (t))
+      -> PropSet.subset (PropSet.of_list l) (PropSet.of_list (h :: t)).
+  Proof.
+    intros.
+    unfold subset.
+    intros. unfold elem_of, of_list.
+    eapply in_cons, H, H0.
+  Qed.
+
+  Lemma subset_of_list_tail:
+    forall h (l1 l2: list E),
+      PropSet.subset (PropSet.of_list l1) (PropSet.of_list l2) ->
+      PropSet.subset (PropSet.of_list (h :: l1)) (PropSet.of_list (h :: l2)).
+  Proof.
+    unfold subset. intros.
+    unfold elem_of in *.
+    eapply in_inv in H0; destr H0.
+    - rewrite H0. unfold of_list. eapply in_eq.
+    - unfold of_list. eapply in_cons. unfold of_list in H. eauto.
+  Qed.
+  
+  Lemma subset_of_list_split_union:
+    forall s1 s1' s2 s2',
+      subset (of_list s1) (of_list s1')
+      -> subset (of_list s2) (of_list s2')
+      -> subset (of_list (list_union eeq s1 s2)) (of_list (list_union eeq s1' s2')).
+  Proof.
+    intros. repeat rewrite of_list_list_union.
+    eapply subset_union_l.
+    - eapply subset_union_rl. assumption.
+    - eapply subset_union_rr. assumption.
+  Qed.
+
+  Lemma subset_of_list_union:
+    forall s1a s1b s2,
+      subset (of_list s1a) (of_list s2) ->
+      subset (of_list s1b) (of_list s2) ->
+      subset (of_list (list_union eeq s1a s1b)) (of_list s2).
+  Proof.
+    intros. rewrite of_list_list_union.
+    eapply subset_union_l; assumption.
+  Qed.
+  
+  Lemma subset_of_list_union_inv:
+    forall s1a s1b s2,
+      subset (of_list (list_union eeq s1a s1b)) (of_list s2) ->
+      subset  (of_list s1a) (of_list s2) /\
+        subset (of_list s1b) (of_list s2).
+  Proof.
+    intros.
+    rewrite of_list_list_union in H.
+    split.
+    - unfold subset, union in *.
+      unfold elem_of in *.
+      intros. eapply H.
+      eauto.
+    - unfold subset, union in *.
+      unfold elem_of in *.
+      intros. eapply H.
+      eauto.
+  Qed.
+
+  Lemma superset_of_list_union_l:
+    forall s1 s2a s2b,
+      subset (of_list s1) (of_list s2a) ->
+      subset (of_list s1) (of_list (list_union eeq s2a s2b)).
+  Proof.
+    intros. rewrite of_list_list_union. eapply subset_union_rl; assumption.
+  Qed.
+
+  Lemma superset_of_list_union_r:
+    forall s1 s2a s2b,
+      subset (of_list s1) (of_list s2b) ->
+      subset (of_list s1) (of_list (list_union eeq s2a s2b)).
+  Proof.
+    intros. rewrite of_list_list_union. eapply subset_union_rr; assumption.
+  Qed.
+
+  Lemma superset_of_list_union_comm:
+    forall s1 s2a s2b,
+      subset (of_list s1) (of_list (list_union eeq s2a s2b)) ->
+      subset (of_list s1) (of_list (list_union eeq s2b s2a)).
+  Proof.
+    intros.
+    rewrite of_list_list_union in *.
+    eapply subset_trans.
+    - eassumption.
+    - eapply union_comm.
+  Qed.
+
+  Lemma superset_of_list_union_assoc:
+    forall s1 s2a s2b s2c,
+      subset (of_list s1)
+        (of_list (list_union eeq (list_union eeq s2a s2b) s2c)) ->
+      subset
+        (of_list s1) (of_list (list_union eeq s2a (list_union eeq s2b s2c))).
+  Proof.
+    intros.
+    repeat rewrite of_list_list_union in *.
+    eapply subset_trans.
+    - eassumption.
+    - eapply union_assoc.
+  Qed.
+  
+  Lemma sameset_union_diff_of_list:
+    forall (l1 l2: list E),
+      sameset (union (of_list l1) (of_list l2)) (union (diff (of_list l1) (of_list l2)) (of_list l2)).
+  Proof.
+    intros.
+    unfold sameset, of_list, subset, union, diff, elem_of.
+    assert (forall x, In x l2 \/ ~ (In x l2)).
+    { intros. eapply ListDec.In_decidable. unfold ListDec.decidable_eq.
+      intros. destr (eeq x0 y).
+      - unfold Decidable.decidable. left. reflexivity.
+      - unfold Decidable.decidable. right. eassumption.
+    }
+    split; intros; unfold elem_of in *.
+    - destr H0.  
+      + specialize (H x).
+        destr H.
+        * right. assumption.
+        * left. split; assumption.
+      + right. assumption.
+    - destr H0.
+      + destr H0. left. assumption.
+      + right. assumption.
+  Qed.
 
 End ListSetProofs.

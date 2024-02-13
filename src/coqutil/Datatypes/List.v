@@ -224,6 +224,68 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
         * eauto.
         * simpl. eauto.
   Qed.
+
+  Lemma existsb_eqb_in:
+    forall (x: A) (l: list A),
+      In x l <-> (existsb (aeqb x) l = true).
+  Proof.
+    intros.
+    unfold iff.
+    split.
+    - intros. eapply List.existsb_exists. exists x; split.
+      + assumption.
+      + destr (aeqb x x); eauto.
+    - intros. apply List.existsb_exists in H.
+      do 2 destr H.
+      destr (aeqb x x0).
+      + eauto.
+      + exfalso. inversion H0. 
+  Qed.
+
+  Lemma forallb_implies:
+    forall (l: list A) (f: A -> bool) (g: A -> bool),
+      forallb f l = true ->
+      (forall s, f s = true -> g s = true) ->
+      forallb g l = true.
+  Proof.
+    intros.
+    eapply forallb_forall.
+    intros. eapply H0.
+    eapply forallb_forall in H.
+    - eapply H.
+    - eassumption.
+  Qed.
+
+  Lemma find_eqb:
+    forall (l: list A) s s',
+      find (aeqb s) l = Some s' -> s = s'.
+  Proof.
+    induction l; simpl in *.
+    - intros.
+      inversion H.
+    - intros. destr (aeqb s a).
+      + inversion H. reflexivity.
+      + eauto.
+  Qed.
+
+  Lemma existsb_find_some:
+    forall (l: list A) s s',
+      (find (aeqb s) l = Some s') -> existsb (aeqb s) l = true.
+  Proof.
+    intros.
+    induction l.
+    + simpl in *.
+      inversion H.
+    + simpl in H.
+      destr ((aeqb s a)).
+      * inversion H. simpl in *.
+        destr (aeqb s' s').
+        -- eapply Bool.orb_true_l.
+        -- exfalso; eauto.
+      * simpl. apply IHl in H. 
+        rewrite H.
+        eapply Bool.orb_true_r.
+  Qed.
 End WithAAndEqDecider.
 Global Hint Resolve list_eqb_spec : typeclass_instances.
 
