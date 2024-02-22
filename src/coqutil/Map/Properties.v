@@ -299,29 +299,6 @@ Module map.
         discriminate.
     Qed.
 
-    Lemma in_keys: forall m k v,
-        get m k = Some v ->
-        List.In k (keys m).
-    Proof.
-      intro m. unfold keys.
-      eapply fold_spec; intros.
-      - rewrite get_empty in H. discriminate.
-      - rewrite get_put_dec in H1. simpl.
-        destr (key_eqb k k0); eauto.
-    Qed.
-
-    Lemma keys_NoDup(m: map): List.NoDup (map.keys m).
-    Proof.
-      eapply proj1 with (B := forall k, List.In k (map.keys m) -> map.get m k <> None).
-      unfold keys.
-      eapply fold_spec.
-      - split; [constructor|]. intros. simpl in *. contradiction.
-      - intros. destruct H0. split.
-        + constructor. 2: assumption. intro C. specialize (H1 _ C). contradiction.
-        + intros. rewrite get_put_dec. destr (key_eqb k k0). 1: congruence.
-          simpl in *. destruct H2. 1: congruence. eauto.
-    Qed.
-
     Lemma fold_two_spec:
       forall {R1 R2: Type} (P: map -> R1 -> R2 -> Prop)
              (f1: R1 -> key -> value -> R1) (f2: R2 -> key -> value -> R2) r01 r02,
@@ -577,6 +554,46 @@ Module map.
           destr (key_eqb k k0).
           * left. congruence.
           * right. apply H1. assumption.
+    Qed.
+
+    Lemma in_keys: forall m k v,
+        get m k = Some v ->
+        List.In k (keys m).
+    Proof.
+      intro m. unfold keys.
+      eapply fold_spec; intros.
+      - rewrite get_empty in H. discriminate.
+      - rewrite get_put_dec in H1. simpl.
+        destr (key_eqb k k0); eauto.
+    Qed.
+
+    Lemma in_keys_inv: forall (k: key) (m: map),
+        List.In k (map.keys m) -> map.get m k <> None.
+    Proof.
+      unfold map.keys. intros.
+      pose proof (fold_to_list (fun acc k v => cons k acc) nil m) as P.
+      destruct P as (l & E & G).
+      rewrite E in H.
+      assert (exists v, List.In (k, v) l) as HI. {
+        clear -H. revert H. induction l; simpl; intros. 1: contradiction.
+        destruct a as (k' & v). simpl in H. destruct H as [H | H].
+        - subst k'. clear. eauto.
+        - specialize (IHl H). clear -IHl. destruct IHl. eauto.
+      }
+      destruct HI as (v & HI). specialize (G k v). apply proj1 in G. specialize (G HI).
+      congruence.
+    Qed.
+
+    Lemma keys_NoDup(m: map): List.NoDup (map.keys m).
+    Proof.
+      eapply proj1 with (B := forall k, List.In k (map.keys m) -> map.get m k <> None).
+      unfold keys.
+      eapply fold_spec.
+      - split; [constructor|]. intros. simpl in *. contradiction.
+      - intros. destruct H0. split.
+        + constructor. 2: assumption. intro C. specialize (H1 _ C). contradiction.
+        + intros. rewrite get_put_dec. destr (key_eqb k k0). 1: congruence.
+          simpl in *. destruct H2. 1: congruence. eauto.
     Qed.
 
     Lemma putmany_of_list_zip_extends_exists: forall ks vs m1 m1' m2,
