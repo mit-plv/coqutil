@@ -30,7 +30,6 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
     if BinInt.Z.ltb z BinInt.Z0 then default
     else List.nth (BinInt.Z.to_nat z) xs default.
 
-  (* commented out because lia of Coq 8.12.2 fails on it, TODO reactivate
   Lemma Znth_ext: forall l l' d d',
       length l = length l' ->
       (forall z, BinInt.Z.le BinInt.Z0 z /\ BinInt.Z.lt z (BinInt.Z.of_nat (length l)) ->
@@ -42,7 +41,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
     replace (BinInt.Z.ltb (BinInt.Z.of_nat n) BinNums.Z0) with false in H0. 2: Lia.lia.
     rewrite Znat.Nat2Z.id in H0.
     eapply H0. Lia.lia.
-  Qed. *)
+  Qed.
 
   Definition Znth_error (xs : list A) z :=
     if BinInt.Z.ltb z BinInt.Z0 then None
@@ -239,7 +238,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
       do 2 destr H.
       destr (aeqb x x0).
       + eauto.
-      + exfalso. inversion H0. 
+      + exfalso. inversion H0.
   Qed.
 
   Lemma forallb_implies:
@@ -282,12 +281,29 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
         destr (aeqb s' s').
         -- eapply Bool.orb_true_l.
         -- exfalso; eauto.
-      * simpl. apply IHl in H. 
+      * simpl. apply IHl in H.
         rewrite H.
         eapply Bool.orb_true_r.
   Qed.
 End WithAAndEqDecider.
 Global Hint Resolve list_eqb_spec : typeclass_instances.
+
+Section Lexicographic.
+  Context {T: Type} (compare_elem: T -> T -> comparison).
+
+  Fixpoint compare(a b: list T): comparison :=
+    match a, b with
+    | nil, nil => Eq
+    | nil, _ => Lt
+    | cons _ _, nil => Gt
+    | cons a_head a_tail, cons b_head b_tail =>
+        match compare_elem a_head b_head with
+        | Lt => Lt
+        | Gt => Gt
+        | Eq => compare a_tail b_tail
+        end
+    end.
+End Lexicographic.
 
 Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
   Context [A: Type].
@@ -355,6 +371,16 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       induction n; intros.
       - reflexivity.
       - simpl. f_equal. apply IHn.
+    Qed.
+
+    Lemma firstn_unfoldn: forall n m start,
+        (n <= m)%nat ->
+        List.firstn n (unfoldn m start) = unfoldn n start.
+    Proof.
+      induction n; intros.
+      - reflexivity.
+      - destruct m. 1: inversion H.
+        cbn. f_equal. eapply IHn. eapply le_S_n. assumption.
     Qed.
   End WithStep.
 

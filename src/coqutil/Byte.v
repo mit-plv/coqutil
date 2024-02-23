@@ -8,6 +8,8 @@ Notation byte := (Coq.Init.Byte.byte: Type). (* to avoid that some universes are
 Module byte.
   Definition unsigned(b: byte): Z := Z.of_N (Byte.to_N b).
 
+  Definition compare(x y: byte): comparison := Z.compare (unsigned x) (unsigned y).
+
   Definition wrap(z: Z): Z := z mod 2 ^ 8.
 
   Lemma wrap_range z:

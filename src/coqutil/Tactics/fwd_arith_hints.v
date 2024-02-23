@@ -1,4 +1,5 @@
 Require Import Coq.Arith.PeanoNat Coq.NArith.BinNat Coq.ZArith.BinInt.
+Require Import coqutil.Tactics.autoforward.
 
 (* If `bool_comparison x y = true/false` appears as a hypothesis, it
    is already taken care of by autoforward, BoolSpec_true, BoolSpec_false,
@@ -24,3 +25,14 @@ Require Import Coq.Arith.PeanoNat Coq.NArith.BinNat Coq.ZArith.BinInt.
      Nat.min_id
      Nat.max_id
   : fwd_rewrites.
+
+Local Open Scope Z_scope.
+
+#[export] Instance Z_compare_eq(n m: Z): autoforward ((n ?= m) = Eq) (n = m).
+Proof. unfold autoforward. apply Z.compare_eq_iff. Qed.
+
+#[export] Instance Z_compare_lt(n m: Z): autoforward ((n ?= m) = Lt) (n < m).
+Proof. unfold autoforward. apply Z.compare_lt_iff. Qed.
+
+#[export] Instance Z_compare_gt(n m: Z): autoforward ((n ?= m) = Gt) (m < n).
+Proof. unfold autoforward. apply Z.compare_gt_iff. Qed.

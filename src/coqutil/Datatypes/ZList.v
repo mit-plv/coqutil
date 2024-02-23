@@ -49,6 +49,12 @@ Module List.
     Lemma len_app: forall (l1 l2: list A), len (l1 ++ l2) = len l1 + len l2.
     Proof. intros. rewrite List.app_length. lia. Qed.
 
+    Lemma len_nil: len (@nil A) = 0.
+    Proof. intros. reflexivity. Qed.
+
+    Lemma len_cons: forall a (l: list A), len (a :: l) = 1 + len l.
+    Proof. intros. simpl (List.length (a :: l)). lia. Qed.
+
     Lemma repeatz_0: forall (x: A), repeatz x 0 = nil.
     Proof. intros. reflexivity. Qed.
 
@@ -299,5 +305,50 @@ Module List.
       rewrite len_sized_slice; lia.
     Qed.
 
+    Lemma notin_from: forall (a: A) (i: Z) (l: list A),
+        ~ List.In a l ->
+        ~ List.In a (List.from i l).
+    Proof.
+      unfold List.from. intros. rewrite <- (List.firstn_skipn (Z.to_nat i) l) in H.
+      intro C. apply H. apply List.in_or_app. right. assumption.
+    Qed.
+
+    Lemma notin_upto: forall (a: A) (i: Z) (l: list A),
+        ~ List.In a l ->
+        ~ List.In a (List.upto i l).
+    Proof.
+      unfold List.from. intros. rewrite <- (List.firstn_skipn (Z.to_nat i) l) in H.
+      intro C. apply H. apply List.in_or_app. left. assumption.
+    Qed.
+
+    Lemma get_inj{inh: inhabited A}: forall (l1 l2: list A) (n: Z),
+        Z.of_nat (List.length l1) = n ->
+        Z.of_nat (List.length l2) = n ->
+        (forall i, 0 <= i < n -> List.get l1 i = List.get l2 i) ->
+        l1 = l2.
+    Proof.
+      intros. apply List.nth_inj with (n := Z.to_nat n) (d := default); try lia.
+      intros. specialize (H1 (Z.of_nat i) ltac:(lia)).
+      unfold List.get in *.
+      destruct (Z.of_nat i <? 0) eqn: E. 1: exfalso; lia.
+      rewrite Nat2Z.id in *.
+      assumption.
+    Qed.
+
+    Lemma split_at: forall n (l: list A), l = l[:n] ++ l[n:].
+    Proof.
+      intros. unfold List.upto, List.from. symmetry. apply List.firstn_skipn.
+    Qed.
+
+    Lemma compare_cons_cons_same{inh: inhabited A}(compare_elem: A -> A -> comparison):
+      forall (l1 l2: list A),
+        0 < len l1 ->
+        0 < len l2 ->
+        compare_elem l1[0] l2[0] = Eq ->
+        List.compare compare_elem l1 l2 = List.compare compare_elem l1[1:] l2[1:].
+    Proof.
+      intros. destruct l1. 1: discriminate. destruct l2. 1: discriminate.
+      cbn in H1. simpl (List.compare _ (_ :: _) _). rewrite H1. reflexivity.
+    Qed.
   End WithAAndZNotations.
 End List.

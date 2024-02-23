@@ -25,3 +25,16 @@ Require Import coqutil.Tactics.autoforward.
   => rapply @List.invert_Forall_cons : typeclass_instances.
 #[export] Hint Extern 1 (autoforward (NoDup (_ :: _)) _)
   => rapply @List.invert_NoDup_cons : typeclass_instances.
+
+#[export] Instance notin_nil[A: Type](a: A): autoforward (~ List.In a (@nil A)) True.
+Proof. intros ?. constructor. Qed.
+
+#[export] Instance notin_app[A: Type](a: A)(l1 l2: list A):
+  autoforward (~ List.In a (l1 ++ l2)) (~ List.In a l1 /\ ~ List.In a l2).
+Proof.
+  intros ?. split; intro C; apply H; apply List.in_app_iff; auto.
+Qed.
+
+#[export] Instance notin_singleton[A: Type](x y: A):
+  autoforward (~ List.In x (cons y nil)) (x <> y).
+Proof. intros ? C. apply H. subst. constructor. reflexivity. Qed.

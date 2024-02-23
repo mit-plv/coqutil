@@ -77,6 +77,13 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
     intuition idtac.
   Qed.
 
+  Lemma of_list_app_eq: forall (l1 l2: list E),
+      of_list (l1 ++ l2) = union (of_list l1) (of_list l2).
+  Proof.
+    intros. extensionality x. eapply propositional_extensionality.
+    unfold of_list, union, elem_of. eapply in_app_iff.
+  Qed.
+
   Lemma disjoint_diff_l: forall (A B C: set E),
       disjoint A C ->
       disjoint (diff A B) C.
@@ -123,7 +130,7 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
     sameset s2 s2' ->
     sameset (union s1 s2) (union s1' s2').
   Proof. firstorder idtac.  Qed.
-  
+
   Lemma union_assoc (s1 s2 s3 : set E) :
     sameset (union s1 (union s2 s3)) (union (union s1 s2) s3).
   Proof. firstorder idtac. Qed.
@@ -212,6 +219,32 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
     disjoint s3 s2 ->
     disjoint s1 s2.
   Proof. firstorder idtac. Qed.
+
+  Lemma diff_disjoint_same(a b: set E): disjoint a b -> diff a b = a.
+  Proof.
+    unfold disjoint, diff, elem_of. intros.
+    extensionality x. apply propositional_extensionality.
+    firstorder.
+  Qed.
+
+  Lemma subset_discard_diff_r: forall (a b r: set E),
+      disjoint a r ->
+      subset a b ->
+      subset a (diff b r).
+  Proof. unfold diff, disjoint, subset, elem_of. firstorder. Qed.
+
+  Lemma diff_union_r: forall (a b c: set E),
+      diff a (union b c) = diff (diff a b) c.
+  Proof.
+    unfold diff, union, elem_of. intros.
+    extensionality x. apply propositional_extensionality.
+    firstorder.
+  Qed.
+
+  (* The converse direction also holds, but requires decidability of membership for r *)
+  Lemma subset_union_r_to_diff_l: forall (a b r: set E),
+      subset a (union b r) -> subset (diff a r) b.
+  Proof. unfold subset, diff, union, elem_of. firstorder. Qed.
 
   Global Instance Proper_union :
     Proper (sameset ==> sameset ==> sameset) (@union E).
@@ -376,12 +409,12 @@ Section PropSetLemmasWithEqDecider. Local Set Default Proof Using "All".
       subset (of_list (h::t)) (of_list l) <->
       existsb (aeqb h) l = true /\ subset (of_list t) (of_list l).
   Proof.
-    intros. 
+    intros.
     unfold iff.
     split.
     - rewrite of_list_cons. intros.
       repeat autounfold with unf_basic_set_defs unf_derived_set_defs in *; unfold elem_of in *.
-      intros. 
+      intros.
       split.
       + specialize (H h). eapply List.existsb_exists. exists h. split.
         * eapply H. eapply or_introl. reflexivity.
@@ -399,7 +432,7 @@ Section PropSetLemmasWithEqDecider. Local Set Default Proof Using "All".
       }
       { exfalso. inversion H2. }
   Qed.
-  
+
   Lemma existsb_of_list :
     forall k keySet,
       List.existsb (aeqb k) keySet = true <-> k \in PropSet.of_list keySet.
@@ -414,4 +447,4 @@ Section PropSetLemmasWithEqDecider. Local Set Default Proof Using "All".
       + unfold elem_of, PropSet.of_list in *; eauto.
       + destr (aeqb k k); eauto.
    Qed.
-End PropSetLemmasWithEqDecider. 
+End PropSetLemmasWithEqDecider.

@@ -79,6 +79,15 @@ Ltac auto_specialize :=
                                      end
          end.
 
+Ltac specialize_hyp A :=
+  repeat match goal with
+    | H: _ |- _ => specialize A with (1 := H)
+    end.
+
+Ltac pose_specialized_as pf name :=
+  pose proof pf as name;
+  specialize_hyp name.
+
 Ltac apply_in_hyps t :=
   repeat match goal with
          | H: _ |- _ => unique eapply t in copy of H
