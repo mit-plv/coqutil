@@ -3,6 +3,7 @@
    see that they're an invertible Inductive, and it also does not destruct records. *)
 
 Require Import Coq.ZArith.ZArith.
+Require Import coqutil.Tactics.invert_hyp.
 
 Ltac head_of_app e :=
   match e with
@@ -20,20 +21,6 @@ Ltac destruct_unique_match :=
     try (exfalso; (contradiction || discriminate || congruence));
     [> ] (* "(let n := numgoals in guard n = 1)" would not be executed if 0 goals *)
   end.
-
-Definition protected(P: Prop) := P.
-
-Ltac protect_equalities :=
-  repeat match goal with
-         | H: ?a = ?b |- _ => change (protected (a = b)) in H
-         end.
-
-Ltac unprotect_equalities :=
-  repeat match goal with
-         | H: protected (?a = ?b) |- _ => change (a = b) in H
-         end.
-
-Ltac invert_hyp H := protect_equalities; inversion H; clear H; subst; unprotect_equalities.
 
 (* succeeds iff the type of H is an inductive with several constructors *)
 Ltac has_several_constructors H :=
