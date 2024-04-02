@@ -50,4 +50,14 @@ Section Combinators.
       (Preserve: forall s, invariant s -> step s invariant)
       (Use: forall s, invariant s -> P s).
 
+  CoInductive always' (P : State -> Prop) (s : State) : Prop :=
+    always'_step { hd_always' : P s; tl_always' : step s (always P) }.
+
+  Context (step_weaken: forall s P Q, (forall x, P x -> Q s) -> step s P -> step s Q).
+
+  Lemma always_always' P s (H : always' P s) : always P s.
+  Proof. esplit; try eapply H; inversion 1; eauto. Qed.
+
+  CoFixpoint always'_always P s (H : always P s) : always' P s.
+  Proof. split; inversion H; eauto. Defined.
 End Combinators.
