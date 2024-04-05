@@ -50,21 +50,50 @@ Section Combinators.
       (Preserve: forall s, invariant s -> step s invariant)
       (Use: forall s, invariant s -> P s).
 
+  Context (step_weaken: forall s P Q, (forall x, P x -> Q x) -> step s P -> step s Q).
+
+  Lemma hd_always: forall P initial, always P initial -> P initial.
+  Proof. inversion 1. eauto. Qed.
+
+  Lemma tl_always: forall P initial, always P initial -> step initial (always P).
+  Proof. inversion 1. eauto using mk_always. Qed.
+
+  Lemma always_elim: forall P initial,
+    always P initial -> P initial /\ step initial (always P).
+  Proof. split; [apply hd_always | apply tl_always]; assumption. Qed.
+
+  (* Not a very useful intro rule because it already requires an `always` in a
+     hypothesis. Typically, one would use `mk_always` instead and provide an invariant.
+     But if the first step is somehow special, and the invariant only holds after that
+     first step, this rule might be handy. *)
+  Lemma always_intro: forall P initial,
+      P initial ->
+      step initial (always P) ->
+      always P initial.
+  Proof.
+    intros. eapply mk_always with (invariant := fun s => P s /\ step s (always P)).
+    - auto.
+    - intros * [Hd Tl]. eapply step_weaken. 2: exact Tl. 1: apply always_elim.
+    - intros * [Hd Tl]. assumption.
+  Qed.
+
+  Lemma always_unfold1: forall P initial,
+    always P initial <-> P initial /\ step initial (always P).
+  Proof.
+    split.
+    - apply always_elim.
+    - intuition eauto using always_intro.
+  Qed.
+
   CoInductive always' (P : State -> Prop) s : Prop := always'_step {
     hd_always' : P s; Q ; _ : step s Q; _ s' : Q s' -> always' P s' }.
 
   CoFixpoint always'_always P s : always P s -> always' P s.
   Proof. inversion 1; esplit; eauto using mk_always. Qed.
 
-  Context (step_weaken: forall s P Q, (forall x, P x -> Q x) -> step s P -> step s Q).
-
   Lemma tl_always' P s : always' P s -> step s (always' P).
   Proof. inversion 1; eauto. Qed.
 
   Lemma always_always' P s : always' P s -> always P s.
   Proof. exists (always' P); try inversion 1; eauto. Qed.
-
-  Lemma always_elim: forall P initial,
-    always P initial -> P initial /\ step initial (always P).
-  Proof. inversion 1; eauto 6 using mk_always. Qed.
 End Combinators.
