@@ -56,7 +56,7 @@ Section Combinators.
   CoFixpoint always'_always P s : always P s -> always' P s.
   Proof. inversion 1; esplit; eauto using mk_always. Qed.
 
-  Context (step_weaken: forall s P Q, (forall x, P x -> Q s) -> step s P -> step s Q).
+  Context (step_weaken: forall s P Q, (forall x, P x -> Q x) -> step s P -> step s Q).
 
   Lemma tl_always' P s : always' P s -> step s (always' P).
   Proof. inversion 1; eauto. Qed.
@@ -66,5 +66,5 @@ Section Combinators.
 
   Lemma always_elim: forall P initial,
     always P initial -> P initial /\ step initial (always P).
-  Proof. inversion 1; eauto. Qed.
+  Proof. inversion 1; eauto 6 using mk_always. Qed.
 End Combinators.
