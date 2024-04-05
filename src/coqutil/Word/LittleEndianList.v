@@ -1,10 +1,9 @@
 Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Z.Lia Coq.micromega.Lia.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
 Require Import coqutil.Z.bitblast.
 Require Import coqutil.Z.prove_Zeq_bitwise.
 Require Import coqutil.Byte.
+Require Import coqutil.Z.PushPullMod.
 Require coqutil.Datatypes.List.
 
 Local Open Scope Z_scope.
@@ -160,7 +159,7 @@ Section LittleEndian.
     apply le_combine_inj.
     - rewrite !length_le_split; reflexivity.
     - rewrite !le_combine_split.
-      coqutil.Z.PushPullMod.Z.push_pull_mod; reflexivity.
+      Z.push_pull_mod; reflexivity.
   Qed.
 
   Lemma split_le_combine' bs n:

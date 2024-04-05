@@ -1,7 +1,6 @@
 Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Z.Lia.
-Require Import coqutil.Word.Interface coqutil.Datatypes.HList coqutil.Datatypes.PrimitivePair.
-Require Import coqutil.Word.Properties.
+Require Import coqutil.Datatypes.HList coqutil.Datatypes.PrimitivePair.
 Require Import coqutil.Z.bitblast.
 Require Import coqutil.Z.prove_Zeq_bitwise.
 Require Import coqutil.Byte.
