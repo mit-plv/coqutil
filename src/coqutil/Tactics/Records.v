@@ -1,5 +1,6 @@
 Require Import Ltac2.Ltac2.
 Require Ltac2.Option.
+Require Import coqutil.Ltac2Lib.Ltac2.
 Set Default Proof Mode "Classic".
 
 Ltac2 sfail(s: string) := Control.zero (Tactic_failure (Some (Message.of_string s))).
@@ -45,7 +46,10 @@ Ltac2 unfold_if_getter(g: constr) :=
   let (h, args) := splitApp g in
   match Constr.Unsafe.kind h with
   | Constr.Unsafe.Constant r _ =>
-    let getter_lambda := Std.eval_unfold [(Std.ConstRef r, Std.AllOccurrences)] h in
+    let getter_lambda := Std.backtrackable_eval_unfold
+                           [(Std.ConstRef r, Std.AllOccurrences)] h in
+    if Int.equal (count_lambdas getter_lambda) (Int.add (Array.length args) 1) then ()
+    else sfail "getter not applied to the right number of (potentially implicit) arguments";
     match Constr.Unsafe.kind (strip_lambdas getter_lambda) with
     (* TODO reactivate once we only use Coq >= 8.19
     | Constr.Unsafe.Proj _ _ v =>
@@ -54,7 +58,13 @@ Ltac2 unfold_if_getter(g: constr) :=
       | _ => sfail "not a getter because not proj from Rel"
       end
     *)
-    | Constr.Unsafe.Case _ _ _ _ branches =>
+    | Constr.Unsafe.Case _ _ _ discriminee branches =>
+      match Constr.Unsafe.kind discriminee with
+      | Constr.Unsafe.Rel i =>
+          if Int.equal i 1 (* note: de Brujin indices are 1-based *) then ()
+          else sfail "not a getter because discriminee is a var, but not the last argument"
+      | _ => sfail "not a getter because discriminee is not the last argument"
+      end;
       if Int.equal (Array.length branches) 1 then
         let b := Array.get branches 0 in
         match Constr.Unsafe.kind (strip_lambdas b) with
@@ -81,9 +91,18 @@ Definition TestIsntAGetter(p: nat * nat) :=
   match p with
   | pair a b => a + 1
   end.
-Goal False.
+Axiom alsoNotAGetter: nat.
+Record test_fun_wrapper{A B: Type} := { get_wrapped_fun: A -> B }.
+Goal @test_fun_wrapper nat nat -> False.
   assert_succeeds (is_getter TestIsAGetter).
+  assert_fails (is_getter @fst). (* not applied enough to be a getter *)
+  assert_succeeds (is_getter (@fst nat nat)).
+  assert_fails (is_getter (@fst nat nat (1, 2))). (* too applied to be a getter *)
   assert_fails (is_getter TestIsntAGetter).
+  assert_fails (is_getter alsoNotAGetter).
+  assert_succeeds (is_getter (@get_wrapped_fun nat nat)).
+  intro w.
+  assert_fails (is_getter (@get_wrapped_fun nat nat w)). (* too applied to be a getter *)
 Abort.
 
 (* ltac1 needed because of COQBUG https://github.com/coq/coq/issues/11641 *)

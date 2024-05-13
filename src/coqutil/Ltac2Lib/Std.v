@@ -12,6 +12,33 @@ Ltac2 eval_cbv_delta(refs: reference list)(e: constr): constr :=
      rConst := refs
   } e.
 
+Ltac2 Type exn ::= [ Unfold_succeeded ].
+
+(* Beware: Ltac2's Std.eval_unfold throws an uncatchable exception if the constant
+   to be unfolded is opaque (whereas Std.unfold throws a catchable one)
+   https://github.com/coq/coq/issues/14286 *)
+Ltac2 backtrackable_eval_unfold(u: (reference * occurrences) list)(t: constr): constr :=
+  match Control.case
+          (fun _ => '(ltac2:(Std.unfold u (default_on_concl None);
+                             Control.zero Unfold_succeeded): True)) with
+  | Val _ => Control.throw Assertion_failure
+  | Err e => match e with
+             | Unfold_succeeded => Std.eval_unfold u t
+             | _ => Control.zero e
+             end
+  end.
+
+Axiom notUnfoldable: nat.
+
+Goal True.
+  Fail let g := Control.goal () in
+  try (let g' := Std.eval_unfold [(reference:(notUnfoldable),
+                                   Std.AllOccurrences)] g in pose $g').
+  let g := Control.goal () in
+  try (let g' := backtrackable_eval_unfold [(reference:(notUnfoldable),
+                                             Std.AllOccurrences)] g in pose $g').
+Abort.
+
 Ltac2 solve1 (tac : unit -> unit) : unit :=
   let ans := tac () in
   Control.enter (fun () => Control.zero No_applicable_tactic);
