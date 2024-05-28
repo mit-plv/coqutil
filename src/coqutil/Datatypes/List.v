@@ -2253,3 +2253,65 @@ Proof.
   - apply Forall_nil.
   - inversion H; subst. apply Forall_cons; tauto.
 Qed.
+
+(* filter of a flat_map = flat_map where filter is applied in the flat_map function*)
+Lemma filter_flat_map {A B : Type} (p : B -> bool) (f : A -> list B) (l : list A) :
+  filter p (flat_map f l) = flat_map (fun x => filter p (f x)) l.
+Proof.
+  induction l as [| h t IHn].
+  - simpl. reflexivity.
+  - simpl. rewrite filter_app. f_equal. apply IHn.
+Qed.
+
+(* for maps from A->A: filtering a map = doing a map on the filtered list*)
+Lemma filter_map_commute {A : Type} (f : A -> A) (p : A -> bool) (l : list A) :
+  filter p (List.map f l) = List.map f (filter (fun x => p (f x)) l).
+Proof.
+  induction l as [| h t IHn].
+  - simpl. reflexivity.
+  - simpl. destruct (p (f h)).
+    + simpl. f_equal. apply IHn.
+    + apply IHn.
+Qed.
+
+(* filter on another filtered list = filter on original list where function "and"s the two predicates*)
+Lemma filter_filter {A : Type} (p1 p2 : A -> bool) (l : list A) :
+  filter p1 (filter p2 l) = filter (fun x => andb (p1 x) (p2 x)) l.
+Proof.
+  induction l as [| h t IHn].
+  - simpl. reflexivity.
+  - simpl. destruct (p2 h).
+    + simpl. destruct (p1 h).
+      * simpl. f_equal. apply IHn.
+      * simpl. apply IHn.
+    + destruct (p1 h); apply IHn.
+Qed.
+
+(* flat_map of a filtered list = flat_map where filter is applied in the flat_map function*)
+Lemma flat_map_filter {A B : Type} (f : A -> list B) (p : A -> bool) (l : list A) :
+  flat_map f (filter p l) = flat_map (fun x => if p x then f x else @nil B) l.
+Proof.
+  induction l as [| h t IH].
+  - simpl. reflexivity.
+  - simpl. destruct (p h) eqn:H.
+    + simpl. rewrite IH. reflexivity.
+    + rewrite IH. reflexivity.
+Qed.
+
+Lemma filter_nil : forall (A : Type) (f : A -> bool) (l : list A),
+    (forall x : A, In x l -> f x = false) -> filter f l = nil.
+Proof.
+  intros A f l H.
+  induction l as [|h t IH].
+  - simpl. reflexivity.
+  - simpl. rewrite H.
+    + apply IH. intros h' H'. apply H. right. apply H'.
+    + left. reflexivity.
+Qed.
+
+Lemma map_nil : forall (A B : Type) (f : A -> B) (l : list A),
+    l = nil -> List.map f l = nil.
+Proof.
+  intros A B f l H.
+  rewrite H. simpl. reflexivity.
+Qed.
