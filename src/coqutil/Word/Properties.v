@@ -432,6 +432,31 @@ Module word.
       intros. eapply unsigned_inj. rewrite 2unsigned_xor_nowrap. apply Z.lxor_comm.
     Qed.
 
+    Lemma and_assoc: forall x y z : word, word.and x (word.and y z) = word.and (word.and x y) z.
+    Proof.
+      intros. apply unsigned_inj. rewrite 4unsigned_and_nowrap. apply Z.land_assoc.
+    Qed.
+
+    Lemma or_assoc: forall x y z : word, word.or x (word.or y z) = word.or (word.or x y) z.
+    Proof.
+      intros. apply unsigned_inj. rewrite 4unsigned_or_nowrap. apply Z.lor_assoc.
+    Qed.
+
+    Lemma xor_assoc: forall x y z : word, word.xor x (word.xor y z) = word.xor (word.xor x y) z.
+    Proof.
+      intros. apply unsigned_inj. rewrite 4unsigned_xor_nowrap. symmetry. apply Z.lxor_assoc.
+    Qed.
+
+    Lemma or_0_l: forall x, word.or (of_Z 0) x = x.
+    Proof.
+      intros. apply unsigned_inj. rewrite unsigned_or_nowrap, unsigned_of_Z_0. apply Z.lor_0_l.
+    Qed.
+
+    Lemma or_0_r: forall x, word.or x (of_Z 0) = x.
+    Proof.
+      intros. apply unsigned_inj. rewrite unsigned_or_nowrap, unsigned_of_Z_0. apply Z.lor_0_r.
+    Qed.
+
 
   End WithWord.
 
