@@ -15,7 +15,13 @@ Ltac2 reference_of_constr c :=
 Ltac2 constr_string_basename_of_reference r :=
   constr_string_of_string (Ident.to_string (List.last (Env.path r))).
 Ltac2 constr_string_qualname_of_reference r :=
-  constr_string_of_string (String.join "." (List.map Ident.to_string (Env.path r))).
+  match Ident.of_string "Stdlib" with
+  | None => constr_string_of_string ""
+  | Some ident_Stdlib =>
+      constr_string_of_string (String.join "." (List.map (fun x => if Ident.equal x ident_Stdlib then "Coq" else Ident.to_string x) (Env.path r)))
+  end.
+  (* replace above hack by definition below when requiring Coq >= 8.21 *)
+  (* constr_string_of_string (String.join "." (List.map Ident.to_string (Env.path r))). *)
 Ltac2 constr_string_basename_of_constr_reference c :=
   constr_string_basename_of_reference (reference_of_constr c).
 Ltac2 constr_string_qualname_of_constr_reference c :=
