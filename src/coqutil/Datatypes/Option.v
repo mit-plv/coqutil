@@ -1,6 +1,12 @@
 Scheme Equality for option.
 Arguments option_beq {_} _ _ _.
 
+Definition option_map2 {X Y Z : Type} (f : X -> Y -> Z) x y :=
+  match x, y with
+  | Some x, Some y => Some (f x y)
+  | _, _ => None
+  end.
+
 Definition option_relation {A B} R (x : option A) (y : option B) :=
   match x with
   | None    => y = None
