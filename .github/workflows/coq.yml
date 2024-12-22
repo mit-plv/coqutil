@@ -3,8 +3,6 @@ name: CI (Coq)
 on:
   push:
   pull_request:
-  schedule:
-    - cron: '0 0 1 * *'
 
 jobs:
   build:
@@ -14,7 +12,6 @@ jobs:
       matrix:
         env:
         - { COQ_VERSION: "8.18.0", COQ_PACKAGE: "coq-8.18.0 libcoq-8.18.0-ocaml-dev", PPA: "ppa:jgross-h/many-coq-versions-ocaml-4-11" }
-        - { COQ_VERSION: "master", COQ_PACKAGE: "coq libcoq-core-ocaml-dev"         , PPA: "ppa:jgross-h/coq-master-daily" }
 
     runs-on: ubuntu-22.04
     env: ${{ matrix.env }}
