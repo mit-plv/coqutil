@@ -33,7 +33,7 @@ jobs:
       uses: coq-community/docker-coq-action@v1
       with:
         coq_version: ${{ matrix.env.DOCKER_COQ_VERSION }}
-        custom_script: sudo make install
+        custom_script: sudo make install COQBIN="$(dirname "$(which coqc)")/"
     - name: display timing info
       run: cat time-of-build-pretty.log
     - name: display per-line timing info
