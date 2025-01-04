@@ -1,5 +1,40 @@
 Require Export coqutil.Map.Separation.
 
+(** * Tactics for separation logic
+
+** [ecancel] and [cancel]
+
+[ecancel] solves goals of the form [iff1 P Q] or [impl1 P Q] by repeatedly canceling matching [sep]-clauses from both sides. [ecancel] fails if it does not solve the goal.
+
+[cancel] repeatedly cancels matching clauses from both sides of the goal, and may or may not solve it. Ordering and nesting of [sep] clauses in the goal left behing by [cancel] is unspecified and may change.
+
+[cancel] uses syntactic equality when looking for matching clauses. [ecancel] additionally instantiates evars, backtracking if necessary; the order of unification choices is unspecified. Neither tactic performs conversion or reduction during unification. This means that execution time and size of unification solutions is bounded based on the syntactic form of the input, but even trivial differences such as [S] vs [Nat.succ] or [x] vs [fst (x, y)] are treated as mismatches. Variables defined (:=) in the local proof context are treated as transparent during matching; other definitions are treated as opaque.
+
+For [impl1] goals, matching also calls [auto 1 with nocore ecancel_impl] on unmatched single-clause implications, and can be extended using [Hint Extern]. This feature is experimental.
+
+For troubleshooting failing calls to [ecancel]; a common approach is to run [use_sep_assumption; cancel.] and then hand-pick the next desired match, e.g. [cancel_seps_at_indices 0%nat 3%nat.]
+
+** [ecancel_assumption]
+
+[ecancel_assumption] solves goals of the form [m =* Q] by finding an assumption [m =* P], reverting that assumption into an [iff1], and calling ecancel. To use the experimental support for cancellation hints, [ecancel_assumption_impl] reverts into [impl1] instead.
+
+** [seprewrite_in_by]
+
+Use [seprewrite_in_by] to rewrite underneath [sep] in a hypothesis. For example, if you have a lemma [foo] that states [iff1 A B] and a hypothesis [H : (C * A)%sep m], you can [seprewrite_in_by H foo] to get [H : (C * B)%sep m]. If [foo] fails to solve the side-conditions, the rewrite fails. 
+
+[seprewrite_in_by] uses ecancel for matching.
+
+For troubleshooting failing seprewrite invocations, a potential approach is to instantiate the lemma fully (potentially with some evars), and then call [seprewrite0_in lemma_instance H], inlining further if that still fails.
+
+Using [setoid_rewrite] instead of seprewrite_in_by may work (Proper instances are provided), but is not recommended due to performance concerns and unification unpredictability.
+
+** [extract_ex1_and_emp]
+
+[extract_ex1_and_emp_in_goal] processes a goal of the form [m =* P]. It instantiates [ex1] quantifiers and turns [emp] clauses into [/\] conjunctions.
+
+[extract_ex1_and_emp_in_hyps] processes all hypotheses of the form [m =* P]. It creates new proof-context variables for [ex1] quantifiers and new assumptions for [emp] clauses.
+*)
+
 Require Import Coq.Classes.Morphisms.
 Require Coq.Lists.List.
 Require Import coqutil.sanity coqutil.Decidable coqutil.Tactics.destr.
