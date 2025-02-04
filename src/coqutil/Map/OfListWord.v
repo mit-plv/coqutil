@@ -194,3 +194,7 @@ Module map.
     Qed.
   End __.
 End map.
+
+Module Export Notations.
+  Notation "xs $@ a" := (map.of_list_word_at a xs) (at level 10, format "xs $@ a").
+End Notations.

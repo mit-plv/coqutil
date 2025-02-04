@@ -60,7 +60,7 @@ Section SepProperties.
   Proof. cbv [iff1 sep split]; t; eauto 15 using eq_sym, putmany_assoc, ((fun m1 m2 m3 => proj2 (disjoint_putmany_l m1 m2 m3))), ((fun m1 m2 m3 => proj2 (disjoint_putmany_r m1 m2 m3))). Qed.
 
   Lemma get_ptsto k v m (H : ptsto k v m) : get m k = Some v.
-  Proof. rewrite H, get_put_same; trivial. Qed.
+  Proof. cbv [ptsto exact] in *. subst. rewrite get_put_same; trivial. Qed.
   Lemma get_sep k v R m (H : sep (ptsto k v) R m) : get m k = Some v.
   Proof.
     destruct H as (mk&mR&H&Hp&HR); eapply get_ptsto in Hp; subst.
@@ -86,7 +86,7 @@ Section SepProperties.
   Lemma sep_put k v m v_old R (H : sep (ptsto k v_old) R m) : sep (ptsto k v) R (put m k v).
   Proof.
     eapply sep_comm in H; eapply sep_comm.
-    destruct H as (mR&mk&[Heq Hd]&HR&Hp); cbv [ptsto] in Hp; subst mk; subst m.
+    destruct H as (mR&mk&[Heq Hd]&HR&Hp); cbv [ptsto exact] in Hp; subst mk; subst m.
     exists mR, (put empty k v); split; [|solve[repeat split; trivial]]; split.
     { eapply map_ext; intro k'; destruct (key_eq_dec k' k); try subst k';
         rewrite ?get_put_same, ?get_put_diff by trivial.
@@ -126,6 +126,15 @@ Section SepProperties.
 
   Lemma iff1_sep_cancel p q1 q2 (H : iff1 q1 q2) : iff1 (p * q1) (p * q2).
   Proof. exact (Proper_sep_iff1 _ _ (reflexivity _) _ _ H). Qed.
+
+  Lemma sep_ptsto_same a b c m : not ((ptsto a b * ptsto a c)%sep m).
+  Proof.
+    cbv [ptsto exact]; intros (?&?&[]&?&?); subst.
+    eapply H0; erewrite ?map.get_put_same; eauto.
+  Qed.
+
+  Lemma sep_ptsto_same_framed a b c R m : (ptsto a b * ptsto a c * R)%sep m -> False.
+  Proof. intros (?&?&?&?&?). eapply sep_ptsto_same; eauto. Qed.
 
   (* More Conntectives *)
   Global Instance Proper_emp_iff : Proper (iff ==> @iff1 map) emp. firstorder idtac. Qed.
