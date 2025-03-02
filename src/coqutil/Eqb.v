@@ -95,10 +95,10 @@ Section __.
   
 End __.
 
-Arguments eqb {A}%_type_scope {Impl} _ _.
-Arguments Eqb_ok {A}%_type_scope H.
-Arguments eqb_spec {A}%_type_scope {Impl Pf} a b.
-Arguments dec {A}%_type_scope {DecidableEq} s1 s2.
+Arguments eqb {A}%type_scope {Impl} _ _.
+Arguments Eqb_ok {A}%type_scope H.
+Arguments eqb_spec {A}%type_scope {Impl Pf} a b.
+Arguments dec {A}%type_scope {DecidableEq} s1 s2.
    
 #[export] Hint Rewrite eqb_prop_iff using solve[typeclasses eauto] : bool.
 #[export] Hint Rewrite eqb_refl_true using solve[typeclasses eauto] : bool.
