@@ -1,3 +1,5 @@
+Require Import Eqb InversionRewrite.
+
 Scheme Equality for option.
 Arguments option_beq {_} _ _ _.
 
@@ -65,3 +67,30 @@ Ltac inversion_option :=
        rename H into H';
        destruct (invert_eq_Some H') as [H ?]; subst H'
   end.
+
+Section __.
+  Context (A : Type)
+    `{Eqb_ok A}.
+
+  #[export] Instance option_eqb : Eqb (option A) :=
+    fun a b =>
+      match a, b with
+      | Some a, Some b => eqb a b
+      | None, None => true
+      | _, _ => false
+      end.
+
+  #[export] Instance option_eqb_ok : Eqb_ok option_eqb.
+  Proof.
+    unfold Eqb_ok, option_eqb.
+    unfold eqb at 1.
+    intros a b;
+      destruct a;
+      destruct b;
+      intros;
+      autorewrite with bool inversion;
+      intuition auto.
+    eqb_case a a0; congruence.
+  Qed.
+
+End __.
