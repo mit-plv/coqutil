@@ -13,7 +13,7 @@ TEST_VS := $(shell find $(TEST_DIR) -type f -name '*.v')
 # We auto-update _CoqProject and _CoqProject.notest,
 # but only change their timestamp if the set of files that they list changed
 
-PRINT_COQPROJECT_ARGS := printf -- '-R %s/coqutil/ coqutil\n' '$(SRC_DIR)'
+PRINT_COQPROJECT_ARGS := printf -- '-Q %s/coqutil/ coqutil\n' '$(SRC_DIR)'
 PRINT_SRC_VS := printf -- '%s\n' $(sort $(SRC_VS))
 PRINT_TEST_VS := printf -- '%s\n' $(sort $(TEST_VS))
 PRINT_COQPROJECT_NOTEST := { $(PRINT_COQPROJECT_ARGS); $(PRINT_SRC_VS); }
