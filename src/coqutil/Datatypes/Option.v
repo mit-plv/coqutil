@@ -1,4 +1,4 @@
-Require Import Eqb InversionRewrite.
+From coqutil Require Import Eqb InversionRewrite.
 
 Scheme Equality for option.
 Arguments option_beq {_} _ _ _.

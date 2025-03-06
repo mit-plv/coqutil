@@ -1,4 +1,4 @@
-Require Import Tactics.ProveInversion.
+From coqutil Require Import Tactics.ProveInversion.
 
 (* A database of inversion rules for use in autorewrite *)
 
