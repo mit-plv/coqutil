@@ -1,4 +1,5 @@
-Require Import Tactics.case_match Datatypes.Bool Decidable Datatypes.String Uint63.
+From coqutil Require Import Tactics.case_match Datatypes.Bool Decidable Datatypes.String.
+Require Import Uint63.
 (*
   A typeclass for boolean equality
  *)
