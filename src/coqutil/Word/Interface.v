@@ -90,5 +90,8 @@ Module word.
     signed_lts : forall x y, lts x y = Z.ltb (signed x) (signed y);
   }.
   Arguments ok {_} _.
+
+  Definition broadcast {width} {word : word width} (b : bool) : word.rep :=
+    opp (of_Z (Z.b2z b)).
 End word. Notation word := word.word.
 Global Coercion word.rep : word >-> Sortclass.

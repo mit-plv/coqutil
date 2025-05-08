@@ -38,6 +38,9 @@ Module word.
     Lemma unsigned_inj x y (H : unsigned x = unsigned y) : x = y.
     Proof. rewrite <-(of_Z_unsigned x), <-(of_Z_unsigned y). apply f_equal, H. Qed.
 
+    Lemma unsigned_inj_iff x y : word.unsigned x = word.unsigned y <-> x = y.
+    Proof. split; try congruence; try apply unsigned_inj. Qed.
+
     Lemma unsigned_inj' x y (H : x <> y) : unsigned x <> unsigned y.
     Proof. intros. intro C. apply H. apply unsigned_inj. exact C. Qed.
 
@@ -457,6 +460,113 @@ Module word.
       intros. apply unsigned_inj. rewrite unsigned_or_nowrap, unsigned_of_Z_0. apply Z.lor_0_r.
     Qed.
 
+    Lemma xor_m1_l x : word.xor (word.opp (word.of_Z 1)) x = word.not x.
+    Proof.
+      apply unsigned_inj.
+      rewrite <-wrap_unsigned; symmetry; rewrite <-wrap_unsigned.
+      rewrite <-!Z.land_ones by blia.
+      rewrite unsigned_not_nowrap, unsigned_xor_nowrap.
+      change (-1) with (Z.opp 1).
+      rewrite unsigned_opp_nowrap; rewrite unsigned_of_Z_1; try inversion 1.
+      rewrite Z.sub_1_r, <-Z.ones_equiv.
+      apply Z.bits_inj'; intros i Hi.
+      rewrite ?Z.land_spec, ?Z.lxor_spec, ?Z.ldiff_spec, ?Z.testbit_ones by blia.
+      case Z.leb_spec; intros; try blia.
+      case Z.ltb_spec; intros; try blia.
+      Btauto.btauto.
+    Qed.
+
+    Lemma and_xorm1_r (x y : word) :
+      word.and x (word.xor (word.of_Z (-1)) y) = word.ndn x y.
+    Proof.
+      apply unsigned_inj.
+      rewrite <-wrap_unsigned; symmetry; rewrite <-wrap_unsigned.
+      rewrite <-!Z.land_ones by blia.
+      rewrite unsigned_and_nowrap, unsigned_xor_nowrap, unsigned_ndn_nowrap.
+      change (-1) with (Z.opp 1).
+      rewrite ring_morph_opp, unsigned_opp_nowrap; rewrite unsigned_of_Z_1; try inversion 1.
+      rewrite Z.sub_1_r, <-Z.ones_equiv.
+      apply Z.bits_inj'; intros i Hi.
+      rewrite ?Z.land_spec, ?Z.lxor_spec, ?Z.ldiff_spec, ?Z.testbit_ones by blia.
+      case Z.leb_spec; intros; try blia.
+      case Z.ltb_spec; intros; try blia.
+      Btauto.btauto.
+    Qed.
+
+    Lemma and_xorm1_l (x y : word) :
+      word.and (word.xor (word.of_Z (-1)) y) x = word.ndn x y.
+    Proof. rewrite and_comm. apply and_xorm1_r. Qed.
+
+    Lemma not_broadcast (b : bool) : word.not (word.broadcast b) = word.broadcast (negb b).
+    Proof.
+      apply signed_inj; case b; cbv [broadcast]; cbn;
+        rewrite ?signed_not_nowrap, ?signed_opp, ?signed_of_Z; try blia;
+        case (Z.eq_dec (2^(width-1)) 1) as[H|];
+        try solve [cbv [swrap]; rewrite <-?twice_halfm, ?H; trivial];
+        repeat (rewrite !swrap_inrange; try blia; trivial).
+    Qed.
+
+    Lemma xor_m1_broadcast (b : bool) : word.xor (word.opp (word.of_Z 1)) (word.broadcast b) = word.broadcast (negb b).
+    Proof. rewrite xor_m1_l, not_broadcast; trivial. Qed.
+
+    Lemma testbit_broadcast b i : Z.testbit (unsigned (broadcast b)) i = ((0 <=? i) && (i <? width) && b)%bool.
+    Proof.
+      case Z.leb_spec; intros. 2: { rewrite Z.testbit_neg_r; trivial. }
+      case b; cbv [broadcast Z.b2z];
+        rewrite <-?(ring_morph_opp 1), ?unsigned_opp_0, ?word.unsigned_of_Z, ?Z.testbit_0_l, ?Bool.andb_false_r
+        by apply unsigned_of_Z_0; trivial.
+      cbv [wrap]; rewrite Z.testbit_mod_pow2, ?Z.bits_m1, ?Bool.andb_true_r by blia; trivial.
+    Qed.
+
+    Lemma broadcast_0_iff b : word.broadcast b = word.of_Z 0 <-> b = false.
+    Proof.
+      case b; cbv [broadcast Z.b2z]; split; trivial; try congruence.
+      { intros H%(f_equal unsigned).
+        rewrite ?unsigned_of_Z_0, ?unsigned_opp, ?unsigned_of_Z_1 in *.
+        apply Z.mod_divide in H; try blia; case H as [x Hx]; blia. }
+      { intros _. apply unsigned_inj; rewrite ?unsigned_of_Z.
+        apply unsigned_opp_0, unsigned_of_Z_0. }
+    Qed.
+
+    Lemma lor_0_iff x y :
+      word.or x y = word.of_Z 0 <-> x = word.of_Z 0 /\ y = word.of_Z 0.
+    Proof.
+      split; cycle 1.
+      { intuition subst. apply or_0_l. }
+      { intros H%(f_equal word.unsigned).
+        rewrite ?unsigned_or_nowrap, unsigned_of_Z_0, Z.lor_eq_0_iff in H.
+        destruct H as [X Y]; split; apply unsigned_inj; rewrite ?X, ?Y, ?unsigned_of_Z_0; trivial. }
+    Qed.
+
+    Lemma testbit_msb w : Z.testbit (unsigned w) (width-1) = Z.ltb (word.signed w) 0.
+    Proof.
+      pose proof unsigned_range w; apply Bool.eq_true_iff_eq.
+      rewrite signed_eq_swrap_unsigned, swrap_as_div_mod.
+      rewrite Z.testbit_true, Z.ltb_lt by blia. PreOmega.Z.div_mod_to_equations; blia.
+    Qed.
+
+    Lemma srs_msb w : word.srs w (word.of_Z (width-1)) = word.broadcast (Z.testbit (unsigned w) (width-1)).
+    Proof.
+      pose proof Z.pow_gt_lin_r 2 width eq_refl width_nonneg_context.
+      apply signed_inj, Z.bits_inj'; intros i Hi.
+      rewrite signed_srs.
+      2:{ rewrite unsigned_of_Z; cbv[wrap]; rewrite Z.mod_small; try blia. }
+      rewrite testbit_swrap.
+      rewrite 2testbit_wrap, 2Z.shiftr_spec by blia.
+      rewrite !testbit_signed.
+      rewrite !testbit_broadcast.
+      rewrite !(proj2 (Z.leb_le _ _)) by blia.
+      rewrite !Bool.andb_true_l.
+      rewrite unsigned_of_Z_nowrap by blia.
+      case (Z.ltb_spec (_ - 1 + _) _); try blia.
+      { intros. assert (1 = width) as Hu by blia.
+        remember (unsigned w).
+        case Hu; case Z.ltb_spec; trivial; try blia; intros.
+        assert (i = 0) as -> by blia; trivial. }
+      case (Z.ltb_spec i width); intros; rewrite ?Bool.andb_true_l, ?Bool.andb_true_r; trivial.
+      case Z.ltb_spec; intros; trivial.
+      f_equal; blia.
+    Qed.
 
   End WithWord.
 
@@ -575,6 +685,8 @@ Module word.
     Lemma mul_0_r: forall x, word.mul x (word.of_Z 0) = word.of_Z 0. Proof. intros. ring. Qed.
     Lemma mul_1_l: forall x, word.mul (word.of_Z 1) x = x. Proof. intros. ring. Qed.
     Lemma mul_1_r: forall x, word.mul x (word.of_Z 1) = x. Proof. intros. ring. Qed.
+    Lemma mul_m1_l: forall x, word.mul (word.opp (word.of_Z 1)) x = word.opp x. Proof. intros. ring. Qed.
+    Lemma mul_m1_r: forall x, word.mul x (word.opp (word.of_Z 1)) = word.opp x. Proof. intros. ring. Qed.
 
     Lemma of_Z_inj_mod: forall x y,
         x mod 2 ^ width = y mod 2 ^ width ->
@@ -585,6 +697,19 @@ Module word.
       rewrite ?word.unsigned_of_Z.
       unfold word.wrap.
       assumption.
+    Qed.
+
+    Lemma eq_of_Z_iff x y : word.of_Z x = word.of_Z y :> word <-> x mod 2^width = y mod 2^width.
+    Proof.
+      split; try apply of_Z_inj_mod; [].
+      intros ?%(f_equal word.unsigned); rewrite !unsigned_of_Z in *. assumption.
+    Qed.
+
+    Lemma zero_of_Z_iff (x : Z) : word.of_Z x = word.of_Z 0 :> word <-> x mod 2^width = 0.
+    Proof.
+      intros.
+      rewrite eq_of_Z_iff; try exact _.
+      rewrite Zdiv.Zmod_0_l; reflexivity.
     Qed.
 
     Lemma add_sub_r_same_r x y : word.add x (word.sub y x) = y. intros. ring. Qed.
