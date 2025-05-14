@@ -38,8 +38,8 @@ Section LittleEndian. Local Set Default Proof Using "All".
       Z.bitblast.
   Qed.
 
-  Lemma split_combine (n: nat) bs :
-    split_deprecated n (combine_deprecated n bs) = bs.
+  Lemma split_combine@{u u0} (n: nat) bs :
+    split_deprecated@{u0 u} n (combine_deprecated n bs) = bs.
   Proof.
     revert bs; induction n.
     - destruct bs. reflexivity.
