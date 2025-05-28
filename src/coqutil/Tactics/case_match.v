@@ -31,6 +31,8 @@ Ltac case_match_goal :=
 
 Section Tests.
 
+  #[local] Set Warnings "-undo-batch-mode".
+
   Goal forall x,
       match match x with
             | S _ => 1
