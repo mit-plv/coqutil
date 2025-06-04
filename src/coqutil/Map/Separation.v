@@ -16,6 +16,10 @@ Section Sep.
     end.
 End Sep.
 
+Definition sepclause_of_map {key value map} (m : @map.rep key value map)
+  : map.rep -> Prop := Logic.eq m.
+Coercion sepclause_of_map : Interface.map.rep >-> Funclass.
+
 Declare Scope sep_scope.
 Delimit Scope sep_scope with sep.
 Infix "*" := sep (at level 40, left associativity) : sep_scope.

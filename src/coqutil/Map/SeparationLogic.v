@@ -151,9 +151,9 @@ Section SepProperties.
     apply split_undef_put. assumption.
   Qed.
 
-  Lemma sep_eq_putmany (a b : map) (H : disjoint a b)
-    : Lift1Prop.iff1 (eq (putmany a b)) (sep (eq a) (eq b)).
+  Lemma sep_eq_putmany (a b : map) (H : disjoint a b) : iff1 (putmany a b) (sep a b).
   Proof.
+    cbv [sepclause_of_map] in *.
     split.
     { intros; subst. eexists _, _; eauto using Properties.map.split_disjoint_putmany. }
     { intros (?&?&(?&?)&?&?); subst; trivial. }
