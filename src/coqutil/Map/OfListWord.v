@@ -1,4 +1,4 @@
-Require Import ZArith.
+From Coq Require Import ZArith.
 Require Import Coq.Lists.List coqutil.Datatypes.List.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Map.Interface coqutil.Map.OfFunc.
