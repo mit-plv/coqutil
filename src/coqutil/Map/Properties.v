@@ -2436,6 +2436,16 @@ Module map.
     Qed.
 
   End WithTwoMaps.
+
+  Lemma to_list_getmany_of_tuple [key value] [map : map.map key value] sz ks (m : map) :
+    option_map HList.tuple.to_list (map.getmany_of_tuple m (sz:=sz) ks) =
+    List.option_all (List.map (map.get m) (HList.tuple.to_list ks)).
+  Proof.
+    induction sz; cbn; trivial.
+    case map.get; trivial; intros.
+    erewrite <-IHsz; clear IHsz. cbv [map.getmany_of_tuple].
+    case HList.tuple.option_all; trivial.
+  Qed.
 End map.
 
 #[global] Hint Opaque map.eqb : typeclass_instances.
