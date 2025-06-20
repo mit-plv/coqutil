@@ -100,7 +100,7 @@ Section Memory.
   Local Infix "$+" := map.putmany (at level 70).
   Local Notation "xs $@ a" := (map.of_list_word_at a xs) (at level 10, format "xs $@ a").
 
-  Lemma load_bytes_of_putmany_bytes_at bs a mR n (Hn : length bs = n) (Hl : Z.of_nat n < 2^width)
+  Lemma load_bytes_of_putmany_bytes_at bs a mR n (Hn : length bs = n) (Hl : Z.of_nat n <= 2^width)
     : load_bytes (mR $+ bs$@a) a n = Some bs.
   Proof.
     destruct (load_bytes (mR $+ bs$@a) a n) eqn:HN in *; cycle 1.

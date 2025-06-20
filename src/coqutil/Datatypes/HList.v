@@ -121,9 +121,24 @@ Module tuple.
     Lemma length_to_list {n} xs : length (@to_list n xs) = n.
     Proof. revert xs; induction n; cbn; eauto. Qed.
 
+    Lemma to_list_inj n (xs ys : tuple A n) : to_list xs = to_list ys -> xs = ys.
+    Proof.
+      induction n, xs, ys; inversion 1; subst; trivial.
+      f_equal. eapply IHn. assumption.
+    Qed.
+
     Lemma to_list_eq_rect a b xs pf
       : to_list (eq_rect a _ xs b pf) = to_list xs.
     Proof. destruct pf. cbn. trivial. Qed.
+
+    Definition cast {m} (xs : tuple A m) {n} : m = n -> tuple A n :=
+      match PeanoNat.Nat.eq_dec m n with
+      | left Heq => fun _ => eq_rect m _ xs  n Heq
+      | right Hneq => fun Heq => False_rect _ (Hneq Heq)
+      end.
+
+    Lemma to_list_cast [m n] (p : m = n) (xs  : tuple A m) : to_list (cast xs  p) = to_list xs .
+    Proof. cbv[cast]. case PeanoNat.Nat.eq_dec; intros; [apply to_list_eq_rect|contradiction]. Qed.
 
     Section WithF. Local Set Default Proof Using "All".
       Context {B: Type}.

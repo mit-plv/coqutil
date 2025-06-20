@@ -50,7 +50,7 @@ Section SeparationMemory.
   (** * Load *)
 
   Lemma load_bytes_of_sep bs a n R (m : mem) (Hsep: m =* bs$@a*R)
-    (Hl : length bs = n%nat) (Hlw : Z.of_nat n < 2 ^ width) :
+    (Hl : length bs = n%nat) (Hlw : Z.of_nat n <= 2 ^ width) :
     load_bytes m a n = Some bs.
   Proof.
     apply sep_comm in Hsep.
@@ -59,17 +59,17 @@ Section SeparationMemory.
   Qed.
 
   Lemma load_Z_of_sep bs a n R (m : mem) (Hsep: m =* bs$@a*R)
-    (Hl : length bs = n%nat) (Hlw : Z.of_nat n < 2 ^ width) : 
+    (Hl : length bs = n%nat) (Hlw : Z.of_nat n <= 2 ^ width) : 
     load_Z m a n = Some (LittleEndianList.le_combine bs).
   Proof. cbv [load_Z]. erewrite load_bytes_of_sep; eauto. Qed.
 
   Lemma uncurried_load_Z_of_sep bs a n R (m : mem)
-    (H : m =* bs$@a * R /\ length bs = n%nat /\ Z.of_nat n < 2 ^ width) :
+    (H : m =* bs$@a * R /\ length bs = n%nat /\ Z.of_nat n <= 2 ^ width) :
     load_Z m a n = Some (LittleEndianList.le_combine bs).
   Proof. eapply load_Z_of_sep; eapply H. Qed.
 
   Lemma uncurried_load_Z_of_sep_Z bs a n R (m : mem)
-    (H : m =* bs$@a * R /\ Z.of_nat (length bs) = n%nat /\ n < 2 ^ width) :
+    (H : m =* bs$@a * R /\ Z.of_nat (length bs) = n%nat /\ n <= 2 ^ width) :
     load_Z m a (Z.to_nat n) = Some (LittleEndianList.le_combine bs).
   Proof. eapply load_Z_of_sep; try eapply H; lia. Qed.
 
@@ -78,7 +78,7 @@ Section SeparationMemory.
     load_Z m a (Z.to_nat (word.unsigned n)) = Some (LittleEndianList.le_combine bs).
   Proof.
     case (word.unsigned_range n) as [].
-    eapply uncurried_load_Z_of_sep_Z; intuition eauto.
+    eapply uncurried_load_Z_of_sep_Z; intuition eauto using Z.lt_le_incl.
   Qed.
 
   (** * Store *)
@@ -105,7 +105,7 @@ Section SeparationMemory.
   Qed.
 
   Lemma uncurried_store_bytes_of_sep (a: word) (n: nat) (_bs bs: list byte)
-    (R: mem -> Prop) (m: mem) (H : m =* _bs$@a * R /\ length _bs = n /\ length bs = n /\ n < 2^width) :
+    (R: mem -> Prop) (m: mem) (H : m =* _bs$@a * R /\ length _bs = n /\ length bs = n /\ n <= 2^width) :
     exists m', Memory.store_bytes m a bs = Some m' /\ m' =* bs$@a * R.
   Proof.
     cbv [store_bytes]; intuition idtac.
@@ -115,7 +115,7 @@ Section SeparationMemory.
   Qed.
 
   Lemma uncurried_store_Z_of_sep (a: word) (n: nat) (_bs : list byte) (z : Z)
-    (R: mem -> Prop) (m: mem) (H : m =* _bs$@a * R /\ length _bs = n /\ n < 2^width) :
+    (R: mem -> Prop) (m: mem) (H : m =* _bs$@a * R /\ length _bs = n /\ n <= 2^width) :
     exists m', Memory.store_Z m a n z = Some m' /\ m' =* (le_split n z)$@a * R.
   Proof.
     cbv [Memory.store_Z].
