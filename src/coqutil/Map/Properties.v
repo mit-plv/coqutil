@@ -2446,6 +2446,13 @@ Module map.
     erewrite <-IHsz; clear IHsz. cbv [map.getmany_of_tuple].
     case HList.tuple.option_all; trivial.
   Qed.
+
+  Lemma disjoint_remove_keys [key value] [map : map.map key value] (m1 m2 : map)
+    {ok : map.ok map} {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb} :
+    disjoint (remove_many m1 (keys m2)) m2.
+  Proof.
+    intros ? ? ? ?%get_remove_many_Some_notin ?%map.in_keys; contradiction.
+  Qed.
 End map.
 
 #[global] Hint Opaque map.eqb : typeclass_instances.

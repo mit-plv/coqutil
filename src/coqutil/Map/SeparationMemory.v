@@ -17,8 +17,7 @@ Section SeparationMap.
 
   Lemma sep_eq_of_list_word_at_app (a : word) (xs ys : list value)
     lxs (Hlxs : Z.of_nat (length xs) = lxs) (Htotal : length xs + length ys <= 2^width)
-    : Lift1Prop.iff1 (eq ((xs ++ ys)$@a))
-      (sep (eq (xs$@a)) (eq (ys$@(word.add a (word.of_Z lxs))))).
+    : Lift1Prop.iff1 ((xs ++ ys)$@a) (xs$@a * ys$@(word.add a (word.of_Z lxs))).
   Proof.
     etransitivity.
     2: eapply sep_comm.
@@ -30,7 +29,7 @@ Section SeparationMap.
   Lemma list_word_at_app_of_adjacent_eq (a b : word) (xs ys : list value)
     (Hl: word.unsigned (word.sub b a) = Z.of_nat (length xs))
     (Htotal : length xs + length ys <= 2^width)
-    : Lift1Prop.iff1 (eq(xs$@a)*eq(ys$@b)) (eq((xs++ys)$@a)).
+    : Lift1Prop.iff1 (xs$@a*ys$@b) ((xs++ys)$@a).
   Proof.
     etransitivity.
     2:symmetry; eapply sep_eq_of_list_word_at_app; trivial.
@@ -56,6 +55,23 @@ Section SeparationMemory.
     apply sep_comm in Hsep.
     case Hsep as (mR&mbs&[-> disj]&?&?); cbv [sepclause_of_map] in *; subst mbs.
     auto using load_bytes_of_putmany_bytes_at.
+  Qed.
+
+  Lemma load_bytes_in_sep bs a n P R (m : mem) (Hsep: m =* P*R)
+    (H : forall m, P m -> load_bytes m a n = Some bs) :
+    load_bytes m a n = Some bs.
+  Proof.
+    eapply sep_comm in Hsep.
+    case Hsep as (mR&mP&[-> _]&_&HP%H); clear H.
+    erewrite load_bytes_putmany_right; eauto.
+  Qed.
+
+  Lemma sep_of_load_bytes (m : mem) a n bs (H : load_bytes m a n = Some bs) :
+    m =* map.remove_many m (map.keys (bs$@a)) * bs$@a.
+  Proof.
+    eapply invert_load_bytes in H.
+    cbv [sep map.split sepclause_of_map]; eexists _, _; ssplit;
+      eauto using map.disjoint_remove_keys, word.eqb_spec.
   Qed.
 
   Lemma load_Z_of_sep bs a n R (m : mem) (Hsep: m =* bs$@a*R)
@@ -121,5 +137,38 @@ Section SeparationMemory.
     cbv [Memory.store_Z].
     eapply uncurried_store_bytes_of_sep; intuition eauto with nocore;
     rewrite ?length_le_split; lia.
+  Qed.
+
+  Lemma sep_of_store_bytes (_m m : mem) a bs (H : store_bytes _m a bs = Some m) :
+    m =* map.remove_many m (map.keys (bs$@a)) * bs$@a.
+  Proof.
+    cbv [store_bytes] in *; destruct load_bytes eqn:E; inversion_clear H.
+    epose proof sep_of_load_bytes _ _ _ _ E.
+    unshelve epose proof uncurried_unchecked_store_bytes_of_sep _ _ _ _ _ _ _ as Hsep; shelve_unifiable; ssplit.
+    { ecancel_assumption. }
+    { reflexivity. }
+    { symmetry; erewrite length_load_bytes; eauto. }
+    apply sep_comm; eqapply Hsep; cbv [unchecked_store_bytes].
+
+    enough (map.keys (l$@a) = map.keys (bs$@a)) as Hkeys. {
+      apply f_equal, map.map_ext; intros k.
+      rewrite ?map.get_remove_many_dec, ?Hkeys, ?map.get_putmany_dec.
+      destruct find eqn:N; trivial. 
+      destruct (map.get (bs$@a)) eqn:G; trivial.
+      eapply map.in_keys in G.
+      eapply find_none, word.eqb_false in G; eauto; congruence. }
+    (* is the order the same though ?*)
+  Abort.
+
+  Lemma sep_of_store_bytes_ex (_m m : mem) a bs (H : store_bytes _m a bs = Some m) :
+    exists R, m =* bs$@a * R.
+  Proof.
+    cbv [store_bytes] in *; destruct load_bytes eqn:E; inversion_clear H.
+    epose proof sep_of_load_bytes _ _ _ _ E.
+    unshelve epose proof uncurried_unchecked_store_bytes_of_sep _ _ _ _ _ _ _ as Hsep; shelve_unifiable; ssplit.
+    { ecancel_assumption. }
+    { reflexivity. }
+    { symmetry; erewrite length_load_bytes; eauto. }
+    eexists. ecancel_assumption.
   Qed.
 End SeparationMemory.
