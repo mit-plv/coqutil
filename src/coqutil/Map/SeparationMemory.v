@@ -139,6 +139,44 @@ Section SeparationMemory.
     rewrite ?length_le_split; lia.
   Qed.
 
+  Lemma sub_domain_putmany_load_bytes a _bs (m : mem) n bs (H : load_bytes m a n = Some _bs) :
+    length _bs = length bs -> map.sub_domain (m $+ bs$@a) m.
+  Proof.
+    cbv [map.sub_domain]; intros Hl k v.
+    rewrite map.get_putmany_dec, map.get_of_list_word_at.
+    case nth_error eqn:E; inversion 1; eauto; apply List.nth_error_Some_bound_index in E.
+    erewrite <-Hl, length_load_bytes in E by eassumption.
+    pose proof E as E'; eapply nth_error_load_bytes in E; eauto.
+    erewrite Z2Nat.id, word.of_Z_unsigned, word.add_sub_r_same_r in E by apply word.unsigned_range.
+    rewrite <-E; case nth_error eqn:nE; eauto.
+    apply length_load_bytes in H; apply nth_error_None in nE; lia.
+  Qed.
+
+  Lemma store_bytes_in_sep a bs R (m0 m1 m : mem) 
+    (Hstore : store_bytes m0 a bs = Some m1) (Hsep: m =* m0*R) :
+    exists m', store_bytes m a bs = Some m' /\ m' =* m1*R.
+  Proof.
+    cbv [sepclause_of_map store_bytes unchecked_store_bytes] in *.
+    case load_bytes eqn:Hload in Hstore; inversion Hstore; subst; clear Hstore.
+    eapply sep_comm in Hsep.
+    case Hsep as (mR&m0'&[-> ?]&?&?); subst m0'.
+    erewrite load_bytes_putmany_right by eauto.
+    eexists; split; trivial.
+
+    eapply sep_comm; eexists _, _; ssplit; eauto.
+    erewrite <-map.putmany_assoc; eapply map.split_disjoint_putmany.
+    eapply map.disjoint_comm, map.sub_domain_disjoint, map.disjoint_comm in H; eauto.
+    eapply sub_domain_putmany_load_bytes; erewrite ?length_load_bytes by eassumption; trivial. eassumption.
+  Qed.
+
+  Lemma same_domain_store_bytes a bs m m' : store_bytes m a bs = Some m' :> option mem -> map.same_domain m m'.
+  Proof.
+    cbv [store_bytes unchecked_store_bytes].
+    case load_bytes eqn:E; inversion_clear 1.
+    cbv [map.same_domain]; split; [apply map.sub_domain_putmany_r, map.sub_domain_refl|].
+    eapply sub_domain_putmany_load_bytes; erewrite ?length_load_bytes by eassumption; trivial. eassumption.
+  Qed.
+
   Lemma sep_of_store_bytes (_m m : mem) a bs (H : store_bytes _m a bs = Some m) :
     m =* map.remove_many m (map.keys (bs$@a)) * bs$@a.
   Proof.

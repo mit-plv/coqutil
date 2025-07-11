@@ -160,4 +160,11 @@ Section Memory.
     rewrite map.get_remove_many_notin; trivial.
     intros N%map.in_keys_inv; rewrite map.get_of_list_word_at in N; contradiction.
   Qed.
+
+  Lemma load_Z_bound m a n z : load_Z m a n = Some z -> 0 <= z < 2^(8*Z.of_nat n).
+  Proof.
+    cbv [load_Z]; case load_bytes eqn:?E; inversion 1; subst.
+    erewrite <-length_load_bytes with (n:=n) by eassumption.
+    apply le_combine_bound.
+  Qed.
 End Memory.
