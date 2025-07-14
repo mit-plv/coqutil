@@ -94,6 +94,18 @@ Section SepProperties.
   Lemma sep_assoc p q r : iff1 ((p*q)*r) (p*(q*r)).
   Proof. cbv [iff1 sep split]; t; eauto 15 using eq_sym, putmany_assoc, ((fun m1 m2 m3 => proj2 (disjoint_putmany_l m1 m2 m3))), ((fun m1 m2 m3 => proj2 (disjoint_putmany_r m1 m2 m3))). Qed.
 
+  Lemma ptsto_nonaliasing k a b m (R: map -> Prop) : not (m =* ptsto k a * ptsto k b * R).
+  Proof.
+    intro. unfold ptsto, sep, map.split, map.disjoint in *.
+    repeat match goal with
+           | H: exists _, _ |- _ => destruct H
+           | H: _ /\ _ |- _ => destruct H
+           | H: _ |- _ => specialize (H k)
+           | H: _ |- _ => rewrite map.get_put_same in H
+           | _ => progress subst
+           end; eauto.
+  Qed.
+
   Lemma get_ptsto k v m (H : ptsto k v m) : get m k = Some v.
   Proof. rewrite H, get_put_same; trivial. Qed.
   Lemma get_sep k v R m (H : sep (ptsto k v) R m) : get m k = Some v.

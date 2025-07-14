@@ -2436,6 +2436,23 @@ Module map.
     Qed.
 
   End WithTwoMaps.
+
+  Lemma to_list_getmany_of_tuple [key value] [map : map.map key value] sz ks (m : map) :
+    option_map HList.tuple.to_list (map.getmany_of_tuple m (sz:=sz) ks) =
+    List.option_all (List.map (map.get m) (HList.tuple.to_list ks)).
+  Proof.
+    induction sz; cbn; trivial.
+    case map.get; trivial; intros.
+    erewrite <-IHsz; clear IHsz. cbv [map.getmany_of_tuple].
+    case HList.tuple.option_all; trivial.
+  Qed.
+
+  Lemma disjoint_remove_keys [key value] [map : map.map key value] (m1 m2 : map)
+    {ok : map.ok map} {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb} :
+    disjoint (remove_many m1 (keys m2)) m2.
+  Proof.
+    intros ? ? ? ?%get_remove_many_Some_notin ?%map.in_keys; contradiction.
+  Qed.
 End map.
 
 #[global] Hint Opaque map.eqb : typeclass_instances.
