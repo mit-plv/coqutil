@@ -708,6 +708,18 @@ Ltac ecancel_assumption :=
     but its performance may be worse, especially when it fails.
   *)
 
+Ltac use_sep_assumption_impl :=
+ match goal with
+    | |- ?PG ?m1 =>
+      match goal with
+      | H: ?PH ?m2
+        |- _ =>
+        syntactic_unify_deltavar m1 m2;
+        refine (Morphisms.subrelation_refl Lift1Prop.impl1 PH PG _ m1 H);
+        clear H
+      end
+    end.
+
 Ltac use_sep_assumption :=
   match goal with
   | |- _ ?m1 =>
