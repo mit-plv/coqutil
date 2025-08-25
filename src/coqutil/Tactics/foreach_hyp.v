@@ -16,7 +16,7 @@ Ltac2 foreach_var_in_list(f: ident -> constr -> constr -> unit) :=
                       end).
 
 Ltac2 drop_until_marker(marker: constr)(hs: (ident * constr option * constr) list) :=
-  let l := List.drop_while (fun p => let (h, obody, tp) := p in
+  let l := List.drop_while (fun p => let (_h, _obody, tp) := p in
                                      Bool.neg (Constr.equal tp marker)) hs in
   match l with
   | [] => Control.throw_out_of_bounds "stopping marker not found"
@@ -24,7 +24,7 @@ Ltac2 drop_until_marker(marker: constr)(hs: (ident * constr option * constr) lis
   end.
 
 Ltac2 take_until_marker(marker: constr)(hs: (ident * constr option * constr) list) :=
-  let (tw, dw) := List.span (fun p => let (h, obody, tp) := p in
+  let (tw, dw) := List.span (fun p => let (_h, _obody, tp) := p in
                                       Bool.neg (Constr.equal tp marker)) hs in
   match dw with
   | [] => Control.throw_out_of_bounds "stopping marker not found"
@@ -145,7 +145,7 @@ Tactic Notation "foreach_hyp_from_marker_downwards" constr(m) tactic0(f) :=
 Goal forall a b c: nat, b = a -> c = b -> a = c.
 Proof.
   intros.
-  foreach_hyp (fun h tp => try (symmetry in $h)).
+  foreach_hyp (fun h _tp => try (symmetry in $h)).
   etransitivity > [ exact H | exact H0 ].
 Abort.
 

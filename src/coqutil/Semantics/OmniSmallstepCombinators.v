@@ -85,6 +85,8 @@ Section Combinators.
     - intuition eauto using always_intro.
   Qed.
 
+  (* Don't need a projection for Q, turn off the warning. *)
+  #[warnings="-cannot-define-projection"]
   CoInductive always' (P : State -> Prop) s : Prop := always'_step {
     hd_always' : P s; Q ; _ : step s Q; _ s' : Q s' -> always' P s' }.
 

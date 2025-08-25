@@ -11,7 +11,7 @@ Ltac2 constructor_of_record(r: Std.reference) :=
 
 Ltac2 rec count_foralls(t: constr) :=
   match Constr.Unsafe.kind t with
-  | Constr.Unsafe.Prod b u => Int.add 1 (count_foralls u)
+  | Constr.Unsafe.Prod _b u => Int.add 1 (count_foralls u)
   | _ => 0
   end.
 
@@ -21,13 +21,13 @@ Ltac2 count_params_of_record(r: Std.reference) :=
 Ltac2 rec strip_foralls_and_lets(t: constr) :=
   match Constr.Unsafe.kind t with
   | Constr.Unsafe.Prod  b     u => let (bs, body) := strip_foralls_and_lets u in (b :: bs, body)
-  | Constr.Unsafe.LetIn b rhs u => let (bs, body) := strip_foralls_and_lets u in (b :: bs, body)
+  | Constr.Unsafe.LetIn b _rhs u => let (bs, body) := strip_foralls_and_lets u in (b :: bs, body)
   | _ => ([], t)
   end.
 
 Ltac2 app_arg_count(t: constr) :=
   match Constr.Unsafe.kind t with
-  | Constr.Unsafe.App f args => Array.length args
+  | Constr.Unsafe.App _f args => Array.length args
   | _ => 0
   end.
 

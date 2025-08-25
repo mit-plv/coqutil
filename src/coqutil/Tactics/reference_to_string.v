@@ -6,9 +6,9 @@ Require Import Ltac2.Ltac2. Import Ltac2.Option Ltac2.Constr Ltac2.Constr.Unsafe
 Ltac2 reference_of_constr c :=
   match kind c with
   | Var id => Std.VarRef id
-  | Constant const inst => Std.ConstRef const
-  | Ind ind inst => Std.IndRef ind
-  | Constructor cnstr inst => Std.ConstructRef cnstr
+  | Constant const _inst => Std.ConstRef const
+  | Ind ind _inst => Std.IndRef ind
+  | Constructor cnstr _inst => Std.ConstructRef cnstr
   | _ => Control.throw No_value
   end.
 

@@ -29,7 +29,7 @@ Ltac2 constr_string_of_var (c : constr) :=
   end.
 Ltac2 constr_string_of_lambda (c : constr) :=
   match kind c with
-  | Lambda b i =>
+  | Lambda b _i =>
       match Binder.name b with
       | Some n => constr_string_of_ident n
       | _ => Control.throw_invalid_argument "a Lambda with unnamed binder"

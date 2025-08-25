@@ -67,7 +67,7 @@ Goal forall a b c: nat, a = a -> b = b -> c = c -> True.
   intros.
 
   let r := fold_hyps_downwards
-    (fun res h tp =>
+    (fun res _h tp =>
        pose $tp;
        lazy_match! tp with
        | nat => res
@@ -77,7 +77,7 @@ Goal forall a b c: nat, a = a -> b = b -> c = c -> True.
   assert $r.
 
   fold_hyps_downwards_cont
-    (fun res h tp k =>
+    (fun res _h tp k =>
        pose $tp;
        lazy_match! tp with
        | nat => k res
@@ -87,7 +87,7 @@ Goal forall a b c: nat, a = a -> b = b -> c = c -> True.
     (fun r => assert $r).
 
   let r := fold_hyps_upwards
-    (fun res h tp =>
+    (fun res _h tp =>
        pose $tp;
        lazy_match! tp with
        | nat => res
@@ -97,7 +97,7 @@ Goal forall a b c: nat, a = a -> b = b -> c = c -> True.
   assert $r.
 
   fold_hyps_upwards_cont
-    (fun res h tp k =>
+    (fun res _h tp k =>
        pose $tp;
        lazy_match! tp with
        | nat => k res
@@ -107,7 +107,7 @@ Goal forall a b c: nat, a = a -> b = b -> c = c -> True.
     (fun r => assert $r).
 
   fold_hyps_downwards_cont
-    (fun res h tp k =>
+    (fun res _h tp k =>
        pose $tp;
        lazy_match! tp with
        | nat => k res
@@ -117,7 +117,7 @@ Goal forall a b c: nat, a = a -> b = b -> c = c -> True.
     (fun r => assert $r).
 
   fold_hyps_upwards_cont
-    (fun res h tp k =>
+    (fun res _h tp k =>
        pose $tp;
        lazy_match! tp with
        | nat => k res

@@ -89,10 +89,14 @@ Section SepProperties.
   Implicit Types (p q r : map -> Prop) (k : key) (v : value) (m : map).
 
   (* sep and sep *)
+  Local Hint Immediate putmany_comm putmany_assoc eq_sym: sep.
+  Local Hint Resolve putmany_assoc eq_sym : sep.
+  Local Hint Extern 1 (disjoint ?x ?y) => solve [rewrite disjoint_comm; trivial] : sep.
+  Local Hint Resolve <- disjoint_putmany_l disjoint_putmany_r : sep.
   Lemma sep_comm p q : iff1 (p*q) (q*p).
-  Proof. cbv [iff1 sep split]; t; eauto 10 using putmany_comm, (fun m1 m2 => proj2 (disjoint_comm m1 m2)). Qed.
+  Proof. cbv [iff1 sep split]; t; eauto 10 with sep. Qed.
   Lemma sep_assoc p q r : iff1 ((p*q)*r) (p*(q*r)).
-  Proof. cbv [iff1 sep split]; t; eauto 15 using eq_sym, putmany_assoc, ((fun m1 m2 m3 => proj2 (disjoint_putmany_l m1 m2 m3))), ((fun m1 m2 m3 => proj2 (disjoint_putmany_r m1 m2 m3))). Qed.
+  Proof. cbv [iff1 sep split]; t; time eauto 15 with sep. Qed.
 
   Lemma ptsto_nonaliasing k a b m (R: map -> Prop) : not (m =* ptsto k a * ptsto k b * R).
   Proof.
@@ -256,7 +260,7 @@ Section SepProperties.
   Definition skipn {T} := Eval cbv delta in @List.skipn T.
   Definition app {T} := Eval cbv delta in @List.app T.
 
-  Local Infix "++" := app. Local Infix "++" := app : list_scope.
+  Local Infix "++" := app.
   Let nth n xs := hd (emp(map:=map) True) (skipn n xs).
   Let remove_nth n (xs : list (map -> Prop)) :=
     (firstn n xs ++ tl (skipn n xs)).
