@@ -36,7 +36,7 @@ jobs:
       run: |
         sudo mkdir /chroot
         sudo apt-get -q -y -o Acquire::Retries=30 update
-        sudo apt-get -q -y -o Acquire::Retries=30 install apt-eatmydata debootstrap debian-keyring
+        sudo apt-get -q -y -o Acquire::Retries=30 install debootstrap debian-keyring
         sudo debootstrap --variant=minbase "$DEBIAN" /chroot http://debian-archive.trafficmanager.net/debian/ || ( cat /tmp/tmp.*/debootstrap/debootstrap.log ; exit 1 )
         sudo mount proc /chroot/proc -t proc
         sudo mount sysfs /chroot/sys -t sysfs
