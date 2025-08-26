@@ -48,9 +48,9 @@ jobs:
         sudo chown "$(id -u):$(id -g)" "/chroot/$HOME"
         sudo mount --bind "$HOME" "/chroot/$HOME"
     - name: TIMED=1 make -j "$(nproc)" -k
-      shell: |
-        sudo --preserve-env -- \
-           chroot /chroot setpriv --reuid "$(id -u)" --regid "$(id -g)" --init-groups \
+      shell: >
+        sudo --preserve-env --
+           chroot /chroot setpriv --reuid "$(id -u)" --regid "$(id -g)" --init-groups
           /bin/sh -e -u -x -o pipefail -c 'cd "$1"; shift; exec sh -e -u -x -o pipefail "$@"' -- "$(pwd)" {0}
       run: |
           TIMED=1 make -j "$(nproc)" -k
