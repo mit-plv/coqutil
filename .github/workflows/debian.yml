@@ -48,13 +48,13 @@ jobs:
         sudo mkdir -p "/chroot/$HOME"
         sudo chown "$(id -u):$(id -g)" "/chroot/$HOME"
         sudo mount --bind "$HOME" "/chroot/$HOME"
-        sudo cat > /chroot/sh <<'EOF'
+        sudo tee /chroot-sh <<'EOF'
           #!/bin/sh
           exec sudo -E chroot /chroot setpriv --reuid "$(id -u)" --regid "$(id -g)" --init-groups \
             /bin/sh -e -u -x -c 'cd "$1"; shift; exec sh -e -u -x "$@"' -- "$(pwd)" "$@"
         EOF
-        sudo chmod +x /chroot/sh
+        sudo chmod +x /chroot-sh
     - name: TIMED=1 make -j "$(nproc)" -k
-      shell: /chroot/sh {0}
+      shell: /chroot-sh {0}
       run: |
           TIMED=1 make -j "$(nproc)" -k
