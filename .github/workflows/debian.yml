@@ -50,7 +50,7 @@ jobs:
         sudo mount --bind "$HOME" "/chroot/$HOME"
     - name: TIMED=1 make -j "$(nproc)" -k
       shell: >
-        sh -c 'exec sudo -E chroot /chroot setpriv --reuid "$(id -u)" --regid "$(id -g)" --init-groups
-          /bin/sh -c '\''cd "$1"; shift; exec sh -e -u -x -o pipefail "$@"'\'' -- "$(pwd)" $@' {0}
+        exec sudo -E chroot /chroot setpriv --reuid 1001 --regid 1001 --init-groups
+          /bin/sh -c 'cd "$1"; shift; exec sh -e -u -x -o pipefail "$@"' -- "$(pwd)" $@' {0}
       run: |
           TIMED=1 make -j "$(nproc)" -k
