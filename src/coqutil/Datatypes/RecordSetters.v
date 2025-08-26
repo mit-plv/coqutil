@@ -173,7 +173,7 @@ Module record.
   Ltac2 lambda_proj_index(c: constr) :=
     let rec test d t :=
       match Constr.Unsafe.kind t with
-      | Constr.Unsafe.Lambda x body => test (Int.add d 1) body
+      | Constr.Unsafe.Lambda _x body => test (Int.add d 1) body
       | Constr.Unsafe.Rel i => if Int.le i d then Some i else None
       | _ => None
       end in
@@ -186,7 +186,7 @@ Module record.
      with (1 <= i <= n), None otherwise. *)
   Ltac2 unfolded_getter_proj_index(u: constr) :=
     match Constr.Unsafe.kind u with
-    | Constr.Unsafe.Lambda x body =>
+    | Constr.Unsafe.Lambda _x body =>
         match Constr.Unsafe.kind body with
         | Constr.Unsafe.Case _ _ _ d branches =>
             if is_rel 1 d && Int.equal (Array.length branches) 1 then
@@ -200,7 +200,7 @@ Module record.
   Ltac2 rec strip_n_lambdas(n: int)(c: constr) :=
     if Int.le n 0 then Some c else
       match Constr.Unsafe.kind c with
-      | Constr.Unsafe.Lambda x body => strip_n_lambdas (Int.sub n 1) body
+      | Constr.Unsafe.Lambda _x body => strip_n_lambdas (Int.sub n 1) body
       | _ => None
       end.
 
@@ -250,7 +250,7 @@ Module record.
                  (Message.of_constr h) (constr_list_to_msg t))
     end.
 
-  Ltac2 log_call(name: string)(args: constr list) := (). (*
+  Ltac2 log_call(_name: string)(_args: constr list) := (). (*
     Message.print (Message.concat (Message.of_string "(Calling ")
       (Message.concat (Message.of_string name) (constr_list_to_msg args))). *)
 
@@ -260,7 +260,7 @@ Module record.
     | None => Message.of_string "None"
     end.
 
-  Ltac2 log_ret(name: string)(args: constr list)(ret: constr option) := (*
+  Ltac2 log_ret(_name: string)(_args: constr list)(ret: constr option) := (*
     Message.print (Message.concat (Message.concat (Message.of_string "Return value of ")
       (Message.concat (Message.of_string name) (constr_list_to_msg args)))
            (Message.concat (Message.of_string " is ") (Message.concat (co_msg ret) (Message.of_string ")")))); *)
@@ -300,7 +300,7 @@ Module record.
     let c' :=
     lazy_match! upd with @mk_update ?tR ?tE ?g ?s ?u =>
     lazy_match! c with
-    | @apply_update ?tR' ?tE' ?upd' ?r => lazy_match! upd' with @mk_update _ _ ?g' ?s' ?u' =>
+    | @apply_update ?tR' ?tE' ?upd' ?r => lazy_match! upd' with @mk_update _ _ ?g' ?_s' ?u' =>
         (* setter applied to setter *)
         if Constr.equal g g' then
           (* setter applied to same setter *)
@@ -383,10 +383,10 @@ Module record.
   with simp_app(f: constr)(a: constr) :=
     log_call "simp_app" [f; a];
     let c' := lazy_match! f with
-    | @apply_update ?tR ?tE ?upd => push_down_setter upd a
+    | @apply_update ?_tR ?_tE ?upd => push_down_setter upd a
     | compose ?f1 ?f2 => Some (simp_app_nonstrict f1 (simp_app_nonstrict f2 a))
     | fun x => _ => match Constr.Unsafe.kind f with
-                    | Constr.Unsafe.Lambda y body => Some (Constr.Unsafe.substnl [a] 0 body)
+                    | Constr.Unsafe.Lambda _y body => Some (Constr.Unsafe.substnl [a] 0 body)
                     | _ => Control.throw Assertion_failure
                     end
     | _ => match getter_proj_index f with
@@ -407,7 +407,7 @@ Module record.
   Ltac2 rec transform_array(f: 't -> 't option)(i: int)(a: 't array) :=
     if Int.ge i (Array.length a) then false
     else match f (Array.get a i) with
-         | Some v => Array.set a i v; transform_array f (Int.add i 1) a; true
+         | Some v => Array.set a i v; transform_array f (Int.add i 1) a || true
          | None => transform_array f (Int.add i 1) a
          end.
 
@@ -509,7 +509,7 @@ Module record.
     end.
 
   Ltac2 simp_hyps_bool_progress () :=
-    List.fold_left (fun progr (x, obody, tp) =>
+    List.fold_left (fun progr (x, _obody, tp) =>
       match simp_term_check tp with
       | Some tp' => change $tp' in $x; true
       | None => progr
