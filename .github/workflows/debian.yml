@@ -49,9 +49,7 @@ jobs:
         sudo mount --bind "$HOME" "/chroot/$HOME"
     - name: TIMED=1 make -j "$(nproc)" -k
       shell: >
-        sudo -E `#--preserve-env --`
-           chroot /chroot
-           setpriv --reuid "$(id -u)" --regid "$(id -g)" --init-groups
+        sudo -E chroot /chroot setpriv --reuid "$(id -u)" --regid "$(id -g)" --init-groups
           /bin/sh -e -u -x -o pipefail -c 'cd "$1"; shift; exec sh -e -u -x -o pipefail "$@"' -- "$(pwd)" {0}
       run: |
           TIMED=1 make -j "$(nproc)" -k
