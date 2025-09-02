@@ -9,6 +9,17 @@ Ltac map_with_ltac f l :=
   end.
 
 (* for lists with concrete structure/length, but elements that should not be cbv'd *)
+Ltac list_get l i :=
+  lazymatch l with
+  | cons ?a ?l =>
+    lazymatch i with
+    | O  => a
+    | S ?i => list_get l i
+    end
+  | _ => fail "list_get nil" i
+  end.
+
+(* for lists with concrete structure/length, but elements that should not be cbv'd *)
 Ltac list_length l :=
   lazymatch l with
   | nil => constr:(O)
