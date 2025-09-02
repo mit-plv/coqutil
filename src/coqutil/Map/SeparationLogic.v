@@ -615,6 +615,26 @@ Ltac ecancel_step :=
       let i := find_syntactic_unify_deltavar LHS y in (* <-- multi-success! *)
       cancel_seps_at_indices i j; [exact eq_refl|]. (* already unified using syntactic_unify *)
 
+Ltac ecancel_step_at j :=
+      let RHS := lazymatch goal with |- Lift1Prop.iff1 _ (seps ?RHS) => RHS end in
+      let y := list_get RHS j in (* <-- multi-success! *)
+      assert_fails (idtac; let y := rdelta_var y in is_evar y);
+      let LHS := lazymatch goal with |- Lift1Prop.iff1 (seps ?LHS) _ => LHS end in
+      let i := find_syntactic_unify_deltavar LHS y in (* <-- multi-success! *)
+      cancel_seps_at_indices i j; [exact eq_refl|]. (* already unified using syntactic_unify *)
+
+Ltac ecancel_steps_inbounds j :=
+  let RHS := lazymatch goal with |- Lift1Prop.iff1 _ (seps ?RHS) => RHS end in
+  let __ := list_get RHS j in
+  idtac.
+
+Ltac ecancel_steps_at j :=
+  (* while *) tryif (ecancel_steps_inbounds j) then (
+    tryif (ecancel_step_at j)
+    then (                         ecancel_steps_at j)
+    else (let j := constr:(S j) in ecancel_steps_at j)
+  ) else idtac.
+
 (* TODO: eventually replace ecancel_step? Probably not since implication is too agressive.*)
 (*TODO: performance. I've replaced the deltavar stuff with heavier operations  *)
 Ltac ecancel_step_by_implication :=
@@ -670,8 +690,8 @@ Ltac ecancel :=
      repeat ecancel_step_by_implication;
      (solve [ cbv [seps]; exact impl1_refl ])
   | [|- iff1 _ _] =>
-    repeat ecancel_step;
-    solve [ ecancel_done ]
+    ecancel_steps_at O;
+    ecancel_done
   end.
 
 
