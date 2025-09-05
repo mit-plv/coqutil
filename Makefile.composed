@@ -1,0 +1,18 @@
+COQFLAGS :=
+O:=o
+
+include globalsettings.mk
+include src/coqutil/BUILD.mk
+include test/BUILD.mk
+
+VFILES := $(COQUTIL_VFILES) $(COQUTIL_TEST_VFILES)
+COQDEPFLAGS := -w +default $(COQUTIL_COQDEPFLAGS)
+include vfiles_rules.mk
+
+.PHONY: all
+all: vo $(COQUTIL_DIR)/_CoqProject $(COQUTIL_TEST_DIR)/_CoqProject
+.PHONY: check
+check: all
+.PHONY: clean
+clean: vfiles_clean
+	rm -f  $(COQUTIL_DIR)/_CoqProject $(COQUTIL_TEST_DIR)/_CoqProject
