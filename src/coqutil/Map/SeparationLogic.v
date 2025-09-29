@@ -609,6 +609,16 @@ Ltac cancel_step := once (
       let i := find_constr_eq LHS y in (* <-- different from ecancel_step *)
       cancel_seps_at_indices i j; [exact eq_refl|]). (* already unified using constr_eq *)
 
+Ltac cancel_step_impl := once (
+    let RHS := lazymatch goal with |- Lift1Prop.impl1 _ (seps ?RHS) => RHS end in
+    let jy := index_and_element_of RHS in (* <-- multi-success! *)
+    let j := lazymatch jy with (?i, _) => i end in
+    let y := lazymatch jy with (_, ?y) => y end in
+    assert_fails (has_evar y); (* <-- different from ecancel_step *)
+    let LHS := lazymatch goal with |- Lift1Prop.impl1 (seps ?LHS) _ => LHS end in
+    let i := find_constr_eq LHS y in (* <-- different from ecancel_step *)
+    cancel_seps_at_indices_by_implication i j; [exact impl1_refl|]). (* already unified using constr_eq *)
+
 Ltac ecancel_step :=
       let RHS := lazymatch goal with |- Lift1Prop.iff1 _ (seps ?RHS) => RHS end in
       let jy := index_and_element_of RHS in (* <-- multi-success! *)
@@ -679,10 +689,15 @@ Ltac cancel_done :=
   ecancel_done.
 
 Ltac cancel_seps :=
-  repeat cancel_step;
-  repeat cancel_emp_l;
-  repeat cancel_emp_r;
-  repeat cancel_emp_impl;
+  lazymatch goal with
+  | |- Lift1Prop.iff1 _ _ => 
+    repeat cancel_step;
+    repeat cancel_emp_l;
+    repeat cancel_emp_r
+  | |- Lift1Prop.impl1 _ _ =>
+    repeat cancel_step_impl;
+    repeat cancel_emp_impl
+  end;
   try solve [ cancel_done ].
 
 Ltac cancel := reify_goal; cancel_seps.
