@@ -1,0 +1,23 @@
+opam-version: "2.0"
+name: "coqutil"
+version: "dev"
+maintainer: "Samuel Gruetter <s.gruetter@inf.ethz.ch>"
+authors: ["coqutil Authors"]
+homepage: "https://github.com/mit-plv/coqutil"
+bug-reports: "https://github.com/mit-plv/coqutil/issues"
+dev-repo: "git+https://github.com/mit-plv/coqutil.git"
+license: "MIT"
+synopsis: "Coq library for tactics, basic definitions, sets, maps"
+description: """
+This package provides utilities and libraries that assist with the development
+and verification of proofs using the Coq proof assistant.
+"""
+depends: [
+  "coq" {>= "8.18"}
+]
+build: [
+  ["%{make}%" "all" "-j%{jobs}%"]
+]
+install: [
+  ["%{make}%" "install"]
+]
