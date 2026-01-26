@@ -1,3 +1,12 @@
+From Ltac2 Require Import Ltac2.
+Local Set Default Proof Mode Classic.
+
+Local Ltac unify := ltac2:( x y |-
+  Unification.unify
+    TransparentState.empty
+    (Option.get (Ltac1.to_constr x))
+    (Option.get (Ltac1.to_constr y))).
+
 Ltac _syntactic_unify x y :=
   match constr:(Set) with
   | _ => is_evar x; unify x y
