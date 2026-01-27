@@ -506,6 +506,35 @@ Module word.
         repeat (rewrite !swrap_inrange; try blia; trivial).
     Qed.
 
+    Lemma and_m1_r (x : word) :
+      word.and x (word.of_Z (-1)) = x.
+    Proof.
+      apply unsigned_inj.
+      rewrite unsigned_and_nowrap.
+      rewrite unsigned_of_Z_minus1.
+      rewrite Z.land_ones; try blia.
+      exact (wrap_unsigned _).
+    Qed.
+
+    Lemma and_0_r (x : word) :
+      word.and x (word.of_Z 0) = (word.of_Z 0).
+    Proof.
+      apply unsigned_inj.
+      rewrite unsigned_and_nowrap.
+      rewrite unsigned_of_Z_0.
+      apply Z.land_0_r.
+    Qed.
+
+    Lemma xor_eq_0_iff (x y: word) : y = x ->
+      word.xor x y = (word.of_Z 0).
+    Proof.
+      intros; subst y.
+      apply unsigned_inj.
+      rewrite unsigned_xor_nowrap.
+      rewrite unsigned_of_Z_0.
+      apply Z.lxor_eq_0_iff. exact eq_refl.
+    Qed.
+
     Lemma xor_m1_broadcast (b : bool) : word.xor (word.opp (word.of_Z 1)) (word.broadcast b) = word.broadcast (negb b).
     Proof. rewrite xor_m1_l, not_broadcast; trivial. Qed.
 
