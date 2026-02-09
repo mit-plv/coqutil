@@ -254,11 +254,11 @@ Section SepProperties.
       symmetry. apply sep_assoc.
   Qed.
 
-  Definition hd {T} := Eval cbv delta in @List.hd T.
-  Definition tl {T} := Eval cbv delta in @List.tl T.
-  Definition firstn {T} := Eval cbv delta in @List.firstn T.
-  Definition skipn {T} := Eval cbv delta in @List.skipn T.
-  Definition app {T} := Eval cbv delta in @List.app T.
+  Local Definition hd {T} := Eval cbv delta in @List.hd T.
+  Local Definition tl {T} := Eval cbv delta in @List.tl T.
+  Local Definition firstn {T} := Eval cbv delta in @List.firstn T.
+  Local Definition skipn {T} := Eval cbv delta in @List.skipn T.
+  Local Definition app {T} := Eval cbv delta in @List.app T.
 
   Local Infix "++" := app.
   Let nth n xs := hd (emp(map:=map) True) (skipn n xs).
