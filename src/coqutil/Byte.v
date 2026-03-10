@@ -1,5 +1,6 @@
 Require Coq.Init.Byte Coq.Strings.Byte.
 Require Import Coq.ZArith.ZArith.
+From coqutil Require Import Z.PushPullMod.
 
 Local Open Scope Z_scope.
 
@@ -11,6 +12,10 @@ Module byte.
   Definition compare(x y: byte): comparison := Z.compare (unsigned x) (unsigned y).
 
   Definition wrap(z: Z): Z := z mod 2 ^ 8.
+
+  Definition swrap(z : Z): Z := (z + 2^7) mod 2^8 - 2^7.
+
+  Definition signed(b: byte): Z := swrap (byte.unsigned b).
 
   Lemma wrap_range z:
     0 <= byte.wrap z < 2 ^ 8.
@@ -122,4 +127,10 @@ Module byte.
   (* FIXME isn't this defined somewhere already? *)
   Definition and (b1 b2: byte) := byte.of_Z (Z.land (byte.unsigned b1) (byte.unsigned b2)).
   Definition xor a b := byte.of_Z (Z.lxor (byte.unsigned a) (byte.unsigned b)).
+
+  Lemma swrap_wrap b : byte.swrap (byte.wrap b) = byte.swrap b.
+  Proof.
+    cbv [byte.wrap byte.swrap].
+    Z.mod_equality.
+  Qed.
 End byte.

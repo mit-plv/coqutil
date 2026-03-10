@@ -1,4 +1,5 @@
 From Coq Require Import ZArith.
+Require Import Coq.ZArith.Znumtheory.
 Require Import Coq.ZArith.Zpow_facts.
 Require Import coqutil.Z.div_mod_to_equations.
 Require Import coqutil.Z.Lia Btauto.
@@ -6,6 +7,7 @@ Require Import coqutil.Z.PushPullMod.
 Require Coq.setoid_ring.Ring_theory.
 Require Import coqutil.Z.bitblast.
 Require Import coqutil.Word.Interface. Import word.
+Require Import coqutil.Byte.
 
 Local Open Scope Z_scope.
 
@@ -767,6 +769,30 @@ Module word.
 
     Lemma mul_comm: forall x y : word, word.mul x y = word.mul y x.
     Proof. intros. ring. Qed.
+
+    Lemma byte_wrap_word_wrap: forall w,
+      8 <= width ->
+      byte.wrap (word.wrap w) = byte.wrap w.
+    Proof.
+      intros.
+      cbv [byte.wrap word.wrap].
+      rewrite <-Zmod_div_mod.
+      { reflexivity. }
+      { blia. }
+      { blia. }
+      exists (2^(width - 8)).
+      rewrite <-Z.pow_add_r by blia.
+      rewrite Z.sub_add.
+      reflexivity.
+    Qed.
+
+    Lemma byte_swrap_word_wrap: forall w,
+      8 <= width ->
+      byte.swrap (word.wrap w) = byte.swrap w.
+    Proof.
+      intros.
+      rewrite <-byte.swrap_wrap, (byte_wrap_word_wrap _ H), byte.swrap_wrap; reflexivity.
+    Qed.
   End WordConvenienceKitchenSink.
 End word.
 
