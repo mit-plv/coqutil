@@ -2185,7 +2185,7 @@ Section Chunk. Local Set Default Proof Using "All".
     intros * Hmod.
     eapply nth_ext with (d := []) (d' := []); [ | intros idx ].
     - apply length_chunk_app; assumption.
-    - intros Hidx; eassert (Some _ = Some _) as HS; [ | injection HS; intros Hs; apply Hs ].
+    - intros Hidx; eassert (Some _ = Some _) as HS; [ | injection HS as Hs; apply Hs ].
       rewrite <- !nth_error_nth' by assumption.
       rewrite <- !nth_error_nth' by (rewrite length_chunk_app in Hidx; eassumption).
       assert (idx < length (chunk l) \/ length (chunk l) <= idx)%nat as [Hlt | Hge] by lia;
