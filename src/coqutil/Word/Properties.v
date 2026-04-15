@@ -559,6 +559,20 @@ Module word.
         apply unsigned_opp_0, unsigned_of_Z_0. }
     Qed.
 
+    Lemma unsigned_broadcast_false : word.unsigned (word.broadcast false) = 0.
+    Proof.
+      rewrite (proj2 (broadcast_0_iff _)), unsigned_of_Z_0; trivial.
+    Qed.
+
+    Lemma unsigned_broadcast_true : word.unsigned (word.broadcast true) = Z.ones width.
+    Proof.
+      apply Z.bits_inj'; intros.
+      rewrite testbit_broadcast, Z.testbit_ones_nonneg by blia.
+      repeat case Z.ltb_spec; case Z.leb_spec; intros;
+      rewrite ?Bool.andb_true_r, ?Bool.andb_true_l,
+          ?Bool.andb_false_r, ?Bool.andb_false_l; trivial; blia.
+    Qed.
+
     Lemma lor_0_iff x y :
       word.or x y = word.of_Z 0 <-> x = word.of_Z 0 /\ y = word.of_Z 0.
     Proof.
