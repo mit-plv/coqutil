@@ -47,8 +47,8 @@ Abort.
 
 Goal forall (foo baz foobar: nat), True.
   intros.
-  pose ltac:(exact_append_ident foo bar).
-  assert_fails (idtac; pose ltac:(exact_append_ident foo baz)).
+  pose (ltac:(exact_append_ident foo bar)).
+  assert_fails (idtac; pose (ltac:(exact_append_ident foo baz))).
 Abort.
 
 Goal forall (a b c d: nat), True.
