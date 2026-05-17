@@ -1,3 +1,4 @@
+Set Universe Polymorphism.
 (* Specification of two's complement machine words wrt Z *)
 
 Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt.
