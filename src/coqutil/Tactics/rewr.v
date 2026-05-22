@@ -37,9 +37,13 @@ Ltac rewr_hyp_step getEq sidecond :=
                    let T := type of E in
                    let EQ := concl T in
                    match EQ with
-                   | ?LHS = _ => progress (pattern LHS in H;
-                                           eapply rew_zoom_fw in H;
-                                           [ | apply E; solve [sidecond] ])
+                   | ?LHS = _ =>
+                       (* eapply can reorder which counts as progress and breaks section variable status,
+                          so try to early detect a useless rewrite  *)
+                       match A with context[LHS] => idtac end;
+                       progress (pattern LHS in H;
+                                 eapply rew_zoom_fw in H;
+                                 [ | apply E; solve [sidecond] ])
                    end
   end.
 
