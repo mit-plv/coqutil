@@ -1,18 +1,19 @@
+COQC ?= coqc
 VOFILES := $(patsubst %.v, $(O)/%.vo, $(VFILES))
 VOSFILES := $(patsubst %.v, $(O)/%.vos, $(VFILES))
 VOKFILES := $(patsubst %.v, $(O)/%.vok, $(VFILES))
 
 $(O)/%.vo:
 	@mkdir -p $(@D)
-	coqc $(COQFLAGS) $*.v -o $@
+	$(COQC) $(COQFLAGS) $*.v -o $@
 
 $(O)/%.vos:
 	@mkdir -p $(@D)
-	coqc $(COQFLAGS) -vos $*.v -o $@
+	$(COQC) $(COQFLAGS) -vos $*.v -o $@
 
 $(O)/%.vok:
 	@mkdir -p $(@D)
-	coqc $(COQFLAGS) -vok $*.v -o $@
+	$(COQC) $(COQFLAGS) -vok $*.v -o $@
 
 %/_CoqProject:
 	+$(file >$@) $(foreach a,$(COQFLAGS),$(file >>$@,-arg $a))
