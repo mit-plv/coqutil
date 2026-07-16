@@ -761,6 +761,24 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     - destruct l. 1: assumption. inversion H. subst. simpl. apply IHn; eauto.
   Qed.
 
+  Lemma Forall2_firstn {B} (R : A -> B -> Prop) n xs ys :
+    Forall2 R xs ys ->
+    Forall2 R (firstn n xs) (firstn n ys).
+  Proof.
+    intro H.
+    revert n.
+    induction H; intros [|n']; simpl; constructor; eauto.
+  Qed.
+
+  Lemma Forall2_skipn {B} (R : A -> B -> Prop) n xs ys :
+    Forall2 R xs ys ->
+    Forall2 R (skipn n xs) (skipn n ys).
+  Proof.
+    intro H.
+    revert n.
+    induction H; intros [|n']; simpl; eauto.
+  Qed.
+
   Lemma Forall_filter(P: A -> Prop)(f: A -> bool)(HfP: forall a, f a = true -> P a):
     forall (l: list A), Forall P (filter f l).
   Proof.
