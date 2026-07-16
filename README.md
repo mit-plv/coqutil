@@ -9,4 +9,11 @@ Contents:
 * [Z](https://github.com/mit-plv/coqutil/tree/master/src/coqutil/Z): Utilities to work with the `Z` type from Coq's standard library, including a tactic to prove `Z` equalities by splitting the equality into equalities on bit index ranges, a tactic to make `lia` capable of reasoning about goals with division and modulo, and a tactic to simplify expressions containing nested occurrences of `mod`, and more misc utilities.
 * Various macros, notations, and desirable default settings.
 
+Build and usage:
+* To install the released package into the active opam switch, run `opam install coq-coqutil`.
+* To build this checkout and its tests, run `make -j"$(nproc)"`.
+* To build this checkout without tests, run `make notest -j"$(nproc)"`.
+* To install this checkout into the active opam switch, run `make install`.
+* Once installed, modules can be imported with commands such as `From coqutil Require Import Datatypes.PropSet.`
+
 Each feature is intended to be as minimal and as independent of the other features as possible, so that users can pick just what they need.
