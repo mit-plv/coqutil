@@ -9,6 +9,21 @@ Definition option_map2 {X Y Z : Type} (f : X -> Y -> Z) x y :=
   | _, _ => None
   end.
 
+Lemma option_map2_Some {X Y Z : Type} (f : X -> Y -> Z) x y z :
+  option_map2 f x y = Some z ->
+  exists x' y', x = Some x' /\ y = Some y' /\ f x' y' = z.
+Proof.
+  destruct x, y; simpl; intros; try discriminate.
+  inversion H; subst. eauto.
+Qed.
+
+Lemma option_map2_None {X Y Z : Type} (f : X -> Y -> Z) x y :
+  option_map2 f x y = None <-> x = None \/ y = None.
+Proof.
+  destruct x, y; simpl; split; intros; try discriminate; eauto.
+  destruct H; discriminate.
+Qed.
+
 Definition option_relation {A B} R (x : option A) (y : option B) :=
   match x with
   | None    => y = None
