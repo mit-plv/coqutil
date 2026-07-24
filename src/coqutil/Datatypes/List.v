@@ -832,14 +832,10 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
   Qed.
 
   Lemma Forall2_impl_strong {B} (R1 R2 : A -> B -> Prop) xs ys :
+    Forall2 R1 xs ys ->
     (forall x y, R1 x y -> In x xs -> In y ys -> R2 x y) ->
-    Forall2 R1 xs ys -> Forall2 R2 xs ys.
-  Proof.
-    revert ys; induction xs; destruct ys; intros;
-      match goal with H : Forall2 _ _ _ |- _ =>
-                      inversion H; subst; clear H end;
-      constructor; eauto using in_eq, in_cons.
-  Qed.
+    Forall2 R2 xs ys.
+  Proof. induction 1; simpl; eauto 9. Qed.
 
   Lemma Forall2_app_inv {B} (R : A -> B -> Prop)
         xs1 xs2 ys1 ys2 :
