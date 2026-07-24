@@ -1,4 +1,5 @@
 Require Import Coq.Strings.String.
+Require Import Coq.Lists.List.
 (* Almost everyone importing this file will need strings in their error messages *)
 Export Coq.Strings.String.StringSyntax.
 Require Import coqutil.Datatypes.dlist.
@@ -87,15 +88,32 @@ Module List.
       | cons r rest => x <- r;; xs <- all_success rest;; Success (cons x xs)
       end.
 
+    Lemma all_success_Success_iff: forall l1 l2,
+        all_success l1 = Success l2 <->
+        Forall2 (fun r a => r = Success a) l1 l2.
+    Proof.
+      induction l1 as [|r l1 IH]; intros l2; destruct l2 as [|a l2].
+      - cbn. split; intros; constructor.
+      - cbn. split; intros H; inversion H.
+      - split; intros H.
+        + cbn in H. destruct r; try discriminate.
+          destruct (all_success l1); discriminate.
+        + inversion H.
+      - split; intros H.
+        + cbn in H. destruct r; try discriminate.
+          destruct (all_success l1) eqn: E; try discriminate.
+          inversion H; subst. constructor; [reflexivity|].
+          apply (proj1 (IH _)). reflexivity.
+        + inversion H as [|r' a' l1' l2' Hr Hrest]; subst. cbn.
+          rewrite (proj2 (IH _) Hrest). reflexivity.
+    Qed.
+
     Lemma length_all_success: forall {l1: list (result A)} {l2: list A},
         all_success l1 = Success l2 ->
         List.length l2 = List.length l1.
     Proof.
-      induction l1; cbn; intros.
-      { inversion H. trivial. }
-      { case a in *; try inversion H.
-        case (all_success l1) in *; try inversion H.
-        subst. cbn. eapply f_equal, IHl1; trivial. }
+      intros. apply all_success_Success_iff in H.
+      symmetry. eapply Forall2_length. exact H.
     Qed.
   End WithA.
 End List.
