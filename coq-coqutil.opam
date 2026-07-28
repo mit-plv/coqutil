@@ -22,3 +22,6 @@ build: [
 install: [
   ["%{make}%" "install"]
 ]
+conflict-class: [
+  "coq-coqutil"
+]
