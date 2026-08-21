@@ -1,4 +1,4 @@
-Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidable coqutil.Map.Interface.
+Require Import coqutil.Tactics.autoforward coqutil.Tactics.destr coqutil.Decidable coqutil.Eqb coqutil.Map.Interface.
 Require Import coqutil.Z.Lia.
 Import map.
 Require Import coqutil.Datatypes.Option.
@@ -7,7 +7,7 @@ Require Import coqutil.Sorting.Permutation.
 Module map.
   Section WithMap. Local Set Default Proof Using "All".
     Context {key value} {map : map key value} {ok : map.ok map}.
-    Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+    Context {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb}.
     Local Hint Mode map.map - - : typeclass_instances.
     Hint Resolve
          get_empty
@@ -30,9 +30,9 @@ Module map.
     Lemma get_update_diff m k k' ov (H:k' <> k) : get (update m k ov) k' = get m k'.
     Proof using ok. case ov as [v|]; cbn; eauto using get_put_diff, get_remove_diff. Qed.
 
-    Lemma get_remove_dec m x y : get (remove m x) y = if key_eqb x y then None else get m y.
+    Lemma get_remove_dec m x y : get (remove m x) y = if eqb x y then None else get m y.
     Proof. prover. Qed.
-    Lemma get_put_dec m x y v : get (put m x v) y = if key_eqb x y then Some v else get m y.
+    Lemma get_put_dec m x y v : get (put m x v) y = if eqb x y then Some v else get m y.
     Proof. prover. Qed.
 
     Lemma get_putmany_left: forall m1 m2 k, get m2 k = None -> get (putmany m1 m2) k = get m1 k.
@@ -41,7 +41,7 @@ Module map.
       eapply fold_spec.
       - intros. reflexivity.
       - intros. rewrite get_put_dec in *.
-        destr (key_eqb k k0). 1: discriminate.
+        destr (eqb k k0). 1: discriminate.
         eauto.
     Qed.
 
@@ -51,7 +51,7 @@ Module map.
       eapply fold_spec.
       - intros. rewrite get_empty in H. discriminate.
       - intros. rewrite get_put_dec in *.
-        destr (key_eqb k k0). 1: assumption. eauto.
+        destr (eqb k k0). 1: assumption. eauto.
     Qed.
 
     Hint Resolve get_putmany_left get_putmany_right : map_spec_hints_separate.
@@ -62,7 +62,7 @@ Module map.
 
     Lemma put_put_same: forall k v1 v2 m, put (put m k v1) k v2 = put m k v2.
     Proof.
-      intros. apply map_ext. intros. rewrite get_put_dec. destr (key_eqb k k0).
+      intros. apply map_ext. intros. rewrite get_put_dec. destr (eqb k k0).
       - rewrite get_put_same. reflexivity.
       - rewrite !get_put_diff; congruence.
     Qed.
@@ -72,7 +72,7 @@ Module map.
         map.put (map.put m k1 v1) k2 v2 = map.put (map.put m k2 v2) k1 v1.
     Proof.
       intros. apply map.map_ext. intros.
-      rewrite ?get_put_dec. destr (key_eqb k1 k); destr (key_eqb k2 k); congruence.
+      rewrite ?get_put_dec. destr (eqb k1 k); destr (eqb k2 k); congruence.
     Qed.
 
     Lemma put_comm: forall k1 k2 v1 v2 m,
@@ -81,7 +81,7 @@ Module map.
     Proof.
       intros. apply map.map_ext. intros.
       rewrite ?get_put_dec.
-      destr (key_eqb k2 k); destr (key_eqb k1 k); congruence.
+      destr (eqb k2 k); destr (eqb k1 k); congruence.
     Qed.
 
     Lemma putmany_spec m1 m2 k :
@@ -175,7 +175,7 @@ Module map.
       repeat split.
       - apply map_ext. intros.
         rewrite get_put_dec.
-        destr (key_eqb k k0).
+        destr (eqb k k0).
         + subst. rewrite get_putmany_left by assumption.
           rewrite get_put_same. reflexivity.
         + rewrite get_putmany_dec.
@@ -186,7 +186,7 @@ Module map.
       - unfold disjoint.
         intros.
         rewrite get_put_dec in H0.
-        destr (key_eqb k k0).
+        destr (eqb k k0).
         + subst. congruence.
         + rewrite get_empty in H0. congruence.
     Qed.
@@ -243,7 +243,7 @@ Module map.
         intros.
         rewrite !get_putmany_dec.
         rewrite !get_put_dec.
-        destr (key_eqb k k0).
+        destr (eqb k k0).
         + subst.
           destr (map.get m2 k0). 2: reflexivity.
           specialize H1 with (2 := E).
@@ -252,7 +252,7 @@ Module map.
         + destr (map.get m2 k0); reflexivity.
       - intros.
         rewrite get_put_dec in H2.
-        destr (key_eqb k k0).
+        destr (eqb k k0).
         + subst. apply eq_of_eq_Some in H2.
           congruence.
         + specialize H1 with (2 := H2).
@@ -281,7 +281,7 @@ Module map.
     Proof.
       unfold extends. intros.
       rewrite get_put_dec.
-      destr (key_eqb k x).
+      destr (eqb k x).
       + subst. rewrite get_put_same in H0. exact H0.
       + rewrite get_put_diff in H0; try congruence.
         eapply H. assumption.
@@ -349,7 +349,7 @@ Module map.
         + simpl in *. destruct H2.
           * inversion H2; rewrite map.get_put_same; congruence.
           * rewrite get_put_dec.
-            destr (key_eqb k k0).
+            destr (eqb k k0).
             -- specialize H1 with (1 := H2). congruence.
             -- eauto.
     Qed.
@@ -374,7 +374,7 @@ Module map.
       - contradiction.
       - rewrite map.get_empty in H. discriminate.
       - rewrite get_put_dec.
-        destr (key_eqb k k0).
+        destr (eqb k k0).
         + destruct H1.
           * inversion H1; subst v0. reflexivity.
           * specialize (H0 k0 v0). apply proj1 in H0. specialize (H0 H1).
@@ -383,7 +383,7 @@ Module map.
           * congruence.
           * eapply H0. assumption.
       - rewrite get_put_dec in H1.
-        destr (key_eqb k k0).
+        destr (eqb k k0).
         + inversion H1; subst v0. auto.
         + right. eapply H0. assumption.
     Qed.
@@ -429,7 +429,7 @@ Module map.
       simpl.
       rewrite (tuples_spec m).
       rewrite get_put_dec.
-      destr (key_eqb k k0); intuition congruence.
+      destr (eqb k k0); intuition congruence.
     Qed.
 
     Lemma fold_put{R: Type}(f: R -> key -> value -> R)
@@ -468,14 +468,14 @@ Module map.
       - apply map.map_ext.
         intros.
         rewrite get_put_dec.
-        destr (key_eqb k k0); try rewrite map.get_remove_diff; congruence.
+        destr (eqb k k0); try rewrite map.get_remove_diff; congruence.
     Qed.
 
     Lemma remove_empty(x: key): map.remove map.empty x = map.empty.
     Proof.
       apply map.map_ext. intros.
       rewrite get_remove_dec.
-      destr (key_eqb x k). 1: rewrite map.get_empty. all: congruence.
+      destr (eqb x k). 1: rewrite map.get_empty. all: congruence.
     Qed.
 
     Lemma fold_base_cases{R: Type}(f: R -> key -> value -> R):
@@ -497,7 +497,7 @@ Module map.
         rewrite map.get_empty in H1.
         discriminate.
       - destruct H0.
-        destr (key_eqb k0 k). 2: {
+        destr (eqb k0 k). 2: {
           apply (f_equal (fun m => map.get m k)) in H1.
           rewrite map.get_put_same in H1.
           rewrite map.get_put_diff in H1 by congruence.
@@ -514,7 +514,7 @@ Module map.
         apply map.map_ext.
         intros.
         rewrite map.get_empty.
-        destr (key_eqb k k0).
+        destr (eqb k k0).
         + subst. assumption.
         + apply (f_equal (fun m => map.get m k0)) in H3.
           rewrite map.get_put_diff in H3 by congruence.
@@ -547,11 +547,11 @@ Module map.
         + inversion H2. subst k0 v0. rewrite map.get_put_same. reflexivity.
         + specialize (H1 k0 v0). apply proj1 in H1. specialize (H1 H2).
           rewrite get_put_dec.
-          destr (key_eqb k k0).
+          destr (eqb k k0).
           * exfalso. congruence.
           * assumption.
         + rewrite get_put_dec in H0.
-          destr (key_eqb k k0).
+          destr (eqb k k0).
           * left. congruence.
           * right. apply H1. assumption.
     Qed.
@@ -564,7 +564,7 @@ Module map.
       eapply fold_spec; intros.
       - rewrite get_empty in H. discriminate.
       - rewrite get_put_dec in H1. simpl.
-        destr (key_eqb k k0); eauto.
+        destr (eqb k k0); eauto.
     Qed.
 
     Lemma in_keys_inv: forall (k: key) (m: map),
@@ -592,7 +592,7 @@ Module map.
       - split; [constructor|]. intros. simpl in *. contradiction.
       - intros. destruct H0. split.
         + constructor. 2: assumption. intro C. specialize (H1 _ C). contradiction.
-        + intros. rewrite get_put_dec. destr (key_eqb k k0). 1: congruence.
+        + intros. rewrite get_put_dec. destr (eqb k k0). 1: congruence.
           simpl in *. destruct H2. 1: congruence. eauto.
     Qed.
 
@@ -761,7 +761,7 @@ Module map.
         destruct IHks as [IH | IH].
         + destruct IH as (n & IH).
           left. exists (S n). simpl. exact IH.
-        + rewrite get_put_dec in IH. destr (key_eqb a k).
+        + rewrite get_put_dec in IH. destr (eqb a k).
           * subst. left. exists O. simpl. auto.
           * right. assumption.
     Qed.
@@ -808,7 +808,7 @@ Module map.
         + specialize IHbs with (1 := H). specialize (IHbs x).
           destruct IHbs as [IHbs | IHbs]; unfold PropSet.elem_of in *; simpl; auto.
           rewrite get_put_dec in IHbs.
-          destr (key_eqb a x); auto.
+          destr (eqb a x); auto.
         + apply putmany_of_list_zip_sameLength in H.
           apply (sameLength_putmany_of_list _ _ st) in H.
           destruct H. rewrite H in Heqo. discriminate.
@@ -829,7 +829,7 @@ Module map.
         eapply IHks.
         + eassumption.
         + intro C. apply H0. auto.
-        + rewrite get_put_dec. destr (key_eqb a k).
+        + rewrite get_put_dec. destr (eqb a k).
           * exfalso. apply H0. auto.
           * assumption.
     Qed.
@@ -864,7 +864,7 @@ Module map.
     Lemma put_putmany_commute k v m1 m2 : put (putmany m1 m2) k v = putmany m1 (put m2 k v).
     Proof.
       apply map_ext. intro k'.
-      destr (key_eqb k k').
+      destr (eqb k k').
       - rewrite get_put_same. erewrite get_putmany_right; [reflexivity|].
         apply get_put_same.
       - rewrite get_put_diff by congruence.
@@ -1077,7 +1077,7 @@ Module map.
         sub_domain (put m1 k v1) (put m2 k v2).
     Proof.
       unfold sub_domain in *. intros k' v' G.
-      destr (key_eqb k' k).
+      destr (eqb k' k).
       - rewrite get_put_same in G. inversion_option. subst v'.
         exists v2. apply get_put_same.
       - rewrite get_put_diff in G by assumption.
@@ -1092,7 +1092,7 @@ Module map.
         sub_domain (put m1 k v1) m2.
     Proof.
       unfold sub_domain in *. intros k' v' G'.
-      destr (key_eqb k' k).
+      destr (eqb k' k).
       - rewrite get_put_same in G'. inversion_option. subst v'.
         eapply S. eassumption.
       - rewrite get_put_diff in G' by assumption.
@@ -1104,7 +1104,7 @@ Module map.
         sub_domain m1 (map.put m2 k v).
     Proof.
       unfold sub_domain in *. intros k' v' G.
-      destr (key_eqb k' k).
+      destr (eqb k' k).
       - exists v. rewrite get_put_same. reflexivity.
       - rewrite get_put_diff by assumption.
         eapply S. eassumption.
@@ -1152,7 +1152,7 @@ Module map.
       - destruct ks. destruct vs. simpl in *. rewrite get_empty in GP. discriminate.
       - apply invert_getmany_of_tuple_Some in G. destruct G as [G1 G2].
         destruct ks as [ki ks]. destruct vs as [vi vs]. simpl in *.
-        destr (key_eqb ki k).
+        destr (eqb ki k).
         + eexists. exact G1.
         + rewrite get_put_diff in GP by congruence.
           specialize IHn with (1 := G2). unfold sub_domain in IHn.
@@ -1262,7 +1262,7 @@ Module map.
         + apply invert_getmany_of_tuple_Some in G.
           destruct ks as [k ks]. destruct vs as [v vs]. destruct oldvs as [oldv oldvs].
           simpl in *. destruct G as [G1 G2].
-          destr (key_eqb k0 k).
+          destr (eqb k0 k).
           * eexists. exact G1.
           * rewrite get_put_diff in GP by congruence.
             specialize IHn with (1 := G2).
@@ -1359,7 +1359,7 @@ Module map.
       rewrite get_put_dec in H1.
       rewrite get_put_dec in H2.
       repeat match goal with
-             | H: (if key_eqb ?x ?y then _ else _) = _ |- _ => destr (key_eqb x y)
+             | H: (if eqb ?x ?y then _ else _) = _ |- _ => destr (eqb x y)
              end;
         try congruence.
       eauto.
@@ -1384,7 +1384,7 @@ Module map.
       intros. unfold not_in_range in *. apply List.Forall_forall. intros.
       eapply List.Forall_forall in H0. 2: eassumption.
       rewrite get_put_dec.
-      destr (key_eqb x k).
+      destr (eqb x k).
       - subst. intro C. apply eq_of_eq_Some in C. subst. contradiction.
       - eapply H0.
     Qed.
@@ -1393,7 +1393,7 @@ Module map.
         get m k = Some v ->
         put m k v = m.
     Proof.
-      intros. apply map_ext. intros. rewrite get_put_dec. destr (key_eqb k k0); congruence.
+      intros. apply map_ext. intros. rewrite get_put_dec. destr (eqb k k0); congruence.
     Qed.
 
     Lemma invert_put_eq: forall (k: key) (v1 v2: value) (m1 m2: map),
@@ -1405,7 +1405,7 @@ Module map.
       intros. split.
       - eapply (f_equal (fun m => get m k)) in H1.
         rewrite 2get_put_same in H1. congruence.
-      - eapply map_ext. intros. destr (key_eqb k0 k). 1: congruence.
+      - eapply map_ext. intros. destr (eqb k0 k). 1: congruence.
         eapply (f_equal (fun m => get m k0)) in H1.
         rewrite 2get_put_diff in H1 by assumption. exact H1.
     Qed.
@@ -1440,18 +1440,18 @@ Module map.
           apply map_ext.
           intro x.
           rewrite get_put_dec.
-          destr (key_eqb k x).
+          destr (eqb k x).
           * congruence.
           * rewrite get_remove_diff by congruence. reflexivity.
       - replace (remove m1 k) with m1. 2: {
           eapply map_ext. intro x. rewrite get_remove_dec.
-          destr (key_eqb k x).
+          destr (eqb k x).
           - assumption.
           - reflexivity.
         }
         replace (put m2 k v) with m2. 2: {
           apply map_ext. intro x. rewrite get_put_dec.
-          destr (key_eqb k x).
+          destr (eqb k x).
           - congruence.
           - reflexivity.
         }
@@ -1489,7 +1489,7 @@ Module map.
           rewrite get_putmany_dec.
           rewrite !get_put_dec.
           rewrite get_empty.
-          destr (key_eqb k x). 2: destr (get mks x); reflexivity.
+          destr (eqb k x). 2: destr (get mks x); reflexivity.
           destr (get mks x). 2: reflexivity.
           unfold split in IHksp1. destruct IHksp1. subst.
           rewrite get_putmany_dec in E.
@@ -1511,7 +1511,7 @@ Module map.
         subst m.
         rewrite get_putmany_dec in H0.
         rewrite get_put_dec in H0.
-        destr (key_eqb a k).
+        destr (eqb a k).
         + simpl. auto.
         + right. rewrite get_empty in H0. destr (get s k); try discriminate; eauto.
     Qed.
@@ -1611,20 +1611,20 @@ Module map.
     Proof.
       induction ks; simpl; intros.
       - reflexivity.
-      - rewrite get_remove_dec. destr (key_eqb a k).
+      - rewrite get_remove_dec. destr (eqb a k).
         + exfalso. apply H. left. reflexivity.
         + apply IHks. intro C. apply H. right. exact C.
     Qed.
 
     Lemma get_remove_many_dec: forall ks m k,
-        get (remove_many m ks) k = if List.find (key_eqb k) ks then None else get m k.
+        get (remove_many m ks) k = if List.find (eqb k) ks then None else get m k.
     Proof.
       induction ks; simpl; intros.
       - reflexivity.
       - rewrite get_remove_dec.
         rewrite IHks.
         repeat match goal with
-               | |- context[if key_eqb ?x ?y then _ else _] => destr (key_eqb x y)
+               | |- context[if eqb ?x ?y then _ else _] => destr (eqb x y)
                end;
           try congruence.
     Qed.
@@ -1634,7 +1634,7 @@ Module map.
     Proof.
       intros. eapply map_ext. intro k'.
       rewrite ?get_remove_many_dec, ?get_remove_dec, ?get_remove_many_dec.
-      destr (key_eqb k k'). 2: reflexivity. destr (List.find (key_eqb k') ks); reflexivity.
+      destr (eqb k k'). 2: reflexivity. destr (List.find (eqb k') ks); reflexivity.
     Qed.
 
     Lemma get_remove_many_Some_notin :
@@ -1644,7 +1644,7 @@ Module map.
     Proof.
       induction ks; simpl; intros.
       - auto.
-      - rewrite get_remove_dec in H. destr (key_eqb a k). 1: discriminate.
+      - rewrite get_remove_dec in H. destr (eqb a k). 1: discriminate.
         intro C. destruct C. 1: congruence. unfold not in IHks. eauto.
     Qed.
 
@@ -1656,7 +1656,7 @@ Module map.
       | cons k0 keys0, cons v0 values0 =>
         match zipped_lookup keys0 values0 k with
         | Some v => Some v
-        | None => if key_eqb k0 k then Some v0 else None
+        | None => if eqb k0 k then Some v0 else None
         end
       | _, _ => None
       end.
@@ -1670,7 +1670,7 @@ Module map.
       - auto.
       - cbn in *. inversion H0.
         destr (zipped_lookup ks vs k0). 1: discriminate.
-        destr (key_eqb k k0). 1: discriminate.
+        destr (eqb k k0). 1: discriminate.
         intro C. destruct C as [C | C]. 1: congruence. unfold not in IHks. eauto.
     Qed.
 
@@ -1679,7 +1679,7 @@ Module map.
         List.In k ks.
     Proof.
       induction ks as [|k0 ks]; cbn; intros; destruct vs as [|v0 vs]; try discriminate.
-      destr (key_eqb k0 k). 1: auto.
+      destr (eqb k0 k). 1: auto.
       right. destr (zipped_lookup ks vs k). 2: discriminate. apply Option.eq_of_eq_Some in H.
       subst. eauto.
     Qed.
@@ -1704,7 +1704,7 @@ Module map.
         rewrite get_put_dec.
         rewrite IHks.
         destr (zipped_lookup ks vs k0). 1: reflexivity.
-        destr (key_eqb k k0); reflexivity.
+        destr (eqb k k0); reflexivity.
     Qed.
 
     Lemma get_of_list_zip: forall (ks: list key) (vs: list value) (r: map) k,
@@ -1718,21 +1718,21 @@ Module map.
 
     (* restrict a map to those keys in ks *)
     Definition restrict(m: map)(ks: list key): map :=
-      fold (fun r k v => if List.find (key_eqb k) ks then put r k v else r) map.empty m.
+      fold (fun r k v => if List.find (eqb k) ks then put r k v else r) map.empty m.
 
     Lemma get_restrict_dec: forall k ks m,
-        get (restrict m ks) k = if List.find (key_eqb k) ks then get m k else None.
+        get (restrict m ks) k = if List.find (eqb k) ks then get m k else None.
     Proof.
       intros. unfold restrict.
       apply fold_spec.
-      - rewrite get_empty. destr (List.find (key_eqb k) ks); reflexivity.
+      - rewrite get_empty. destr (List.find (eqb k) ks); reflexivity.
       - intros. rewrite get_put_dec.
-        destr (List.find (key_eqb k0) ks).
+        destr (List.find (eqb k0) ks).
         + rewrite get_put_dec.
-          destr (key_eqb k0 k).
+          destr (eqb k0 k).
           * subst. rewrite E. reflexivity.
-          * destr (List.find (key_eqb k) ks); assumption.
-        + destr (key_eqb k0 k).
+          * destr (List.find (eqb k) ks); assumption.
+        + destr (eqb k0 k).
           * subst. rewrite E in *. assumption.
           * assumption.
     Qed.
@@ -1757,12 +1757,12 @@ Module map.
       - exact E.
       - apply map_ext.
         intros. rewrite get_putmany_dec, get_remove_many_dec, get_restrict_dec.
-        destr (List.find (key_eqb k) ks). 2: reflexivity.
+        destr (List.find (eqb k) ks). 2: reflexivity.
         destr (get m k); reflexivity.
       - unfold map.disjoint. intros.
         rewrite get_remove_many_dec in H0.
         rewrite get_restrict_dec in H1.
-        destr (List.find (key_eqb k) ks); discriminate.
+        destr (List.find (eqb k) ks); discriminate.
       - apply map_ext. intros.
         rewrite get_putmany_dec, get_remove_many_dec.
         eapply get_of_list_zip with (k := k) in E.
@@ -1770,30 +1770,30 @@ Module map.
         eapply get_putmany_of_list_zip with (k := k) in H.
         rewrite H.
         destr (zipped_lookup ks vs k). 1: reflexivity.
-        destr (List.find (key_eqb k) ks). 2: reflexivity.
+        destr (List.find (eqb k) ks). 2: reflexivity.
         exfalso.
         eapply zipped_lookup_None_notin in E0. 2: exact L.
-        eapply List.find_some in E1. destruct E1. destr (key_eqb k k0); subst.
+        eapply List.find_some in E1. destruct E1. destr (eqb k k0); subst.
         1: contradiction. discriminate.
       - unfold disjoint. intros.
         rewrite get_remove_many_dec in H0.
         eapply get_of_list_zip with (k := k) in E.
-        destr (List.find (key_eqb k) ks). 1: discriminate.
+        destr (List.find (eqb k) ks). 1: discriminate.
         rewrite H1 in E. symmetry in E. eapply zipped_lookup_Some_in in E.
-        eapply List.find_none in E0. 2: exact E. destr (key_eqb k k); congruence.
+        eapply List.find_none in E0. 2: exact E. destr (eqb k k); congruence.
       - unfold sub_domain. intros. rewrite get_restrict_dec in H0.
-        destr (List.find (key_eqb k)). 2: discriminate.
-        eapply List.find_some in E0. destruct E0. destr (key_eqb k k0). 2: discriminate.
+        destr (List.find (eqb k)). 2: discriminate.
+        eapply List.find_some in E0. destruct E0. destr (eqb k k0). 2: discriminate.
         eapply putmany_of_list_zip_get in E. 2: eassumption.
         destr (get ksvs k0). 2: contradiction. clear. eauto.
     Qed.
 
     Section ComputableComparison.
-      Context (value_eqb: value -> value -> bool) {value_eqb_dec: EqDecider value_eqb}.
+      Context {value_eqb: Eqb value} {value_eqb_dec: EqDecider value_eqb}.
 
       Definition extendsb(m1: map): map -> bool :=
         fold (fun (res: bool) k2 v2 => if res then match get m1 k2 with
-                                                   | Some v1 => value_eqb v1 v2
+                                                   | Some v1 => eqb v1 v2
                                                    | None => false
                                                    end
                                        else false) true.
@@ -1825,28 +1825,29 @@ Module map.
           + destr (fold f true m). 2: discriminate.
             destr (get m1 k). 2: discriminate.
             apply proj1 in H0. specialize (H0 eq_refl).
-            destr (value_eqb v0 v). 2: discriminate.
-            unfold extends in *. intros. rewrite get_put_dec in H2. destr (key_eqb k x).
+            destr (eqb v0 v). 2: discriminate.
+            unfold extends in *. intros. rewrite get_put_dec in H2. destr (eqb k x).
             * inversion H2. subst. assumption.
             * eapply H0. assumption.
           + apply proj2 in H0. unfold extends in *.
             rewrite H0.
             2: {
-              intros. eapply H1. rewrite get_put_dec. destr (key_eqb k x). 2: assumption.
+              intros. eapply H1. rewrite get_put_dec. destr (eqb k x). 2: assumption.
               exfalso. congruence.
             }
             erewrite H1.
             2: {
               rewrite map.get_put_same. reflexivity.
             }
-            destr (value_eqb v v). 1: reflexivity. exfalso; congruence.
+            destr (eqb v v). 1: reflexivity. exfalso; congruence.
       Qed.
 
-      Definition eqb(m1 m2: map): bool := andb (extendsb m1 m2) (extendsb m2 m1).
+      Definition map_eqb : Eqb map :=
+        fun m1 m2 => andb (extendsb m1 m2) (extendsb m2 m1).
 
-      Lemma eqb_spec m1 m2: BoolSpec (m1 = m2) (m1 <> m2) (eqb m1 m2).
+      Lemma eqb_spec m1 m2: BoolSpec (m1 = m2) (m1 <> m2) (map_eqb m1 m2).
       Proof.
-        destr (eqb m1 m2); unfold eqb.
+        destr (map_eqb m1 m2); unfold eqb.
         - destruct E as [E21 E12].
           eapply extendsb_spec in E12. eapply extendsb_spec in E21.
           constructor. eapply map_ext. unfold extends in *. intros.
@@ -2036,7 +2037,7 @@ Module map.
       split; [|exact E].
       apply map.map_ext. intros.
       rewrite get_putmany_dec, ?get_put_dec.
-      destr (key_eqb k k0).
+      destr (eqb k k0).
       - subst. erewrite not_in_of_list_zip_to_get_None by eassumption. reflexivity.
       - rewrite map.get_empty. destr (map.get r k0); reflexivity.
     Qed.
@@ -2151,8 +2152,8 @@ Module map.
     Proof.
       intros. apply map_ext. intros.
       rewrite ! get_put_dec;
-        repeat match goal with |- context [key_eqb ?x ?y] =>
-                               destr (key_eqb x y) end;
+        repeat match goal with |- context [eqb ?x ?y] =>
+                               destr (eqb x y) end;
         congruence.
     Qed.
 
@@ -2161,8 +2162,8 @@ Module map.
     Proof.
       intros. apply map_ext. intros.
       rewrite !get_put_dec;
-        repeat match goal with |- context [key_eqb ?x ?y] =>
-                               destr (key_eqb x y) end;
+        repeat match goal with |- context [eqb ?x ?y] =>
+                               destr (eqb x y) end;
         congruence.
     Qed.
 
@@ -2175,7 +2176,7 @@ Module map.
       match goal with H : context [get (put _ ?k _) ?k'] |- _ =>
                       rewrite get_put_dec in H
       end.
-      destr (key_eqb k k0); subst; eauto; congruence.
+      destr (eqb k k0); subst; eauto; congruence.
     Qed.
 
     Lemma disjoint_put_l m1 m2 k v :
@@ -2187,7 +2188,7 @@ Module map.
       match goal with H : context [get (put _ ?k _) ?k'] |- _ =>
                       rewrite get_put_dec in H
       end.
-      destr (key_eqb k k0); subst; eauto; congruence.
+      destr (eqb k k0); subst; eauto; congruence.
     Qed.
 
     Lemma split_put_None m m1 m2 k v
@@ -2218,7 +2219,7 @@ Module map.
     Proof.
       apply map_ext; intro.
       rewrite !get_put_dec, !get_remove_dec.
-      destr (key_eqb k k0); congruence.
+      destr (eqb k k0); congruence.
     Qed.
 
     Lemma remove_put_same m k v :
@@ -2226,7 +2227,7 @@ Module map.
     Proof.
       intros; apply map_ext; intro.
       rewrite !get_remove_dec, !get_put_dec.
-      destr (key_eqb k k0); congruence.
+      destr (eqb k k0); congruence.
     Qed.
 
     Lemma remove_put_diff m k1 k2 v :
@@ -2235,7 +2236,7 @@ Module map.
     Proof.
       intros; apply map_ext; intro.
       rewrite !get_put_dec, !get_remove_dec.
-      destr (key_eqb k2 k); destr (key_eqb k1 k); subst;
+      destr (eqb k2 k); destr (eqb k1 k); subst;
         rewrite ?get_put_diff, ?get_put_same by congruence;
         congruence.
     Qed.
@@ -2245,7 +2246,7 @@ Module map.
       remove m k = m.
     Proof.
       intros; apply map_ext; intros.
-      rewrite get_remove_dec. destr (key_eqb k k0); congruence.
+      rewrite get_remove_dec. destr (eqb k k0); congruence.
     Qed.
 
     Lemma get_forallb: forall f m,
@@ -2255,7 +2256,7 @@ Module map.
       eapply fold_spec; intros.
       - rewrite get_empty in H0. discriminate.
       - eapply Bool.andb_true_iff in H1. destruct H1.
-        rewrite get_put_dec in H2. destr (key_eqb k k0).
+        rewrite get_put_dec in H2. destr (eqb k k0).
         + inversion H2. subst. eauto.
         + eauto.
     Qed.
@@ -2272,7 +2273,7 @@ Module map.
     Proof.
       unfold map.forall_keys. intros.
       rewrite get_put_dec in H1.
-      destr (key_eqb k k0); subst; eauto.
+      destr (eqb k k0); subst; eauto.
     Qed.
 
     Lemma invert_forall_keys_put: forall (P: key -> Prop) m k v,
@@ -2282,7 +2283,7 @@ Module map.
       unfold map.forall_keys. intros. split.
       - eapply H. apply map.get_put_same.
       - intros. specialize (H k0). rewrite get_put_dec in H.
-        destr (key_eqb k k0); subst; eauto.
+        destr (eqb k k0); subst; eauto.
     Qed.
 
     Lemma forall_keys_putmany: forall (P: key -> Prop) m1 m2,
@@ -2301,7 +2302,7 @@ Module map.
         map.forall_keys P (map.remove m k).
     Proof.
       unfold map.forall_keys. intros. rewrite get_remove_dec in H0.
-      destr (key_eqb k k0). 1: discriminate. eauto.
+      destr (eqb k k0). 1: discriminate. eauto.
     Qed.
 
     Lemma of_list_zip_forall_keys: forall ks vs m (P: key -> Prop),
@@ -2333,11 +2334,11 @@ Module map.
         eapply invert_get_putmany_None in H0. destruct H0.
         assert (map.disjoint (map.put mP k v) mQ). {
           unfold map.disjoint in *. intros. rewrite get_put_dec in H1.
-          destr (key_eqb k k0); subst; try congruence; eauto.
+          destr (eqb k k0); subst; try congruence; eauto.
         }
         assert (map.disjoint mP (map.put mQ k v)). {
           unfold map.disjoint in *. intros. rewrite get_put_dec in H3.
-          destr (key_eqb k k0); subst; try congruence; eauto.
+          destr (eqb k k0); subst; try congruence; eauto.
         }
         destruct HPQ as [HP | HQ].
         + exists (map.put mP k v), mQ.
@@ -2353,7 +2354,7 @@ Module map.
 
   Section WithTwoMaps. Local Set Default Proof Using "All".
     Context {K V1 V2: Type}{M1: map.map K V1}{M2: map.map K V2}
-            {keqb: K -> K -> bool} {keqb_spec: EqDecider keqb}
+            {keqb: Eqb K} {keqb_spec: EqDecider keqb}
             {OK1: map.ok M1} {OK2: map.ok M2}.
 
     Definition map_all_values(f: V1 -> option V2): M1 -> option M2 :=
@@ -2382,7 +2383,7 @@ Module map.
       - rewrite get_empty in H0. discriminate.
       - invert.
         rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
-        destr (keqb k k0); invert; eauto.
+        destr (eqb k k0); invert; eauto.
     Qed.
 
     Lemma map_all_values_bw(f: V1 -> option V2)(m1: M1)(m2: M2):
@@ -2396,7 +2397,7 @@ Module map.
       - invert. rewrite get_empty in H0. discriminate.
       - invert.
         rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
-        destr (keqb k k0); invert; eauto.
+        destr (eqb k k0); invert; eauto.
     Qed.
 
     Lemma map_all_values_not_None_fw: forall (f : V1 -> option V2) (m1 : M1) (m2 : M2) (k: K),
@@ -2411,7 +2412,7 @@ Module map.
       - intros. destr r; try discriminate. destr (f v); try discriminate.
         apply eq_of_eq_Some in H1. subst m2.
         rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
-        destr (keqb k k0).
+        destr (eqb k k0).
         + congruence.
         + eauto.
     Qed.
@@ -2430,7 +2431,7 @@ Module map.
       - rewrite get_empty in H0. discriminate.
       - subst.
         rewrite get_put_dec. rewrite get_put_dec in H2.
-        destr (keqb k k0).
+        destr (eqb k k0).
         + subst. apply Option.eq_of_eq_Some in H2. subst. eauto.
         + eauto.
     Qed.
@@ -2448,12 +2449,13 @@ Module map.
   Qed.
 
   Lemma disjoint_remove_keys [key value] [map : map.map key value] (m1 m2 : map)
-    {ok : map.ok map} {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb} :
+    {ok : map.ok map} {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb} :
     disjoint (remove_many m1 (keys m2)) m2.
   Proof.
     intros ? ? ? ?%get_remove_many_Some_notin ?%map.in_keys; contradiction.
   Qed.
 End map.
 
-#[global] Hint Opaque map.eqb : typeclass_instances.
+#[global] Hint Opaque map.map_eqb : typeclass_instances.
+#[export] Existing Instance map.map_eqb.
 #[export] Existing Instance map.eqb_spec.

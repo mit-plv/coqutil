@@ -1,4 +1,4 @@
-Require Import coqutil.Decidable.
+Require Import coqutil.Decidable coqutil.Eqb.
 Require Import coqutil.Map.Interface coqutil.Map.Properties.
 Require Import coqutil.Map.Solver.
 Require Import coqutil.Datatypes.PropSet.
@@ -6,9 +6,7 @@ Require Import coqutil.Tactics.destr.
 
 Section WithParams. Local Set Default Proof Using "All".
   Import Interface.map.
-  Context {var: Type}. (* variable name (key) *)
-  Context {var_eqb: var -> var -> bool}.
-  Context {var_eqb_spec: EqDecider var_eqb}.
+  Context {var: Type} {var_eqb: Eqb var} {var_eqb_spec: EqDecider var_eqb}.
   Context {val: Type}. (* value *)
 
   Context {stateMap: map.map var val}.
@@ -156,14 +154,14 @@ Section WithParams. Local Set Default Proof Using "All".
       map.remove (map.put m k v) k = map.remove m k.
   Proof.
     intros. apply map.map_ext. intros. rewrite ?map.get_remove_dec, map.get_put_dec.
-    destr (var_eqb k k0); reflexivity.
+    destr (eqb k k0); reflexivity.
   Qed.
 
   Lemma remove_comm: forall m k1 k2,
       map.remove (map.remove m k1) k2 = map.remove (map.remove m k2) k1.
   Proof.
     intros. apply map.map_ext. intros. rewrite ?map.get_remove_dec.
-    destr (var_eqb k1 k); destr (var_eqb k2 k); reflexivity.
+    destr (eqb k1 k); destr (eqb k2 k); reflexivity.
   Qed.
 
   Lemma remove_extends: forall m1 m2 k,
@@ -247,7 +245,7 @@ Section WithParams. Local Set Default Proof Using "All".
     - intros. eauto using List.in_cons.
     - intros. eauto using List.in_eq.
   Qed.
- 
+
   Lemma agree_on_getmany:
     forall ks (m1 m2: stateMap),
       map.agree_on (PropSet.of_list ks) m1 m2 ->
@@ -273,7 +271,7 @@ Section WithParams. Local Set Default Proof Using "All".
         map.agree_on ks m1 m2 ->
         map.agree_on ks' m1 m2.
   Proof. t. Qed.
-  
+
   Lemma agree_on_comm :
     forall ks (m1 m2: stateMap),
       map.agree_on ks m1 m2 ->
@@ -287,7 +285,7 @@ Section WithParams. Local Set Default Proof Using "All".
   Proof.
     intros. unfold iff; split; intros; t.
   Qed.
-  
+
   Lemma agree_on_put:
     forall a r s (mH mL: stateMap) mH' mL',
       map.agree_on s mH mL ->
@@ -296,10 +294,10 @@ Section WithParams. Local Set Default Proof Using "All".
       map.agree_on (union s (singleton_set a)) mH' mL'.
   Proof.
     intros.
-    rewrite <- H0, <- H1. 
+    rewrite <- H0, <- H1.
     t.
   Qed.
-  
+
   Lemma agree_on_diff_put:
     forall a r s (mH mL: stateMap),
       map.agree_on (diff (PropSet.of_list s) (singleton_set a)) mH mL ->
@@ -307,7 +305,7 @@ Section WithParams. Local Set Default Proof Using "All".
   Proof.
     intros. t.
   Qed.
-  
+
   Lemma agree_on_putmany_of_list_zip:
     forall lk0 lv s (mH mL: stateMap) mH' mL',
       map.agree_on s mH mL ->
@@ -343,7 +341,7 @@ Section WithParams. Local Set Default Proof Using "All".
         * reflexivity.
         * reflexivity.
   Qed.
-   
+
   Lemma agree_on_diff_putmany_of_list_zip:
     forall o1 o2 v (l l': stateMap) lL lL',
       map.agree_on (diff (PropSet.of_list o1) (PropSet.of_list o2)) l lL
@@ -356,7 +354,7 @@ Section WithParams. Local Set Default Proof Using "All".
     2: eauto using agree_on_putmany_of_list_zip.
     assert (forall l2 (x: var), (List.In x l2 \/ ~ (List.In x l2))).
     { intros. eapply ListDec.In_decidable. unfold ListDec.decidable_eq.
-      intros. destr (var_eqb x0 y).
+      intros. destr (eqb x0 y).
       - unfold Decidable.decidable. left. reflexivity.
       - unfold Decidable.decidable. right. eassumption.
     }
@@ -365,35 +363,35 @@ Section WithParams. Local Set Default Proof Using "All".
     intros. unfold diff, union, of_list, elem_of.
     set_solver_generic var.
   Qed.
-  
+
   Lemma agree_on_find:
     forall s l (m1 m2: stateMap),
-      map.agree_on (PropSet.of_list (if (List.find (var_eqb s) l)
+      map.agree_on (PropSet.of_list (if (List.find (eqb s) l)
                                      then l
                                      else s :: l)) m1 m2
       -> map.agree_on (PropSet.of_list l) m1 m2 /\ map.get m1 s = map.get m2 s.
   Proof.
     intros.
-    destr (List.find (var_eqb s) l).
+    destr (List.find (eqb s) l).
     - split.
-      + eassumption. 
+      + eassumption.
       + eapply List.find_some in E.
         unfold map.agree_on, elem_of, singleton_set in *.
         intros. destr E.
         unfold PropSet.of_list in H.
-        destr (var_eqb s v).
+        destr (eqb s v).
         2: { exfalso; inversion H1. }
         eauto.
-    - eauto using agree_on_cons. 
+    - eauto using agree_on_cons.
   Qed.
-  
+
   Lemma agree_on_refl: forall k (m: stateMap),
       map.agree_on k m m.
   Proof. t. Qed.
 
   Lemma agree_on_not_in:
     forall keySet (m: stateMap) x,
-      List.existsb (var_eqb x) keySet = false ->
+      List.existsb (eqb x) keySet = false ->
       forall y,
         map.agree_on (PropSet.of_list keySet) (map.put m x y) m.
   Proof.
@@ -401,7 +399,7 @@ Section WithParams. Local Set Default Proof Using "All".
     unfold map.agree_on.
     intros.
     rewrite map.get_put_dec.
-    destr (var_eqb x k).
+    destr (eqb x k).
     - unfold elem_of in H0. apply PropSet.existsb_of_list in H0. exfalso. rewrite H in H0. discriminate.
     - reflexivity.
   Qed.
@@ -409,7 +407,7 @@ Section WithParams. Local Set Default Proof Using "All".
   Lemma agree_on_put_not_in :
     forall x l (m1 m2: stateMap),
       map.agree_on (PropSet.of_list l) m1 m2
-      -> List.existsb (var_eqb x) l = false
+      -> List.existsb (eqb x) l = false
       -> forall v,
           map.agree_on (PropSet.of_list l) (map.put m1 x v) m2.
   Proof.
@@ -424,4 +422,3 @@ Section WithParams. Local Set Default Proof Using "All".
     - eassumption.
   Qed.
 End WithParams.
-

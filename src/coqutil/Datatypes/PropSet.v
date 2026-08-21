@@ -3,7 +3,7 @@ Require Import Coq.Classes.Morphisms.
 Require Import Coq.Classes.RelationClasses.
 Require Import Coq.Logic.PropExtensionality.
 Require Import Coq.Logic.FunctionalExtensionality.
-Require Import coqutil.Decidable.
+Require Import coqutil.Decidable coqutil.Eqb.
 Require Import coqutil.Tactics.destr.
 
 Definition set(A: Type) := A -> Prop.
@@ -294,8 +294,7 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
   Proof. firstorder idtac. Defined.
 
   Section with_eqb. Local Set Default Proof Using "All".
-    Context {eqb}
-            {eq_dec : forall x y : E, BoolSpec (x = y) (x <> y) (eqb x y)}.
+    Context {eeqb : Eqb E} {eeqb_dec : EqDecider eeqb}.
 
     Lemma disjoint_singleton_r_iff (x : E) (s : set E) :
       ~ s x <->
@@ -303,8 +302,7 @@ Section PropSetLemmas. Local Set Default Proof Using "All".
     Proof.
       intros. split; [|firstorder idtac].
       intros. intro y.
-      destruct (eq_dec x y);
-        subst; try firstorder idtac.
+      destr (eqb x y); subst; auto.
     Qed.
 
     Lemma disjoint_singleton_singleton (x y : E) :
@@ -403,11 +401,11 @@ Proof. intros. set_solver_generic T. Qed.
 
 Section PropSetLemmasWithEqDecider. Local Set Default Proof Using "All".
   Context {A: Type}.
-  Context {aeqb : A -> A -> bool} {aeqb_dec: EqDecider aeqb}.
+  Context {aeqb : Eqb A} {aeqb_dec: EqDecider aeqb}.
   Lemma subset_of_list_cons:
-   forall h t l,
+   forall (h : A) t l,
       subset (of_list (h::t)) (of_list l) <->
-      existsb (aeqb h) l = true /\ subset (of_list t) (of_list l).
+      existsb (eqb h) l = true /\ subset (of_list t) (of_list l).
   Proof.
     intros.
     unfold iff.
@@ -418,14 +416,14 @@ Section PropSetLemmasWithEqDecider. Local Set Default Proof Using "All".
       split.
       + specialize (H h). eapply List.existsb_exists. exists h. split.
         * eapply H. eapply or_introl. reflexivity.
-        * destr (aeqb h h); eauto.
+        * destr (eqb h h); eauto.
       + intros. auto.
     - intros. destr H.
       repeat autounfold with unf_basic_set_defs unf_derived_set_defs in *; unfold elem_of in *.
       intros. eapply in_inv in H1.
       eapply existsb_exists in H.
       do 2 destr H.
-      destr (aeqb h x0).
+      destr (eqb h x0).
       { destr H1.
         + rewrite <- H1. assumption.
         + eauto.
@@ -434,17 +432,17 @@ Section PropSetLemmasWithEqDecider. Local Set Default Proof Using "All".
   Qed.
 
   Lemma existsb_of_list :
-    forall k keySet,
-      List.existsb (aeqb k) keySet = true <-> k \in PropSet.of_list keySet.
+    forall (k : A) keySet,
+      List.existsb (eqb k) keySet = true <-> k \in PropSet.of_list keySet.
   Proof.
     intros; unfold iff; split.
     - intros. eapply List.existsb_exists in H.
-      do 2 destr H. destr (aeqb k x).
+      do 2 destr H. destr (eqb k x).
       2: { exfalso. inversion H0. }
       eauto.
     - intros. eapply List.existsb_exists.
       exists k; simpl; split.
       + unfold elem_of, PropSet.of_list in *; eauto.
-      + destr (aeqb k k); eauto.
+      + destr (eqb k k); eauto.
    Qed.
 End PropSetLemmasWithEqDecider.

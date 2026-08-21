@@ -2,13 +2,14 @@ Require Import coqutil.Decidable.
 Require Import coqutil.Datatypes.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
+Require Import coqutil.Eqb.
 
 (*Local Set Ltac Profiling.*)
 
 Goal
   forall (S : Set) (T : Type) (M : map.map S T),
   map.ok M ->
-  forall b : S -> S -> bool,
+  forall b : Eqb S,
   EqDecider b ->
   forall (l initialL_regs middle_regs lH' middle_regs0 finalRegsH middle_regs1 finalRegsH0 : M)
     (ks0 ks : S -> Prop) (k k2 k6 k1 k7 k5 k4 k3 k0 x : S) (p_sp0 : T),
@@ -31,13 +32,14 @@ Goal
   k0 = k1 ->
   x \in union (union ks ks0) (singleton_set k) \/ map.get initialL_regs x = map.get middle_regs1 x.
 Proof.
-  (* Time map_solver_core.   126s *)
+  (*Time map_solver_core.*)
+  (*Finished transaction in 38.648 secs (38.557u,0.079s) (successful)*)
 Abort.
 
 Goal
   forall (T T0 : Type) (M : map.map T T0),
   map.ok M ->
-  forall (keq: T -> T -> bool), EqDecider keq ->
+  forall (keq: Eqb T), EqDecider keq ->
   forall (initialH initialL l' l'0 : M) (ks2 ks ks1 ks4 ks5 ks0 ks3 : T -> Prop)
     (v v0 x : T) (r r0 r1 : T0) (ov0 ov : option T0),
   (forall (x0 : T) (w : T0), map.get initialH x0 = Some w -> map.get initialL x0 = Some w) ->
@@ -65,7 +67,7 @@ Time Qed.
 Goal
   forall (S : Set) (T : Type) (M0 : map.map S T),
   map.ok M0 ->
-  forall b : S -> S -> bool,
+  forall b : Eqb S,
   EqDecider b ->
   forall
     (l st0 middle_regs middle_regs0 finalRegsH middle_regs1 middle_regs2 middle_regs3
@@ -93,7 +95,7 @@ Abort.
 Goal
   forall (S : Set) (T : Type) (M0 : map.map S T),
   map.ok M0 ->
-  forall b : S -> S -> bool,
+  forall b : Eqb S,
   EqDecider b ->
   forall (l initialL_regs middle_regs lH' middle_regs0 finalRegsH middle_regs1 finalRegsH0 : M0)
     (ks0 ks : S -> Prop) (k k2 k6 k1 k7 k5 k4 k3 k0 x : S) (p_sp0 : T),
@@ -122,10 +124,8 @@ Goal
 Proof.
   intros.
   subst.
-  (*
-  Time map_solver H.
-  Finished transaction in 113.098 secs (112.608u,0.056s) (successful)
-  *)
+  (*Time map_solver H.*)
+  (*Finished transaction in 41.23 secs (41.194u,0.029s) (successful)*)
 Abort.
 
 (*Goal True. idtac "End of SlowGoals.v". Abort.*)

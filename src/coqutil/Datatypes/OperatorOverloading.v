@@ -56,7 +56,9 @@ Class Division{A B R: Type}(a: A)(b: B)(r: R) := {}.
 Global Hint Mode Division ! ! - - - - : typeclass_instances.
 Notation "a / b" := (infer! Division a b) (only parsing) : oo_scope.
 
-Notation "a =? b" := (infer! BoolSpec (a = b) (a <> b))
+Class Equality{A B R: Type}(a: A)(b: B)(r: R) := {}.
+Global Hint Mode Equality ! ! - - - - : typeclass_instances.
+Notation "a =? b" := (infer! Equality a b)
   (at level 70, only parsing) : oo_scope.
 
 
@@ -159,13 +161,9 @@ Notation "a / b" := (Z.div a b) (only printing) : oo_scope.
 (* No division on word for the moment because we'd have to decide between
    signed or unsigned division *)
 
-
-Require Import coqutil.Decidable. (* already defines several BoolSpec instances *)
-Notation "a =? b" := (Nat.eqb a b) (only printing) : oo_scope.
-Notation "a =? b" := (Byte.eqb a b) (only printing) : oo_scope.
-Notation "a =? b" := (N.eqb a b) (only printing) : oo_scope.
-Notation "a =? b" := (Z.eqb a b) (only printing) : oo_scope.
-
+Require Import coqutil.Eqb.
+#[export] Instance EqbEquality{A}`{Eqb A}(a b : A): Equality a b (eqb a b) := {}.
+Notation "a =? b" := (@eqb _ _ a b) (only printing) : oo_scope.
 
 Section TestArith.
   (* Note: this one works by using the notation from nat_scope, which is open by default *)

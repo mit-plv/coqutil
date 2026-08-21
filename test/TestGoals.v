@@ -1,4 +1,4 @@
-Require Import coqutil.Decidable.
+Require Import coqutil.Decidable coqutil.Eqb.
 Require Import coqutil.Datatypes.PropSet.
 Require Import coqutil.Map.Interface.
 Require Import coqutil.Map.Solver.
@@ -10,7 +10,7 @@ Section TestGoals. Local Set Default Proof Using "All".
   Context {K V: Type}.
   Context {locals: map.map K V}.
   Context {mapspecs: map.ok locals}.
-  Context {keq: K -> K -> bool}.
+  Context {keq: Eqb K}.
   Context {K_eq_dec: EqDecider keq}.
   Local Hint Mode map.map - - : typeclass_instances.
 

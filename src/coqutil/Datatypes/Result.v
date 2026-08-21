@@ -119,7 +119,7 @@ Module List.
 End List.
 
 Require Import coqutil.Map.Interface coqutil.Map.Properties.
-Require Import coqutil.Decidable.
+Require Import coqutil.Decidable coqutil.Eqb.
 Require Import coqutil.Tactics.fwd.
 Require Import coqutil.Tactics.destr.
 
@@ -128,7 +128,7 @@ Module map.
 
   Section WithMap.
     Context {key value : Type} {map : map.map key value} {map_ok : map.ok map}
-            {keqb: key -> key -> bool} {keqb_spec: EqDecider keqb}.
+            {keqb: Eqb key} {keqb_spec: EqDecider keqb}.
 
     Definition forall_success(f: key -> value -> result unit): map -> result unit :=
       map.fold (fun res k v => res;; f k v) (Success tt).
@@ -139,13 +139,13 @@ Module map.
       unfold forall_success. intros f m.
       eapply map.fold_spec; intros.
       - rewrite map.get_empty in H0. discriminate.
-      - fwd. rewrite map.get_put_dec in H2. destr (keqb k k0); fwd; eauto.
+      - fwd. rewrite map.get_put_dec in H2. destr (eqb k k0); fwd; eauto.
     Qed.
   End WithMap.
 
   Section WithTwoMaps.
     Context {K V1 V2: Type}{M1: map.map K V1}{M2: map.map K V2}
-            {keqb: K -> K -> bool} {keqb_spec: EqDecider keqb}
+            {keqb: Eqb K} {keqb_spec: EqDecider keqb}
             {OK1: map.ok M1} {OK2: map.ok M2}.
 
     Definition try_map_values(f: V1 -> result V2): M1 -> result M2 :=
@@ -163,7 +163,7 @@ Module map.
       - rewrite map.get_empty in H0. discriminate.
       - fwd.
         rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
-        destr (keqb k k0); fwd; eauto.
+        destr (eqb k k0); fwd; eauto.
     Qed.
 
     Lemma try_map_values_bw(f: V1 -> result V2)(m1: M1)(m2: M2):
@@ -177,7 +177,7 @@ Module map.
       - fwd. rewrite map.get_empty in H0. discriminate.
       - fwd.
         rewrite map.get_put_dec. rewrite map.get_put_dec in H2.
-        destr (keqb k k0); fwd; eauto.
+        destr (eqb k k0); fwd; eauto.
     Qed.
   End WithTwoMaps.
 End map.

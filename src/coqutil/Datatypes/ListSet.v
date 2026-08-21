@@ -2,34 +2,31 @@ Require Import Coq.Lists.List.
 Import ListNotations.
 Require Import Coq.Logic.PropExtensionality.
 Require Import Coq.Logic.FunctionalExtensionality.
-Require Import coqutil.Decidable.
+Require Import coqutil.Decidable coqutil.Eqb.
 Require Import coqutil.Datatypes.PropSet.
 Require Import coqutil.Datatypes.List.
 Require Import coqutil.Tactics.Tactics.
 Require Import coqutil.Z.Lia.
 
 Section ListSetDefs. Local Set Default Proof Using "All".
-  Context {E: Type}.
-  Context (eeq: E -> E -> bool).
-  Context {eeq_spec: EqDecider eeq}.
+  Context {E: Type} {eeqb : Eqb E} {eeq_spec: EqDecider eeqb}.
 
   Definition list_union(A B: list E): list E :=
-    fold_right (fun a res => if find (eeq a) res then res else a :: res) B A.
+    fold_right (fun a res => if find (eqb a) res then res else a :: res) B A.
 
   Definition list_intersect(A B: list E): list E :=
-    fold_right (fun a res => if find (eeq a) B then a :: res else res) nil A.
+    fold_right (fun a res => if find (eqb a) B then a :: res else res) nil A.
 
   Definition list_diff(A B: list E): list E :=
-    fold_left (fun res b => removeb eeq b res) B A.
+    fold_left (fun res b => removeb b res) B A.
 End ListSetDefs.
 
 Section ListSetProofs. Local Set Default Proof Using "All".
-  Context {E: Type}.
-  Context {eeq: E -> E -> bool}.
-  Context {eeq_spec: EqDecider eeq}.
+  Context {E: Type} {eeqb : Eqb E} {eeqb_spec: EqDecider eeqb}.
+  Implicit Types s l : list E.
 
   Lemma length_list_union_nil_r: forall (l: list E),
-      length (list_union eeq l []) <= length l.
+      length (list_union l []) <= length l.
   Proof using.
     induction l.
     - simpl. reflexivity.
@@ -37,28 +34,28 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma find_list_union_r_cons_None_Some: forall (l1 l2: list E) a a0 e,
-      find (eeq a) (list_union eeq l1 (a0 :: l2)) = None ->
-      find (eeq a) (list_union eeq l1 l2) = Some e ->
+      find (eqb a) (list_union l1 (a0 :: l2)) = None ->
+      find (eqb a) (list_union l1 l2) = Some e ->
       False.
   Proof.
     induction l1; intros.
-    - simpl in *. destr (eeq a a0); congruence.
+    - simpl in *. destr (eqb a a0); congruence.
     - simpl in *.
-      destr (find (eeq a) (list_union eeq l1 (a1 :: l2))).
-      + destr (find (eeq a) (list_union eeq l1 l2)).
+      destr (find (eqb a) (list_union l1 (a1 :: l2))).
+      + destr (find (eqb a) (list_union l1 l2)).
         * eauto.
-        * simpl in *. destr (eeq a0 a); [|eauto].
+        * simpl in *. destr (eqb a0 a); [|eauto].
           subst. congruence.
-      + simpl in *. destr (eeq a0 a); [discriminate|].
-        destr (find (eeq a) (list_union eeq l1 l2)); [eauto|].
+      + simpl in *. destr (eqb a0 a); [discriminate|].
+        destr (find (eqb a) (list_union l1 l2)); [eauto|].
         simpl in *.
-        destr (eeq a0 a); [congruence|].
+        destr (eqb a0 a); [congruence|].
         eauto.
   Qed.
 
   Lemma find_list_union_r_cons_Some_None: forall (l1 l2: list E) a a0 e,
-      find (eeq a) (list_union eeq l1 (a0 :: l2)) = Some e ->
-      find (eeq a) (list_union eeq l1 l2) = None ->
+      find (eqb a) (list_union l1 (a0 :: l2)) = Some e ->
+      find (eqb a) (list_union l1 l2) = None ->
       a = a0 /\ a = e.
   Proof.
     induction l1; intros.
@@ -66,32 +63,32 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       + split; congruence.
       + congruence.
     - simpl in *.
-      destr (find (eeq a) (list_union eeq l1 (a1 :: l2))).
-      + destr (find (eeq a) (list_union eeq l1 l2)).
+      destr (find (eqb a) (list_union l1 (a1 :: l2))).
+      + destr (find (eqb a) (list_union l1 l2)).
         * eauto.
-        * simpl in *. destr (eeq a0 a); [discriminate|].
+        * simpl in *. destr (eqb a0 a); [discriminate|].
           eauto.
-      + simpl in *. destr (eeq a0 a).
+      + simpl in *. destr (eqb a0 a).
         * subst. replace e with a in * by congruence. clear e H.
-          destr (find (eeq a) (list_union eeq l1 l2)); [exfalso; congruence|].
+          destr (find (eqb a) (list_union l1 l2)); [exfalso; congruence|].
           simpl in H0.
-          destr (eeq a a); exfalso; congruence.
-        * destr (find (eeq a) (list_union eeq l1 l2)); eauto.
+          destr (eqb a a); exfalso; congruence.
+        * destr (find (eqb a) (list_union l1 l2)); eauto.
           simpl in H0.
-          destr (eeq a0 a); try congruence. eauto.
+          destr (eqb a0 a); try congruence. eauto.
   Qed.
 
   Lemma length_list_union_cons_r: forall (l1 l2: list E) (a: E),
-      length (list_union eeq l1 (a :: l2)) <= S (length (list_union eeq l1 l2)).
+      length (list_union l1 (a :: l2)) <= S (length (list_union l1 l2)).
   Proof.
     induction l1; intros.
     - simpl. reflexivity.
-    - simpl. destr (find (eeq a) (list_union eeq l1 l2)).
-      + destr (find (eeq a) (list_union eeq l1 (a0 :: l2))).
+    - simpl. destr (find (eqb a) (list_union l1 l2)).
+      + destr (find (eqb a) (list_union l1 (a0 :: l2))).
         * eapply IHl1.
         * exfalso. eapply find_list_union_r_cons_None_Some; eassumption.
       + simpl in *.
-        destr (find (eeq a) (list_union eeq l1 (a0 :: l2))).
+        destr (find (eqb a) (list_union l1 (a0 :: l2))).
         * pose proof find_list_union_r_cons_Some_None as P.
           specialize P with (1 := E1) (2 := E0). destruct P. subst.
           specialize (IHl1 l2 e). blia.
@@ -99,7 +96,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma length_list_union: forall (l1 l2: list E),
-      (length (list_union eeq l1 l2) <= length l1 + length l2)%nat.
+      (length (list_union l1 l2) <= length l1 + length l2)%nat.
   Proof.
     induction l2.
     - pose proof (length_list_union_nil_r l1). blia.
@@ -107,28 +104,28 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma list_union_empty_l: forall l,
-      list_union eeq nil l = l.
+      list_union nil l = l.
   Proof using.
     intros. reflexivity.
   Qed.
 
   Lemma list_union_empty_r: forall l,
       NoDup l ->
-      list_union eeq l nil = l.
+      list_union l nil = l.
   Proof.
     induction l; intros.
     - reflexivity.
     - simpl. inversion H. subst.
       rewrite IHl by assumption.
-      destr (find (eeq a) l); [exfalso|reflexivity].
+      destr (find (eqb a) l); [exfalso|reflexivity].
       apply find_some in E0. destruct E0.
-      destr (eeq a e); congruence.
+      destr (eqb a e); congruence.
   Qed.
 
   Lemma union_Forall: forall (P: E -> Prop) (l1 l2: list E),
       Forall P l1 ->
       Forall P l2 ->
-      Forall P (list_union eeq l1 l2).
+      Forall P (list_union l1 l2).
   Proof using.
     induction l1; intros; simpl; [assumption|].
     inversion H. subst. clear H. destruct_one_match; eauto.
@@ -136,7 +133,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
 
   Lemma removeb_Forall_weaken: forall (P : E -> Prop) (l : list E) (e: E),
       Forall P l ->
-      Forall P (removeb eeq e l).
+      Forall P (removeb e l).
   Proof.
     unfold removeb. intros. eapply Forall_forall. intros. eapply Forall_forall in H.
     1: exact H.
@@ -144,34 +141,34 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma list_diff_Forall_weaken: forall (P : E -> Prop) (l1 l2 : list E),
-      Forall P l1 -> Forall P (list_diff eeq l1 l2).
+      Forall P l1 -> Forall P (list_diff l1 l2).
   Proof.
     unfold list_diff. intros *. revert l1. induction l2; simpl; intros.
     - assumption.
     - eapply IHl2. eapply removeb_Forall_weaken. assumption.
   Qed.
 
-  Lemma of_list_removeb: forall x A,
-      of_list (removeb eeq x A) = diff (of_list A) (singleton_set x).
-  Proof using eeq_spec.
+  Lemma of_list_removeb: forall (x : E) A,
+      of_list (removeb x A) = diff (of_list A) (singleton_set x).
+  Proof using eeqb_spec.
     unfold of_list, diff, singleton_set, elem_of. intros.
     extensionality e. apply propositional_extensionality. split.
     - induction A; intros.
       + simpl in *. contradiction.
-      + simpl in *. destr (eeq x a).
+      + simpl in *. destr (eqb x a).
         * subst. simpl in *. intuition idtac.
         * simpl in *. intuition congruence.
     - induction A; intros.
       + simpl in *. intuition idtac.
-      + simpl in *. destr (eeq x a).
+      + simpl in *. destr (eqb x a).
         * subst. simpl in *. intuition idtac.
         * simpl in *. intuition congruence.
   Qed.
 
   Lemma subset_of_list_removeb:
-    forall (l: list E) s,
-      PropSet.subset (PropSet.of_list (List.removeb eeq s l))
-        (PropSet.of_list (l)).
+    forall (l: list E) e,
+      PropSet.subset (PropSet.of_list (List.removeb e l))
+        (PropSet.of_list l).
   Proof.
     intros. rewrite of_list_removeb.
     unfold PropSet.subset.
@@ -183,7 +180,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma In_list_union_spec: forall (l1 l2 : list E) (x: E),
-      In x (list_union eeq l1 l2) <-> In x l1 \/ In x l2.
+      In x (list_union l1 l2) <-> In x l1 \/ In x l2.
   Proof.
     induction l1; intros.
     - simpl. split; intuition idtac.
@@ -191,7 +188,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       + apply or_assoc. right. eapply IHl1. assumption.
       + destruct H as [ [ H | H ] | H ].
         * subst. eapply find_some in E0. destruct E0.
-          destr (eeq x e); try discriminate. assumption.
+          destr (eqb x e); try discriminate. assumption.
         * eapply IHl1. left. assumption.
         * eapply IHl1. right. assumption.
       + apply or_assoc. destruct H; [left|right]; auto. eapply IHl1. assumption.
@@ -199,7 +196,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma of_list_list_union: forall (l1 l2: list E),
-      of_list (list_union eeq l1 l2) = union (of_list l1) (of_list l2).
+      of_list (list_union l1 l2) = union (of_list l1) (of_list l2).
   Proof.
     intros.
     extensionality e. apply propositional_extensionality.
@@ -209,35 +206,35 @@ Section ListSetProofs. Local Set Default Proof Using "All".
 
   (* Note: l1 can have duplicates, because it's going to be inserted into l2 one by one *)
   Lemma list_union_preserves_NoDup: forall (l1 l2: list E),
-      NoDup l2 -> NoDup (list_union eeq l1 l2).
+      NoDup l2 -> NoDup (list_union l1 l2).
   Proof.
     induction l1; intros.
     - simpl. assumption.
     - simpl.
-      destr (find (eeq a) (list_union eeq l1 l2)).
+      destr (find (eqb a) (list_union l1 l2)).
       + eauto.
       + constructor. 2: eauto.
         intro C.
         eapply find_none in E0. 2: exact C.
-        destr (eeq a a); [discriminate|contradiction].
+        destr (eqb a a); [discriminate|contradiction].
   Qed.
 
   Lemma In_list_union_l: forall (l1 l2: list E) (x: E),
       In x l1 ->
-      In x (list_union eeq l1 l2).
+      In x (list_union l1 l2).
   Proof. intros. eapply In_list_union_spec. left. assumption. Qed.
 
   Lemma In_list_union_r: forall (l1 l2: list E) (x: E),
       In x l2 ->
-      In x (list_union eeq l1 l2).
+      In x (list_union l1 l2).
   Proof. intros. eapply In_list_union_spec. right. assumption. Qed.
 
   Lemma In_list_union_invert: forall (l1 l2 : list E) (x: E),
-      In x (list_union eeq l1 l2) -> In x l1 \/ In x l2.
+      In x (list_union l1 l2) -> In x l1 \/ In x l2.
   Proof. intros. eapply In_list_union_spec. assumption. Qed.
 
   Lemma In_list_diff_weaken: forall (x: E) (l1 l2: list E),
-      In x (list_diff eeq l1 l2) ->
+      In x (list_diff l1 l2) ->
       In x l1.
   Proof.
     intros. generalize dependent l1. induction l2; simpl; intros.
@@ -246,14 +243,14 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma list_diff_empty_l: forall (l: list E),
-      list_diff eeq [] l = [].
+      list_diff [] l = [].
   Proof.
     induction l; simpl; intros; auto.
   Qed.
 
   Lemma list_diff_NoDup: forall (l1 l2: list E),
       NoDup l1 ->
-      NoDup (list_diff eeq l1 l2).
+      NoDup (list_diff l1 l2).
   Proof.
     intros. generalize dependent l1. induction l2; simpl; intros.
     - assumption.
@@ -261,27 +258,27 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma list_diff_cons: forall (l1 l2: list E) (x: E),
-      list_diff eeq (x :: l1) l2 = if List.find (eeq x) l2
-                                   then list_diff eeq l1 l2
-                                   else x :: list_diff eeq l1 l2.
+      list_diff (x :: l1) l2 = if List.find (eqb x) l2
+                                   then list_diff l1 l2
+                                   else x :: list_diff l1 l2.
   Proof.
     intros. generalize dependent l1.
     induction l2; simpl; intros.
     - reflexivity.
-    - destr (eeq a x).
-      + subst. simpl. destr (eeq x x). 2: contradiction. reflexivity.
-      + simpl. destr (eeq x a). 1: congruence. apply IHl2.
+    - destr (eqb a x).
+      + subst. simpl. destr (eqb x x). 2: contradiction. reflexivity.
+      + simpl. destr (eqb x a). 1: congruence. apply IHl2.
   Qed.
 
   Lemma In_list_diff: forall (l1 l2: list E) (x: E),
       In x l1 ->
       ~ In x l2 ->
-      In x (list_diff eeq l1 l2).
+      In x (list_diff l1 l2).
   Proof.
     induction l1; simpl; intros.
     - contradiction.
-    - rewrite list_diff_cons. destr (find (eeq a) l2).
-      + eapply find_some in E0. destruct E0. destr (eeq a e). 2: congruence. subst.
+    - rewrite list_diff_cons. destr (find (eqb a) l2).
+      + eapply find_some in E0. destruct E0. destr (eqb a e). 2: congruence. subst.
         destruct H.
         * subst. contradiction.
         * eauto.
@@ -291,23 +288,23 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma invert_In_list_diff: forall (l1 l2: list E) (x: E),
-      In x (list_diff eeq l1 l2) ->
+      In x (list_diff l1 l2) ->
       In x l1 /\ ~ In x l2.
   Proof.
     induction l1; simpl; intros.
     - rewrite list_diff_empty_l in H. inversion H.
-    - rewrite list_diff_cons in H. destr (find (eeq a) l2).
-      + eapply find_some in E0. destruct E0. destr (eeq a e). 2: congruence. subst.
+    - rewrite list_diff_cons in H. destr (find (eqb a) l2).
+      + eapply find_some in E0. destruct E0. destr (eqb a e). 2: congruence. subst.
         specialize IHl1 with (1 := H). destruct IHl1. auto.
       + simpl in *. destruct H.
         * subst. split; [auto|]. intro C. eapply find_none in E0. 2: eassumption.
-          destr (eeq x x); congruence.
+          destr (eqb x x); congruence.
         * specialize IHl1 with (1 := H). destruct IHl1. auto.
   Qed.
 
   Lemma In_list_diff_spec:
     forall (l1 l2: list E) (x: E),
-      In x (list_diff eeq l1 l2) <-> In x l1 /\ (~ In x l2).
+      In x (list_diff l1 l2) <-> In x l1 /\ (~ In x l2).
   Proof.
     intros. split.
     - eapply invert_In_list_diff.
@@ -315,7 +312,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma of_list_list_diff: forall (l1 l2: list E),
-      of_list (list_diff eeq l1 l2) = diff (of_list l1) (of_list l2).
+      of_list (list_diff l1 l2) = diff (of_list l1) (of_list l2).
   Proof.
     intros.
     extensionality e. apply propositional_extensionality.
@@ -324,19 +321,19 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma list_diff_length: forall (l1 l2: list E),
-      length (list_diff eeq l1 l2) <= length l1.
+      length (list_diff l1 l2) <= length l1.
   Proof.
     intros. induction l1.
     - cbn. rewrite list_diff_empty_l. auto.
     - cbn. rewrite list_diff_cons.
-      destruct (find (eeq a) l2) eqn:F.
+      destruct (find (eqb a) l2) eqn:F.
       + auto.
       + cbn. blia.
   Qed.
 
   Lemma subset_of_list_diff:
     forall  l' (l: list E),
-      PropSet.subset (PropSet.of_list (list_diff eeq l l'))
+      PropSet.subset (PropSet.of_list (list_diff l l'))
         (PropSet.of_list l).
   Proof.
     intros.
@@ -349,24 +346,24 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Qed.
 
   Lemma removeb_list_diff_comm: forall l r rs,
-      List.removeb eeq r (list_diff eeq l rs) =
-      list_diff eeq (List.removeb eeq r l) rs.
+      List.removeb r (list_diff l rs) =
+      list_diff (List.removeb r l) rs.
   Proof.
     induction l; intros.
     - simpl. rewrite list_diff_empty_l. reflexivity.
     - simpl. rewrite list_diff_cons.
-      destr (eeq r a); simpl; destr (find (eeq a) rs).
+      destr (eqb r a); simpl; destr (find (eqb a) rs).
       + apply IHl.
-      + simpl. destr (eeq a a). 2: congruence. simpl. apply IHl.
+      + simpl. destr (eqb a a). 2: congruence. simpl. apply IHl.
       + rewrite list_diff_cons. rewrite E1. apply IHl.
-      + simpl. destr (negb (eeq r a)). 2: congruence. rewrite list_diff_cons.
+      + simpl. destr (negb (eqb r a)). 2: congruence. rewrite list_diff_cons.
         rewrite E1. f_equal. apply IHl.
   Qed.
 
   Lemma superset_of_list_cons:
     forall h t l,
       PropSet.subset (PropSet.of_list l) (PropSet.of_list (h :: t)) <->
-      forallb (fun x => ((eeq h x) || (existsb (eeq x) t))%bool) l = true.
+      forallb (fun x => ((eqb h x) || (existsb (eqb x) t))%bool) l = true.
   Proof.
     intros.
     unfold iff.
@@ -377,15 +374,15 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       eapply H in H0.
       eapply in_inv in H0.
       destr H0.
-      { rewrite H0 in *. destr (eeq x x).
+      { rewrite H0 in *. destr (eqb x x).
         + eapply Bool.orb_true_l.
         + exfalso. eapply E0. reflexivity.
       }
-      { assert (existsb (eeq x) t = true).
+      { assert (existsb (eqb x) t = true).
         { eapply existsb_exists.
           exists x. split.
           - assumption.
-          - destr (eeq x x); eauto.
+          - destr (eqb x x); eauto.
         }
         rewrite H1.
         eapply Bool.orb_true_r.
@@ -399,12 +396,12 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       eapply forallb_forall with (x := x) in H.
       + eapply Bool.orb_prop in H.
         destr H.
-        * destr (eeq h x).
+        * destr (eqb h x).
           -- left. unfold elem_of, singleton_set. reflexivity.
           -- inversion H.
         * right. eapply existsb_exists in H.
           do 2 destr H.
-          destr (eeq x x0).
+          destr (eqb x x0).
           -- unfold elem_of, of_list.
              assumption.
           -- inversion H1.
@@ -438,7 +435,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
     forall s1 s1' s2 s2',
       subset (of_list s1) (of_list s1')
       -> subset (of_list s2) (of_list s2')
-      -> subset (of_list (list_union eeq s1 s2)) (of_list (list_union eeq s1' s2')).
+      -> subset (of_list (list_union s1 s2)) (of_list (list_union s1' s2')).
   Proof.
     intros. repeat rewrite of_list_list_union.
     eapply subset_union_l.
@@ -450,7 +447,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
     forall s1a s1b s2,
       subset (of_list s1a) (of_list s2) ->
       subset (of_list s1b) (of_list s2) ->
-      subset (of_list (list_union eeq s1a s1b)) (of_list s2).
+      subset (of_list (list_union s1a s1b)) (of_list s2).
   Proof.
     intros. rewrite of_list_list_union.
     eapply subset_union_l; assumption.
@@ -458,7 +455,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
 
   Lemma subset_of_list_union_inv:
     forall s1a s1b s2,
-      subset (of_list (list_union eeq s1a s1b)) (of_list s2) ->
+      subset (of_list (list_union s1a s1b)) (of_list s2) ->
       subset  (of_list s1a) (of_list s2) /\
         subset (of_list s1b) (of_list s2).
   Proof.
@@ -478,7 +475,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Lemma superset_of_list_union_l:
     forall s1 s2a s2b,
       subset (of_list s1) (of_list s2a) ->
-      subset (of_list s1) (of_list (list_union eeq s2a s2b)).
+      subset (of_list s1) (of_list (list_union s2a s2b)).
   Proof.
     intros. rewrite of_list_list_union. eapply subset_union_rl; assumption.
   Qed.
@@ -486,15 +483,15 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Lemma superset_of_list_union_r:
     forall s1 s2a s2b,
       subset (of_list s1) (of_list s2b) ->
-      subset (of_list s1) (of_list (list_union eeq s2a s2b)).
+      subset (of_list s1) (of_list (list_union s2a s2b)).
   Proof.
     intros. rewrite of_list_list_union. eapply subset_union_rr; assumption.
   Qed.
 
   Lemma superset_of_list_union_comm:
     forall s1 s2a s2b,
-      subset (of_list s1) (of_list (list_union eeq s2a s2b)) ->
-      subset (of_list s1) (of_list (list_union eeq s2b s2a)).
+      subset (of_list s1) (of_list (list_union s2a s2b)) ->
+      subset (of_list s1) (of_list (list_union s2b s2a)).
   Proof.
     intros.
     rewrite of_list_list_union in *.
@@ -506,9 +503,9 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Lemma superset_of_list_union_assoc:
     forall s1 s2a s2b s2c,
       subset (of_list s1)
-        (of_list (list_union eeq (list_union eeq s2a s2b) s2c)) ->
+        (of_list (list_union (list_union s2a s2b) s2c)) ->
       subset
-        (of_list s1) (of_list (list_union eeq s2a (list_union eeq s2b s2c))).
+        (of_list s1) (of_list (list_union s2a (list_union s2b s2c))).
   Proof.
     intros.
     repeat rewrite of_list_list_union in *.
@@ -525,7 +522,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
     unfold sameset, of_list, subset, union, diff, elem_of.
     assert (forall x, In x l2 \/ ~ (In x l2)).
     { intros. eapply ListDec.In_decidable. unfold ListDec.decidable_eq.
-      intros. destr (eeq x0 y).
+      intros. destr (eqb x0 y).
       - unfold Decidable.decidable. left. reflexivity.
       - unfold Decidable.decidable. right. eassumption.
     }

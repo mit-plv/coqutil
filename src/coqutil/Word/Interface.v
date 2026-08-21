@@ -95,3 +95,6 @@ Module word.
     opp (of_Z (Z.b2z b)).
 End word. Notation word := word.word.
 Global Coercion word.rep : word >-> Sortclass.
+
+From coqutil Require Import Eqb.
+#[export] Instance word_eqb {width} {word : word width}: Eqb word := word.eqb.

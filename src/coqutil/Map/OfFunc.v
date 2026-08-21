@@ -1,4 +1,4 @@
-Require Import coqutil.Decidable coqutil.Map.Interface coqutil.Map.MapKeys.
+Require Import coqutil.Decidable coqutil.Eqb coqutil.Map.Interface coqutil.Map.MapKeys.
 Require Import coqutil.Z.Lia.
 Require coqutil.Decidable coqutil.Map.Properties.
 Require Coq.Lists.List.
@@ -7,7 +7,7 @@ Import MapKeys.map Interface.map.
 Module map.
   Section OfFunc. Local Set Default Proof Using "All".
     Context {key value} {map : map key value} {ok : map.ok map}.
-    Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+    Context {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb}.
 
     Context (f : key -> option value).
     Fixpoint of_func (support : list key) : map :=
