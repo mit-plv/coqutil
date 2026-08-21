@@ -1,3 +1,4 @@
+Set Universe Polymorphism.
 Require Import coqutil.sanity.
 Require Import coqutil.Datatypes.HList.
 Require Import coqutil.Datatypes.List.
