@@ -10,7 +10,7 @@ Require Coq.Strings.String.
 #[global] Hint Opaque Nat.ltb : typeclass_instances.
 
 Existing Class BoolSpec.
-
+#[global] Hint Mode BoolSpec - - ! : typeclass_instances.
 (* Advantage of BoolSpec over Bool.reflect and sumbool:
    BoolSpec lives in Prop, (while the other two live in Set), so terms intended for
    computation can't accidentally match over it, so we won't have problems that
@@ -35,15 +35,8 @@ Global Instance orb_BoolSpec(Pt Pf Qt Qf: Prop)(p q: bool)
   (sp: BoolSpec Pt Pf p)(sq: BoolSpec Qt Qf q): BoolSpec (Pt \/ Qt) (Pf /\ Qf) (p || q).
 Proof. destruct sp; destruct sq; constructor; intuition auto. Qed.
 
-Lemma negb_BoolSpec(Pt Pf: Prop)(p: bool){sp: BoolSpec Pt Pf p}: BoolSpec Pf Pt (negb p).
+Global Instance negb_BoolSpec(Pt Pf: Prop)(p: bool){sp: BoolSpec Pt Pf p}: BoolSpec Pf Pt (negb p).
 Proof. destruct sp; constructor; intuition auto. Qed.
-Global Hint Extern 10 (BoolSpec ?Pf ?Pt ?p) =>
-  (* This match fails if p is an evar, no matter what `Hint Mode` we'll ever use.
-     Prevents infinite negb chains if ?p is an evar. *)
-  lazymatch p with
-  | negb ?q => refine (@negb_BoolSpec Pt Pf q _)
-  end
-: typeclass_instances.
 
 (* Fallback for the case where the outer nodes of a nested boolean condition can
    be converted, but some leaves cannot.

@@ -20,7 +20,7 @@ For troubleshooting failing calls to [ecancel]; a common approach is to run [use
 
 ** [seprewrite_in_by]
 
-Use [seprewrite_in_by] to rewrite underneath [sep] in a hypothesis. For example, if you have a lemma [foo] that states [iff1 A B] and a hypothesis [H : (C * A)%sep m], you can [seprewrite_in_by H foo] to get [H : (C * B)%sep m]. If [foo] fails to solve the side-conditions, the rewrite fails. 
+Use [seprewrite_in_by] to rewrite underneath [sep] in a hypothesis. For example, if you have a lemma [foo] that states [iff1 A B] and a hypothesis [H : (C * A)%sep m], you can [seprewrite_in_by H foo] to get [H : (C * B)%sep m]. If [foo] fails to solve the side-conditions, the rewrite fails.
 
 [seprewrite_in_by] uses ecancel for matching.
 
@@ -37,7 +37,7 @@ Using [setoid_rewrite] instead of seprewrite_in_by may work (Proper instances ar
 
 Require Import Coq.Classes.Morphisms.
 Require Coq.Lists.List.
-Require Import coqutil.sanity coqutil.Decidable coqutil.Tactics.destr.
+Require Import coqutil.sanity coqutil.Decidable coqutil.Eqb coqutil.Tactics.destr.
 Require Import coqutil.Lift1Prop.
 Require Import coqutil.Map.Interface coqutil.Map.Properties.
 Require Import coqutil.Tactics.ltac_list_ops.
@@ -70,7 +70,7 @@ Ltac impl1_syntactic_reflexivity :=
 
 Section SepProperties.
   Context {key value} {map : map key value} {ok : ok map}.
-  Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+  Context {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb}.
   Local Open Scope sep_scope.
 
   Global Instance Proper_sep_iff1 : Proper (@iff1 map ==> iff1 ==> iff1) sep. firstorder idtac. Qed.
@@ -125,12 +125,12 @@ Section SepProperties.
     - apply map_ext. intros.
       rewrite get_putmany_dec.
       rewrite get_remove_dec.
-      destr (key_eqb k k0).
+      destr (eqb k k0).
       + subst. rewrite get_put_same. assumption.
       + rewrite get_put_diff by congruence. rewrite get_empty.
         destruct (get m k0); reflexivity.
     - unfold disjoint. intros.
-      destr (key_eqb k k0).
+      destr (eqb k k0).
       + subst. rewrite get_remove_same in H1. discriminate.
       + rewrite get_put_diff in H0 by congruence. rewrite get_empty in H0. discriminate.
   Qed.
@@ -439,7 +439,7 @@ Module Tree.
 
   Section WithMap.
     Context {key value} {map : map key value} {ok : ok map}.
-    Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+    Context {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb}.
 
     Definition to_sep: Tree (map -> Prop) -> map -> Prop := interp (fun x => x) sep.
 
@@ -690,7 +690,7 @@ Ltac cancel_done :=
 
 Ltac cancel_seps :=
   lazymatch goal with
-  | |- Lift1Prop.iff1 _ _ => 
+  | |- Lift1Prop.iff1 _ _ =>
     repeat cancel_step;
     repeat cancel_emp_l;
     repeat cancel_emp_r
@@ -956,7 +956,7 @@ Ltac extract_ex1_and_emp_in_goal :=
 
 Section Tests.
   Context {key value} {map : map key value} {ok : ok map}.
-  Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+  Context {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb}.
   Local Open Scope sep_scope.
   Import List.ListNotations.
 

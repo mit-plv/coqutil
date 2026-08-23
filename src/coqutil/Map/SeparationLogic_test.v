@@ -1,4 +1,4 @@
-From coqutil Require Import SeparationLogic Decidable.
+From coqutil Require Import SeparationLogic Decidable Eqb.
 Import Map.Interface.map.
 
 Ltac assert_goal_is P := match goal with
@@ -8,7 +8,7 @@ Ltac assert_goal_is P := match goal with
 
 Section tests.
     Context {key value} {map : map key value} {ok : ok map}.
-    Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+    Context {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb}.
     Context (p q r : map -> Prop).
     Open Scope sep.
 

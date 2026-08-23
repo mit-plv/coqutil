@@ -1,4 +1,4 @@
-Require Import coqutil.Decidable.
+Require Import coqutil.Decidable coqutil.Eqb.
 Require Import coqutil.Datatypes.Option.
 Require Import coqutil.Tactics.Tactics.
 Require Import coqutil.Map.Interface.
@@ -405,9 +405,15 @@ Ltac preprocess_impl mapok stopearly :=
           end);
   lazymatch type of mapok with
   | @map.ok ?K ?V ?Inst =>
+    let Needed := constr:(Eqb K) in
+    first [ let dummy := constr:(_: Needed) in idtac
+          | fail 10000 "map_solver won't work without" Needed ];
+    let Needed := open_constr:(forall (x y: K), BoolSpec (x = y) (x <> y) (eqb x y)) in
+    first [ let dummy := constr:(_: Needed) in idtac
+          | fail 10000 "map_solver won't work without" Needed ];
     let okname := fresh "Ok" in set (okname := mapok : map.ok Inst);
     let keq_spec_name := fresh "keq_spec" in
-      set (keq_spec_name := _ : forall (x y: K), BoolSpec (x = y) (x <> y) _);
+      set (keq_spec_name := _ : forall (x y: K), BoolSpec (x = y) (x <> y) (eqb x y));
     abstract_unrecogs mapok;
     lazymatch stopearly with
     | true => idtac
@@ -430,7 +436,7 @@ Ltac preprocess_impl mapok stopearly :=
       revert_all_maps okname;
       let mname := fresh "M" in
       match type of keq_spec_name with
-      | EqDecider ?f => generalize keq_spec_name; generalize (f: K -> K -> bool)
+      | EqDecider ?f => generalize keq_spec_name; generalize (f: Eqb K)
       end;
       generalize okname;
       generalize Inst as mname;
@@ -487,6 +493,10 @@ Ltac map_solver_should_destruct mapok d :=
       first [ unify T (option K)
             | unify T (option V)
             | match d with
+              | @eqb _ ?keq _ _ =>
+                match goal with
+                | _: EqDecider keq |- _ => idtac
+                end
               | ?keq _ _ =>
                 match goal with
                 | _: EqDecider keq |- _ => idtac
@@ -619,9 +629,6 @@ Ltac map_specialize mapok := repeat map_specialize_step mapok.
 
 Ltac map_solver_core_impl mapok := lazymatch type of mapok with
 | @map.ok ?K ?V ?Inst =>
-  let Needed := open_constr:(forall (x y: K), BoolSpec (x = y) (x <> y) _) in
-  first [ let dummy := constr:(_: Needed) in idtac
-        | fail 10000 "map_solver won't work without" Needed ];
   repeat autounfold with unf_map_defs in *;
   repeat propositional_cheap_step;
   canonicalize_all mapok;

@@ -1,5 +1,6 @@
 From coqutil Require Import Tactics.case_match Datatypes.Bool Decidable Datatypes.String.
 Require Import Uint63.
+Require Import Coq.ZArith.ZArith.
 (*
   A typeclass for boolean equality
  *)
@@ -12,7 +13,6 @@ Section __.
   Definition eqb {Impl : Eqb} : A -> A -> bool := Impl.
   Existing Class Eqb.
 
-  
   (* Not defined as a record so that firstorder doesn't mess with it*)
   Definition Eqb_ok `{Eqb} := forall a b, if eqb a b then a = b else a <> b.
   Definition eqb_spec {Impl : Eqb} {Pf : @Eqb_ok Impl} : forall a b, if eqb a b then a = b else a <> b := Pf.
@@ -31,7 +31,6 @@ Section __.
       intros; subst; cbn; intuition eauto.
   Qed.
 
-  
   Lemma eqb_refl_true
     : forall a, eqb a a = true.
   Proof.
@@ -60,18 +59,26 @@ Section __.
     pose proof (eqb_spec x y).
     destruct (eqb x y); constructor; eauto.
   Qed.
-  
+
 End __.
 
 Arguments eqb {A}%_type_scope {Impl} _ _.
 Arguments Eqb_ok {A}%_type_scope H.
 Arguments eqb_spec {A}%_type_scope {Impl Pf} a b.
-   
+
 #[export] Hint Rewrite eqb_prop_iff using solve[typeclasses eauto] : bool.
 #[export] Hint Rewrite eqb_refl_true using solve[typeclasses eauto] : bool.
 
+#[global] Hint Mode Eqb ! : typeclass_instances.
 
-(* Instances for some standard library types *)
+
+(* Instances for some standard types *)
+
+(*TODO add Eqb_ok instances?  or just use EqDecider, and avoid
+further committing to having two ways of expressing the same thing?*)
+#[export] Instance N_eqb : Eqb N := N.eqb.
+#[export] Instance Byte_eqb : Eqb Byte.byte := Byte.eqb.
+#[export] Instance Z_eqb : Eqb Z := Z.eqb.
 
 #[export] Instance bool_eqb : Eqb bool := Bool.eqb.
 
@@ -122,17 +129,17 @@ Section Tests.
     intros x.
     eqb_case x 5; cbn; tauto.
   Abort.
-  
+
   Goal (forall x : nat, Is_true (eqb 5 x) -> x = 5).
   Proof.
     intros x.
     eqb_case 5 x; cbn; tauto.
   Abort.
-  
+
   Goal (forall x : nat, Is_true (eqb 5 6) -> 6 = 5).
   Proof.
     intros x.
     eqb_case 5 6; cbn; [congruence | tauto].
-  Abort.   
+  Abort.
 
 End Tests.

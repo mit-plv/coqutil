@@ -1,5 +1,5 @@
 Require Import coqutil.sanity.
-Require Import coqutil.Decidable.
+Require Import coqutil.Decidable coqutil.Eqb.
 Require Import coqutil.Tactics.destr coqutil.Tactics.Tactics.
 Require Import Coq.micromega.Lia.
 Require Import coqutil.Z.Lia.
@@ -25,6 +25,7 @@ End WithAAndB.
 
 Section WithAAndEqDecider. Local Set Default Proof Using "All".
   Context {A : Type}. (* maximally inserted to make sure aeqb_dec is inferred *)
+  Context {aeqb : Eqb A} {aeqb_dec: EqDecider aeqb}.
 
   Definition Znth z (xs : list A) (default : A) : A :=
     if BinInt.Z.ltb z BinInt.Z0 then default
@@ -35,7 +36,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
       (forall z, BinInt.Z.le BinInt.Z0 z /\ BinInt.Z.lt z (BinInt.Z.of_nat (length l)) ->
                  Znth z l d = Znth z l' d') ->
       l = l'.
-  Proof.
+  Proof using.
     intros. eapply List.nth_ext. 1: assumption.
     intros. unfold Znth in H0. specialize (H0 (BinInt.Z.of_nat n)).
     replace (BinInt.Z.ltb (BinInt.Z.of_nat n) BinNums.Z0) with false in H0. 2: Lia.lia.
@@ -57,53 +58,51 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
       end
     end.
 
-  Definition removeb(aeq: A -> A -> bool)(e: A)(l: list A): list A :=
-    filter (fun e' => negb (aeq e e')) l.
+  Definition removeb(e: A)(l: list A): list A :=
+    filter (fun e' => negb (eqb e e')) l.
 
   (* same as nodup from standard library but using BoolSpec instead of sumbool *)
-  Definition dedup(aeqb: A -> A -> bool): list A -> list A :=
+  Definition dedup : list A -> list A :=
     fix rec l :=
       match l with
       | [] => []
-      | x :: xs => if List.find (aeqb x) xs then rec xs else x :: rec xs
+      | x :: xs => if List.find (eqb x) xs then rec xs else x :: rec xs
       end.
 
-  Definition list_eqb (aeqb : A -> A -> bool) (x y : list A) : bool :=
-    ((length x =? length y)%nat && forallb (fun xy => aeqb (fst xy) (snd xy)) (combine x y))%bool.
-
-  Context {aeqb : A -> A -> bool} {aeqb_dec: EqDecider aeqb}.
+  Definition list_eqb : Eqb (list A) := fun x y =>
+    ((length x =? length y)%nat && forallb (fun xy => eqb (fst xy) (snd xy)) (combine x y))%bool.
 
   Lemma removeb_not_In:
-    forall (l : list A) (a: A), ~ In a l -> removeb aeqb a l = l.
+    forall (l : list A) (a: A), ~ In a l -> removeb a l = l.
   Proof.
     induction l; intros; simpl; try reflexivity.
-    destr (aeqb a0 a); simpl in *; subst.
+    destr (eqb a0 a); simpl in *; subst.
     + exfalso. auto.
     + f_equal. eauto.
   Qed.
 
   Lemma In_removeb_In:
-    forall (a1 a2: A) (l: list A), In a1 (removeb aeqb a2 l) -> In a1 l.
+    forall (a1 a2: A) (l: list A), In a1 (removeb a2 l) -> In a1 l.
   Proof.
     induction l; intros; simpl in *; try contradiction.
-    destr (aeqb a2 a); simpl in *; intuition idtac.
+    destr (eqb a2 a); simpl in *; intuition idtac.
   Qed.
 
   Lemma In_removeb_diff:
-    forall (a1 a2: A) (l: list A), a1 <> a2 -> In a1 l -> In a1 (removeb aeqb a2 l).
+    forall (a1 a2: A) (l: list A), a1 <> a2 -> In a1 l -> In a1 (removeb a2 l).
   Proof.
     induction l; intros; simpl in *; try contradiction.
-    destr (aeqb a2 a); simpl in *; subst; intuition congruence.
+    destr (eqb a2 a); simpl in *; subst; intuition congruence.
   Qed.
 
   Lemma In_removeb_weaken:
     forall (x y: A) (l: list A),
-      In x (removeb aeqb y l) ->
+      In x (removeb y l) ->
       In x l.
   Proof.
     induction l; simpl; intros.
     - assumption.
-    - destr (aeqb y a).
+    - destr (eqb y a).
       + subst. simpl in H. auto.
       + simpl in H. destruct H; auto.
   Qed.
@@ -111,10 +110,10 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
   Lemma NoDup_removeb:
     forall (a: A) (l: list A),
       NoDup l ->
-      NoDup (removeb aeqb a l).
+      NoDup (removeb a l).
   Proof.
     induction l; intros; simpl in *; try assumption.
-    destr (aeqb a a0); simpl in *; inversion H; auto.
+    destr (eqb a a0); simpl in *; inversion H; auto.
     constructor; auto. intro C. apply H2. eapply In_removeb_In. eassumption.
   Qed.
 
@@ -122,11 +121,11 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
     forall (s: list A) (a: A),
       In a s ->
       NoDup s ->
-      Datatypes.length (removeb aeqb a s) = pred (Datatypes.length s).
+      Datatypes.length (removeb a s) = pred (Datatypes.length s).
   Proof.
     induction s; intros.
     - simpl in H. contradiction.
-    - simpl in *. inversion H0. subst. destr (aeqb a0 a).
+    - simpl in *. inversion H0. subst. destr (eqb a0 a).
       + simpl. subst. rewrite removeb_not_In by assumption. reflexivity.
       + simpl. destruct H; [congruence|].
         rewrite IHs by assumption.
@@ -136,7 +135,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
   Qed.
 
   Lemma dedup_preserves_In(l: list A) a:
-    In a l <-> In a (dedup aeqb l).
+    In a l <-> In a (dedup l).
   Proof.
     induction l.
     - simpl. firstorder idtac.
@@ -144,22 +143,22 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
       + destruct H.
         * subst. destruct_one_match.
           { apply find_some in E. destruct E as [E1 E2].
-            destr (aeqb a a0). 2: discriminate. firstorder idtac. }
+            destr (eqb a a0). 2: discriminate. firstorder idtac. }
           { simpl. auto. }
         * destruct_one_match.
           { apply find_some in E. destruct E as [E1 E2].
-            destr (aeqb a0 a1). 2: discriminate. firstorder idtac. }
+            destr (eqb a0 a1). 2: discriminate. firstorder idtac. }
           { simpl. firstorder idtac. }
       + destruct_one_match_hyp.
         * apply find_some in E. destruct E as [E1 E2].
-          destr (aeqb a0 a1). 2: discriminate. firstorder idtac.
+          destr (eqb a0 a1). 2: discriminate. firstorder idtac.
         * simpl in H. destruct H.
           { subst. auto. }
           { firstorder idtac. }
   Qed.
 
   Lemma NoDup_dedup: forall (l: list A),
-      NoDup (dedup aeqb l).
+      NoDup (dedup l).
   Proof.
     induction l.
     - simpl. constructor.
@@ -169,7 +168,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
         intro C.
         apply dedup_preserves_In in C.
         pose proof (find_none _ _ E _ C).
-        destr (aeqb a a); congruence.
+        destr (eqb a a); congruence.
   Qed.
 
   Lemma list_forallb_eqb_refl ls :
@@ -192,7 +191,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
     rewrite IHx by congruence. reflexivity.
   Qed.
 
-  Lemma list_eqb_spec: EqDecider (list_eqb aeqb).
+  Lemma list_eqb_spec: EqDecider list_eqb.
   Proof.
     cbv [list_eqb].
     induction x as [|x0 x]; destruct y as [|y0 y];
@@ -201,7 +200,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
     destruct (IHx y); subst.
     { rewrite Nat.eqb_refl.
       rewrite list_forallb_eqb_refl by auto.
-      destr (aeqb x0 y0); subst; constructor; congruence. }
+      destr (eqb x0 y0); subst; constructor; congruence. }
     { destr (length x =? length y); cbn [andb];
       try (constructor; congruence); [ ].
       rewrite length_eq_forallb_eqb_false by auto.
@@ -212,14 +211,14 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
     forall (l: list A) (f1 f2: A),
       In f1 l ->
       f1 <> f2 ->
-      In f1 (removeb aeqb f2 l).
+      In f1 (removeb f2 l).
   Proof.
     induction l; intros.
     - inversion H.
     - simpl in *. destruct H.
       + subst a.
-        destr (aeqb f2 f1); try congruence. simpl. auto.
-      + destr (aeqb f2 a); simpl.
+        destr (eqb f2 f1); try congruence. simpl. auto.
+      + destr (eqb f2 a); simpl.
         * eauto.
         * simpl. eauto.
   Qed.
@@ -286,6 +285,7 @@ Section WithAAndEqDecider. Local Set Default Proof Using "All".
         eapply Bool.orb_true_r.
   Qed.
 End WithAAndEqDecider.
+#[global] Existing Instance list_eqb.
 Global Hint Resolve list_eqb_spec : typeclass_instances.
 
 Section Lexicographic.

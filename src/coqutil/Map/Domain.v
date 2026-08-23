@@ -1,6 +1,6 @@
 Require Import Coq.Logic.FunctionalExtensionality Coq.Logic.PropExtensionality.
-Require Import coqutil.Tactics.destr coqutil.Decidable.
-Require Import  coqutil.Map.Interface coqutil.Map.Properties.
+Require Import coqutil.Tactics.destr coqutil.Decidable coqutil.Eqb.
+Require Import coqutil.Map.Interface coqutil.Map.Properties.
 
 Module map.
   Section WithMap.
@@ -9,7 +9,7 @@ Module map.
     Definition domain(m: map): PropSet.set key := fun k => map.get m k <> None.
 
     Context {ok: map.ok map}.
-    Context {key_eqb: key -> key -> bool} {key_eq_dec: EqDecider key_eqb}.
+    Context {key_eqb: Eqb key} {key_eq_dec: EqDecider key_eqb}.
 
     Lemma domain_is_of_list_keys: forall m,
         domain m = PropSet.of_list (map.keys m).

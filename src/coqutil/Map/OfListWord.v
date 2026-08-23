@@ -155,7 +155,7 @@ Module map.
       rewrite of_list_word_at_app, of_list_word_singleton; cbn.
       rewrite map.putmany_comm; cycle 1.
       { intros k ? ?; rewrite map.get_put_dec.
-        destruct (@word.eqb _ _ _ _) eqn:Hbr;
+        destruct (@Eqb.eqb _ _ _ _) eqn:Hbr;
           autoforward with typeclass_instances in Hbr;
           rewrite ?map.get_empty, get_of_list_word_at; inversion 1; subst.
         intro HX.
