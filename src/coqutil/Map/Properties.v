@@ -2459,3 +2459,17 @@ End map.
 #[global] Hint Opaque map.map_eqb : typeclass_instances.
 #[export] Existing Instance map.map_eqb.
 #[export] Existing Instance map.eqb_spec.
+
+Goal forall {M : map.map nat nat} {Mok : map.ok M}, EqDecider (map.map_eqb (map := M)).
+Proof.
+  Succeed solve [eauto with typeclass_instances].
+  Fail typeclasses eauto.
+  (*This fails because we rely on inference of (key_eqb : Eqb key) for the proof, but key_eqb is not used in the definition of map_eqb.
+  Inference of (value_eqb : Eqb value) works just fine, since it is used in the definition of map_eqb. *)
+  (*Ideally, typeclasses eauto should be better, and this should not fail.
+    COQBUG: https://github.com/rocq-prover/rocq/issues/14707
+   *)
+
+  #[local] Hint Mode BoolSpec - - - : typeclass_instances.
+  Succeed typeclasses eauto.
+Abort.
