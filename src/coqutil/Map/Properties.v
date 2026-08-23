@@ -2460,16 +2460,27 @@ End map.
 #[export] Existing Instance map.map_eqb.
 #[export] Existing Instance map.eqb_spec.
 
-Goal forall {M : map.map nat nat} {Mok : map.ok M}, EqDecider (map.map_eqb (map := M)).
-Proof.
-  Succeed solve [eauto with typeclass_instances].
-  Fail typeclasses eauto.
-  (*This fails because we rely on inference of (key_eqb : Eqb key) for the proof, but key_eqb is not used in the definition of map_eqb.
+Module map_eqb_test.
+  Goal forall {M : map.map nat nat} {Mok : map.ok M}, EqDecider (map.map_eqb (map := M)).
+  Proof.
+    Succeed solve [eauto with typeclass_instances].
+    Fail typeclasses eauto.
+    (*This fails because we rely on inference of (key_eqb : Eqb key) for the proof, but key_eqb is not used in the definition of map_eqb.
   Inference of (value_eqb : Eqb value) works just fine, since it is used in the definition of map_eqb. *)
-  (*Ideally, typeclasses eauto should be better, and this should not fail.
+    (*Ideally, typeclasses eauto should be better, and this should not fail.
     COQBUG: https://github.com/rocq-prover/rocq/issues/14707
-   *)
+     *)
 
-  #[local] Hint Mode BoolSpec - - - : typeclass_instances.
-  Succeed typeclasses eauto.
-Abort.
+    #[local] Hint Mode BoolSpec - - - : typeclass_instances.
+    Succeed typeclasses eauto.
+  Abort.
+End map_eqb_test.
+
+(*a hacky fix*)
+#[export] Hint Extern 1 (BoolSpec _ _ (map.map_eqb _ _)) => eapply map.eqb_spec : typeclass_instances.
+#[export] Hint Extern 1 (BoolSpec _ _ (@eqb _ map.map_eqb _ _)) => eapply map.eqb_spec : typeclass_instances.
+
+Goal forall {M : map.map nat nat} {Mok : map.ok M}, EqDecider (map.map_eqb (map := M)).
+Proof. typeclasses eauto. Abort.
+Goal forall {M : map.map nat nat} {Mok : map.ok M}, EqDecider (@eqb _ (map.map_eqb (map := M))).
+Proof. typeclasses eauto. Abort.
