@@ -1,4 +1,5 @@
-COQC ?= coqc
+COQC ?= "$(COQBIN)rocq" compile
+COQDEP ?= "$(COQBIN)rocq" dep
 VOFILES := $(patsubst %.v, $(O)/%.vo, $(VFILES))
 VOSFILES := $(patsubst %.v, $(O)/%.vos, $(VFILES))
 VOKFILES := $(patsubst %.v, $(O)/%.vok, $(VFILES))
@@ -25,7 +26,7 @@ COQDEPMK := $(O)/.coqdep.mk
 include $(COQDEPMK)
 $(COQDEPMK): $(VFILES) $(filter-out $(COQDEPMK),$(MAKEFILE_LIST)) | $(O)
 	+$(file >$@.in) $(foreach v,$(VFILES),$(file >>$@.in,$v))
-	+xargs -a $@.in coqdep -vos -dyndep opt $(COQDEPFLAGS) | \
+	+xargs -a $@.in $(COQDEP) -vos -dyndep opt $(COQDEPFLAGS) | \
 		/bin/sed -e 's#[^ :]*\.\(vo\|vok\|vos\|glob\|v\.beautified\|required_vo\)\b#$(O)/&#g' > $@
 	+@rm $@.in
 

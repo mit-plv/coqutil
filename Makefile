@@ -5,7 +5,7 @@
 SRC_DIR := src
 TEST_DIR := test
 
-COQC ?= "$(COQBIN)coqc"
+COQC ?= "$(COQBIN)rocq" compile
 
 SRC_VS := $(shell find $(SRC_DIR) -type f -name '*.v')
 TEST_VS := $(shell find $(TEST_DIR) -type f -name '*.v')
@@ -13,7 +13,7 @@ TEST_VS := $(shell find $(TEST_DIR) -type f -name '*.v')
 # We auto-update _CoqProject and _CoqProject.notest,
 # but only change their timestamp if the set of files that they list changed
 
-WARNINGS := -deprecated-since-9.0,-deprecated-since-8.20,-deprecated-from-Coq
+WARNINGS := -deprecated-since-9.2,-deprecated-since-9.1,-deprecated-since-9.0,-deprecated-from-Coq
 PRINT_COQPROJECT_ARGS := echo '-arg -w -arg $(WARNINGS)'; printf -- '-Q %s/coqutil/ coqutil\n' '$(SRC_DIR)'
 PRINT_SRC_VS := printf -- '%s\n' $(sort $(SRC_VS))
 PRINT_TEST_VS := printf -- '%s\n' $(sort $(TEST_VS))
@@ -44,7 +44,7 @@ notest: Makefile.coq.notest $(SRC_VS)
 test: Makefile.coq.test $(SRC_VS) $(TEST_VS)
 	$(MAKE) -f Makefile.coq.test
 
-COQ_MAKEFILE := $(COQBIN)coq_makefile -docroot coqutil $(COQMF_ARGS)
+COQ_MAKEFILE := "$(COQBIN)rocq" makefile -docroot coqutil $(COQMF_ARGS)
 
 Makefile.coq.notest: _CoqProject.notest
 	$(COQ_MAKEFILE) -f _CoqProject.notest -o Makefile.coq.notest
