@@ -15,7 +15,7 @@ and verification of proofs using the Coq proof assistant.
 depends: [
   "ocaml" {build & >= "4.14.0"}
   "rocq-core" {>= "9.0~"}
-  "rocq-stdlib" {>= "9.0~"}
+  "rocq-stdlib" {>= "9.1~"}
 ]
 build: [
   ["%{make}%" "all" "-j%{jobs}%"]
