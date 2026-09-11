@@ -1,28 +1,14 @@
 Require Import Coq.ZArith.BinIntDef Coq.ZArith.BinInt coqutil.Z.Lia.
+From Stdlib Require Import Zmod.
 Require Import coqutil.Tactics.destr.
 Require Import coqutil.sanity coqutil.Word.Interface. Import word.
 Local Open Scope Z_scope.
 
-(* TODO: move me? *)
-Definition minimize_eq_proof{A: Type}(eq_dec: forall (x y: A), {x = y} + {x <> y}){x y: A}    (pf: x = y): x = y :=
-  match eq_dec x y with
-  | left p => p
-  | right n => match n pf: False with end
-  end.
-
 Section WithWidth. Local Set Default Proof Using "All".
   Context {width : Z}.
-  Let wrap_value z := z mod (2^width).
-  Let swrap_value z := wrap_value (z + 2 ^ (width - 1)) - 2 ^ (width - 1).
-  Record rep : Set := mk { unsigned : Z ; _unsigned_in_range : wrap_value unsigned = unsigned }.
-
-  Definition wrap (z:Z) : rep :=
-    mk (wrap_value z) (minimize_eq_proof Z.eq_dec (Zdiv.Zmod_mod z _)).
-  Definition signed w := swrap_value (unsigned w).
+  Definition rep : Set := bits width.
 
   Record special_cases : Set := {
-    div_by_zero: Z -> Z;
-    mod_by_zero: Z -> Z;
     adjust_too_big_shift_amount: Z -> Z;
   }.
 
@@ -46,85 +32,111 @@ Section WithWidth. Local Set Default Proof Using "All".
      and no universe inconsistencies occur, hopefully. *)
   Definition gen_word : word.word width := {|
     word.rep := rep;
-    word.unsigned := unsigned;
-    word.signed := signed;
-    of_Z := wrap;
+    word.unsigned := Zmod.unsigned;
+    word.signed := Zmod.signed;
+    of_Z := Zmod.of_Z (2^width);
 
-    add x y := wrap (Z.add (unsigned x) (unsigned y));
-    sub x y := wrap (Z.sub (unsigned x) (unsigned y));
-    opp x := wrap (Z.opp (unsigned x));
+    add := Zmod.add;
+    sub := Zmod.sub;
+    opp := Zmod.opp;
 
-    or x y := wrap (Z.lor (unsigned x) (unsigned y));
-    and x y := wrap (Z.land (unsigned x) (unsigned y));
-    xor x y := wrap (Z.lxor (unsigned x) (unsigned y));
-    not x := wrap (Z.lnot (unsigned x));
-    ndn x y := wrap (Z.ldiff (unsigned x) (unsigned y));
+    or := Zmod.or;
+    and := Zmod.and;
+    xor := Zmod.xor;
+    not := Zmod.not;
+    ndn := Zmod.ndn;
 
-    mul x y := wrap (Z.mul (unsigned x) (unsigned y));
-    mulhss x y := wrap (Z.mul (signed x) (signed y) / 2^width);
-    mulhsu x y := wrap (Z.mul (signed x) (unsigned y) / 2^width);
-    mulhuu x y := wrap (Z.mul (unsigned x) (unsigned y) / 2^width);
+    mul := Zmod.mul;
+    mulhss x y := Zmod.of_Z (2^width) (Z.mul (Zmod.signed x) (Zmod.signed y) / 2^width);
+    mulhsu x y := Zmod.of_Z (2^width) (Z.mul (Zmod.signed x) (Zmod.unsigned y) / 2^width);
+    mulhuu x y := Zmod.of_Z (2^width) (Z.mul (Zmod.unsigned x) (Zmod.unsigned y) / 2^width);
 
-    divu x y := wrap (if Z.eqb (unsigned y) 0 then sp.(div_by_zero) (unsigned x)
-                      else Z.div (unsigned x) (unsigned y));
-    divs x y := wrap (if Z.eqb (signed y) 0 then sp.(div_by_zero) (signed x)
-                      else Z.quot (signed x) (signed y));
-    modu x y := wrap (if Z.eqb (unsigned y) 0 then sp.(mod_by_zero) (unsigned x)
-                      else Z.modulo (unsigned x) (unsigned y));
-    mods x y := wrap (if Z.eqb (signed y) 0 then sp.(mod_by_zero) (signed x)
-                      else Z.rem (signed x) (signed y));
+    divu := Zmod.udiv;
+    divs := Zmod.squot;
+    modu := Zmod.umod;
+    mods := Zmod.srem;
 
-    slu x y := wrap (Z.shiftl (unsigned x) (adjust_shift_amount (unsigned y)));
-    sru x y := wrap (Z.shiftr (unsigned x) (adjust_shift_amount (unsigned y)));
-    srs x y := wrap (Z.shiftr (signed x) (adjust_shift_amount (unsigned y)));
+    slu x y := Zmod.slu x (adjust_shift_amount (Zmod.unsigned y));
+    sru x y := Zmod.sru x (adjust_shift_amount (Zmod.unsigned y));
+    srs x y := Zmod.srs x (adjust_shift_amount (Zmod.unsigned y));
 
-    eqb x y := Z.eqb (unsigned x) (unsigned y);
-    ltu x y := Z.ltb (unsigned x) (unsigned y);
-    lts x y := Z.ltb (signed x) (signed y);
+    eqb := Zmod.eqb;
+    ltu x y := Z.ltb (Zmod.unsigned x) (Zmod.unsigned y);
+    lts x y := Z.ltb (Zmod.signed x) (Zmod.signed y);
 
-    sextend oldwidth z := wrap ((unsigned z + 2^(oldwidth-1)) mod 2^oldwidth - 2^(oldwidth-1));
+    sextend oldwidth z := Zmod.of_Z (2^width) ((Zmod.unsigned z + 2^(oldwidth-1)) mod 2^oldwidth - 2^(oldwidth-1));
   |}.
 
-  Lemma eq_unsigned {x y : rep} : unsigned x = unsigned y -> x = y.
+  (* bridge between stdlib's signed representative and coqutil's swrap *)
+  Lemma smod_swrap z : Z.smodulo z (2 ^ width) = (z + 2 ^ (width - 1)) mod 2 ^ width - 2 ^ (width - 1).
   Proof.
-    cbv [value]; destruct x as [x px], y as [y py]; cbn.
-    intro; subst y.
-    apply f_equal, Eqdep_dec.UIP_dec. eapply Z.eq_dec.
-  Qed.
-
-  Lemma of_Z_unsigned x : wrap (unsigned x) = x.
-  Proof. eapply eq_unsigned; destruct x; cbn; assumption.  Qed.
-
-  Lemma signed_of_Z z : signed (wrap z) = wrap_value (z + 2 ^ (width - 1)) - 2 ^ (width - 1).
-  Proof.
-    cbv [unsigned signed wrap wrap_value swrap_value].
-    rewrite Zdiv.Zplus_mod_idemp_l; auto.
+    cbv [Z.smodulo Z.omodulo].
+    rewrite Z.sub_opp_r, Z.add_opp_r.
+    destruct (Z.ltb_spec width 0).
+    { rewrite !Z.pow_neg_r by blia. reflexivity. }
+    destruct (Z.eqb_spec width 0) as [->|].
+    { reflexivity. }
+    rewrite (Z.pow_sub_r 2 width 1) by blia.
+    rewrite Z.quot_div_nonneg by blia.
+    reflexivity.
   Qed.
 
   Context (width_nonneg : Z.lt 0 width).
 
   #[local] Instance gen_ok : word.ok gen_word.
   Proof.
-    split; intros;
-      repeat match goal with
-             | a: @word.rep _ _ |- _ => destruct a
-             end;
-      cbn in *;
-      unfold adjust_shift_amount in *;
-      repeat match goal with
-             | |- context[if ?b then _ else _] => destr b
-             end;
-      eauto using of_Z_unsigned, signed_of_Z;
-      try (exfalso; blia).
-    apply eq_unsigned; assumption.
+    split;
+      cbv [gen_word adjust_shift_amount
+           word.unsigned word.signed word.of_Z word.swrap
+           word.add word.sub word.opp word.or word.and word.xor word.not word.ndn
+           word.mul word.mulhss word.mulhsu word.mulhuu
+           word.divu word.divs word.modu word.mods word.slu word.sru word.srs
+           word.eqb word.ltu word.lts];
+      intros.
+    - exact width_nonneg.
+    - apply Zmod.unsigned_of_Z.
+    - rewrite Zmod.signed_of_Z. apply smod_swrap.
+    - apply Zmod.of_Z_unsigned.
+    - apply Zmod.unsigned_add.
+    - apply Zmod.unsigned_sub.
+    - apply Zmod.unsigned_opp.
+    - apply Zmod.unsigned_of_Z.
+    - apply Zmod.unsigned_of_Z.
+    - apply Zmod.unsigned_of_Z.
+    - apply Zmod.unsigned_of_Z.
+    - apply Zmod.unsigned_of_Z.
+    - apply Zmod.unsigned_of_Z.
+    - rewrite Zmod.signed_of_Z. apply smod_swrap.
+    - rewrite Zmod.signed_of_Z. apply smod_swrap.
+    - apply Zmod.unsigned_of_Z.
+    - apply Zmod.unsigned_udiv; assumption.
+    - rewrite Zmod.signed_squot, smod_swrap.
+      destruct (Z.eqb_spec (Zmod.signed y) 0); [contradiction | reflexivity].
+    - rewrite Zmod.unsigned_umod. symmetry. apply Z.mod_small.
+      pose proof Zmod.unsigned_pos_bound x ltac:(blia).
+      pose proof Zmod.unsigned_pos_bound y ltac:(blia).
+      pose proof Z.mod_pos_bound (Zmod.unsigned x) (Zmod.unsigned y) ltac:(blia).
+      blia.
+    - rewrite Zmod.signed_srem. apply smod_swrap.
+    - destruct (Z.ltb_spec (Zmod.unsigned y) width); [|exfalso; blia].
+      apply Zmod.unsigned_slu.
+    - destruct (Z.ltb_spec (Zmod.unsigned y) width); [|exfalso; blia].
+      pose proof Zmod.unsigned_pos_bound y ltac:(blia).
+      rewrite <-Zmod.unsigned_sru by blia.
+      symmetry. apply Zmod.mod_unsigned.
+    - destruct (Z.ltb_spec (Zmod.unsigned y) width); [|exfalso; blia].
+      pose proof Zmod.unsigned_pos_bound y ltac:(blia).
+      rewrite <-smod_swrap, <-Zmod.signed_srs by blia.
+      symmetry. apply Zmod.smod_signed.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
   Qed.
 End WithWidth.
 Arguments gen_word : clear implicits.
 Arguments gen_ok : clear implicits.
 
 Definition default_special_case_handlers width := {|
-  div_by_zero x := -1;
-  mod_by_zero x := x;
   adjust_too_big_shift_amount n := n mod 2 ^ Z.log2 width;
 |}.
 
