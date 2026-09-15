@@ -5,7 +5,8 @@ Require Import coqutil.Decidable.
 Require Import coqutil.Datatypes.PrimitivePair coqutil.Datatypes.HList coqutil.Datatypes.List.
 Require Import coqutil.Map.Interface coqutil.Map.Properties.
 Require Import coqutil.Tactics.Tactics coqutil.Datatypes.Option.
-Require Import BinIntDef coqutil.Word.Interface coqutil.Word.LittleEndianList.
+From Stdlib Require Import Zmod Zmod.Bits.
+Require Import BinIntDef coqutil.Word.LittleEndianList.
 Require Import coqutil.Byte.
 Require Import coqutil.Map.OfListWord.
 
@@ -16,10 +17,12 @@ Open Scope Z_scope.
 Definition bytes_per_word(width: Z): Z := (width + 7) / 8.
 
 Section Memory.
-  Context {width: Z} {word: word width} {mem: map.map word byte}.
+  Context {width: Z}.
+  Local Notation word := (bits width).
+  Context {mem: map.map word byte}.
 
   Definition footprint (a : word) (n : nat) : list word :=
-    List.map (fun i => word.add a (word.of_Z (Z.of_nat i))) (List.seq 0 n).
+    List.map (fun i => Zmod.add a (bits.of_Z width (Z.of_nat i))) (List.seq 0 n).
 
   Definition load_bytes (m : mem) (a : word) (n : nat) : option (list byte) :=
     option_all (List.map (map.get m) (footprint a n)).
@@ -48,7 +51,7 @@ Section Memory.
   Proof. cbv [footprint]. rewrite List.map_length, List.seq_length; trivial. Qed.
 
   Lemma nth_error_footprint_inbounds a n i (H : lt i n)
-    : (footprint a n)[i] = Some (word.add a (word.of_Z (Z.of_nat i))).
+    : (footprint a n)[i] = Some (Zmod.add a (bits.of_Z width (Z.of_nat i))).
   Proof.
     cbv [footprint].
     erewrite List.map_nth_error; trivial.
@@ -66,7 +69,7 @@ Section Memory.
   Qed.
 
   Lemma nth_error_load_bytes m a n bs (H : load_bytes m a n = Some bs) i (Hi : lt i n)
-    : List.nth_error bs i = map.get m (word.add a (word.of_Z (Z.of_nat i))).
+    : List.nth_error bs i = map.get m (Zmod.add a (bits.of_Z width (Z.of_nat i))).
   Proof.
     cbv [load_bytes] in *.
     epose proof @nth_error_option_all _ _ _ _ H as Hii.
@@ -77,7 +80,7 @@ Section Memory.
   Qed.
 
   Lemma load_bytes_None m a n (H : load_bytes m a n = None)
-    : exists i, lt i n /\ map.get m (word.add a (word.of_Z (Z.of_nat i))) = None.
+    : exists i, lt i n /\ map.get m (Zmod.add a (bits.of_Z width (Z.of_nat i))) = None.
   Proof.
     eapply option_all_None in H; case H as (i&Hi); exists i.
     eapply nth_error_map_Some in Hi; case Hi as (x&Hfx&Hmx).
@@ -88,7 +91,7 @@ Section Memory.
   Qed.
 
   Lemma load_bytes_all m a n
-    (H : forall i, lt i n -> exists b, map.get m (word.add a (word.of_Z (Z.of_nat i))) = Some b)
+    (H : forall i, lt i n -> exists b, map.get m (Zmod.add a (bits.of_Z width (Z.of_nat i))) = Some b)
     : exists bs, load_bytes m a n = Some bs.
   Proof.
     destruct (load_bytes m a n) eqn:HX; eauto.
@@ -97,22 +100,22 @@ Section Memory.
   Qed.
 
   Import Word.Properties.
-  Context {mem_ok: map.ok mem} {word_ok: word.ok word}.
+  Context {mem_ok: map.ok mem} (Hw : 0 < width).
   Local Infix "$+" := map.putmany (at level 60).
 
   Lemma load_bytes_bytes_at bs a n (Hn : length bs = n) (Hl : Z.of_nat n <= 2^width)
     : load_bytes (bs$@a) a n = Some bs.
   Proof.
     edestruct load_bytes_all with (m:=bs$@a) (n:=n) (a:=a); intros.
-    { rewrite map.get_of_list_word_at.
-      rewrite word.word_sub_add_l_same_l, word.unsigned_of_Z_nowrap, Nat2Z.id by lia.
+    { rewrite (map.get_of_list_word_at Hw).
+      rewrite word.word_sub_add_l_same_l, bits.unsigned_of_Z_small, Nat2Z.id by lia.
       edestruct nth_error eqn:N; eauto; apply nth_error_None in N; lia. }
     epose proof length_load_bytes _ _ _ _ H; subst n.
     rewrite H; f_equal; apply nth_error_ext_samelength; trivial.
     intros i Hi.
     eapply nth_error_load_bytes in H. 2: {  rewrite <-H0; eassumption. }
-    erewrite map.get_of_list_word_at in H; rewrite H; clear H.
-    rewrite word.word_sub_add_l_same_l, word.unsigned_of_Z_nowrap, Nat2Z.id; trivial.
+    erewrite (map.get_of_list_word_at Hw) in H; rewrite H; clear H.
+    rewrite word.word_sub_add_l_same_l, bits.unsigned_of_Z_small, Nat2Z.id; trivial.
     lia.
   Qed.
 
@@ -133,11 +136,10 @@ Section Memory.
     cbv [load_bytes]; erewrite map_ext_in; [reflexivity|].
     intros k [i [? ?%in_seq]]%in_map_iff; subst k n.
     rewrite map.get_putmany_dec; destruct map.get eqn:N; trivial; []; exfalso.
-    rewrite map.get_of_list_word_at in N; eapply nth_error_None in N.
-    rewrite word.word_sub_add_l_same_l, word.unsigned_of_Z in N; cbv [word.wrap] in *.
+    rewrite (map.get_of_list_word_at Hw) in N; eapply nth_error_None in N.
+    rewrite word.word_sub_add_l_same_l, Zmod.unsigned_of_Z in N.
     assert (Z.of_nat i < Z.of_nat i mod 2 ^ width) by lia.
-    pose proof word.width_pos.
-    pose proof Z.mod_le (Z.of_nat i) (2^width) ltac:(lia) ltac:(lia).
+    pose proof Z.mod_le (Z.of_nat i) (2^width) ltac:(lia) ltac:(apply Z.pow_pos_nonneg; lia).
     lia.
   Qed.
 
@@ -151,14 +153,14 @@ Section Memory.
     m = map.remove_many m (map.keys (bs$@a)) $+ bs$@a.
   Proof.
     apply map.map_ext; intros k.
-    rewrite ?map.get_putmany_dec, ?map.get_of_list_word_at.
+    rewrite ?map.get_putmany_dec, ?(map.get_of_list_word_at Hw).
     destruct nth_error eqn:E.
     { rewrite <-E; apply nth_error_Some_bound_index in E.
       erewrite nth_error_load_bytes; try eassumption; f_equal; cycle 1.
       { erewrite length_load_bytes  in *; eauto. }
-      rewrite Z2Nat.id, word.of_Z_unsigned, word.add_sub_r_same_r by apply word.unsigned_range; trivial. }
+      rewrite Z2Nat.id, Zmod.of_Z_unsigned, word.add_sub_r_same_r by apply bits.unsigned_range, Z.lt_le_incl, Hw; trivial. }
     rewrite map.get_remove_many_notin; trivial.
-    intros N%map.in_keys_inv; rewrite map.get_of_list_word_at in N; contradiction.
+    intros N%map.in_keys_inv; rewrite (map.get_of_list_word_at Hw) in N; contradiction.
   Qed.
 
   Lemma load_Z_bound m a n z : load_Z m a n = Some z -> 0 <= z < 2^(8*Z.of_nat n).
