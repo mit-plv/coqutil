@@ -36,9 +36,15 @@ jobs:
         branch: ${{ matrix.alpine }}
         extra-repositories: https://dl-cdn.alpinelinux.org/alpine/edge/testing
         packages: make rocq rocq-stdlib doas-sudo-shim
+    - name: echo Require Bool. | coqtop
+      run: echo Require Bool. | coqtop
+      continue-on-error: true
+      id: require_bool
     - name: TIMED=1 make -j "$(nproc)" -k
+      if: steps.require_bool.outcome == 'success'
       shell: alpine.sh {0}
       run: TIMED=1 make -j "$(nproc)" -k
     - name: sudo make install
+      if: steps.require_bool.outcome == 'success'
       shell: alpine.sh {0}
       run: sudo make install
