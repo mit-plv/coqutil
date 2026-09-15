@@ -1,5 +1,6 @@
 Require Import Coq.ZArith.ZArith. Open Scope Z_scope.
-Require Import coqutil.Word.Interface coqutil.Word.Properties.
+From Stdlib Require Import Zmod Zmod.Bits.
+Require Import coqutil.Word.Properties.
 Require Import coqutil.Z.BitOps.
 Require Import coqutil.Tactics.Tactics.
 Require Import coqutil.Tactics.rewr.
@@ -7,20 +8,16 @@ Require Import coqutil.Z.Lia.
 
 
 Section Lemmas. Local Set Default Proof Using "All".
-  Context {width: Z} {word: word.word width} {word_ok: word.ok word}.
-  Local Hint Mode word.word - : typeclass_instances.
-
-  Add Ring wring: (@word.ring_theory width word word_ok).
+  Context {width: Z}.
 
   Lemma sextend_width_nop: forall (w v: Z),
     w = width ->
-    word.of_Z (BitOps.signExtend w v) = word.of_Z v.
+    bits.of_Z width (BitOps.signExtend w v) = bits.of_Z width v.
   Proof.
-    intros. subst. unfold BitOps.signExtend. apply word.unsigned_inj.
-    rewrite! word.unsigned_of_Z.
-    pose proof (@word.width_pos _ _ word_ok).
+    intros. subst. unfold BitOps.signExtend. apply bits.of_Z_inj.
+    destruct (Z.ltb_spec width 0).
+    { rewrite !Z.pow_neg_r, !Zmod_0_r by blia. blia. }
     pose proof (Z.pow_pos_nonneg 2 width).
-    unfold word.wrap.
     remember (2 ^ width) as M.
     remember (2 ^ (width - 1)) as M2.
     rewrite Z.add_mod by blia.
@@ -55,15 +52,30 @@ Ltac simpl_Zcsts :=
            let r := eval cbv in (Z.of_nat x) in change (Z.of_nat x) with r in *
          end.
 
-Ltac simpl_word_exprs_getEq OK t :=
+(* The stdlib lemmas are stated with Zmod.zero and Zmod.one; the type ascriptions
+   restate them with Zmod.of_Z _ 0 and Zmod.of_Z _ 1 (convertible), which is the
+   spelling that occurs in goals and which rewr matches syntactically. *)
+Ltac simpl_word_exprs_getEq t :=
   match t with
-  | context[ @word.add ?wi ?wo (word.of_Z 0) ?x ] => constr:(@word.add_0_l wi wo OK x)
-  | context[ @word.add ?wi ?wo ?x (word.of_Z 0) ] => constr:(@word.add_0_r wi wo OK x)
-  | context[ @word.mul ?wi ?wo (word.of_Z 0) ?x ] => constr:(@word.mul_0_l wi wo OK x)
-  | context[ @word.mul ?wi ?wo ?x (word.of_Z 0) ] => constr:(@word.mul_0_r wi wo OK x)
-  | context[ @word.mul ?wi ?wo (word.of_Z 1) ?x ] => constr:(@word.mul_1_l wi wo OK x)
-  | context[ @word.mul ?wi ?wo ?x (word.of_Z 1) ] => constr:(@word.mul_1_r wi wo OK x)
-  | context[ word.of_Z (BitOps.signExtend ?w ?v)] => constr:(@sextend_width_nop _ _ OK w v)
+  | context[ @Zmod.add ?m (Zmod.of_Z _ 0) ?x ] =>
+      constr:(@Zmod.add_0_l m x : Zmod.add (Zmod.of_Z m 0) x = x)
+  | context[ @Zmod.add ?m ?x (Zmod.of_Z _ 0) ] =>
+      constr:(@Zmod.add_0_r m x : Zmod.add x (Zmod.of_Z m 0) = x)
+  | context[ @Zmod.mul ?m (Zmod.of_Z _ 0) ?x ] =>
+      constr:(@Zmod.mul_0_l m x : Zmod.mul (Zmod.of_Z m 0) x = Zmod.of_Z m 0)
+  | context[ @Zmod.mul ?m ?x (Zmod.of_Z _ 0) ] =>
+      constr:(@Zmod.mul_0_r m x : Zmod.mul x (Zmod.of_Z m 0) = Zmod.of_Z m 0)
+  | context[ @Zmod.mul ?m (Zmod.of_Z _ 1) ?x ] =>
+      constr:(@Zmod.mul_1_l m x : Zmod.mul (Zmod.of_Z m 1) x = x)
+  | context[ @Zmod.mul ?m ?x (Zmod.of_Z _ 1) ] =>
+      constr:(@Zmod.mul_1_r m x : Zmod.mul x (Zmod.of_Z m 1) = x)
+  | context[ @Zmod.add ?m Zmod.zero ?x ] => constr:(@Zmod.add_0_l m x)
+  | context[ @Zmod.add ?m ?x Zmod.zero ] => constr:(@Zmod.add_0_r m x)
+  | context[ @Zmod.mul ?m Zmod.zero ?x ] => constr:(@Zmod.mul_0_l m x)
+  | context[ @Zmod.mul ?m ?x Zmod.zero ] => constr:(@Zmod.mul_0_r m x)
+  | context[ @Zmod.mul ?m Zmod.one ?x ] => constr:(@Zmod.mul_1_l m x)
+  | context[ @Zmod.mul ?m ?x Zmod.one ] => constr:(@Zmod.mul_1_r m x)
+  | context[ Zmod.of_Z (2 ^ ?width) (BitOps.signExtend ?w ?v) ] => constr:(@sextend_width_nop width w v)
   end.
 
 #[global] Hint Rewrite
@@ -105,18 +117,14 @@ Ltac simpl_Z_nat_step :=
 
 Ltac simpl_Z_nat := repeat simpl_Z_nat_step.
 
-Ltac simpl_word_exprs OK :=
+Ltac simpl_word_exprs :=
   simpl_Z_nat;
-  lazymatch type of OK with
-  | @word.ok ?width ?Inst =>
-    rewr (simpl_word_exprs_getEq OK) in * by (reflexivity || congruence)
-  | _ => fail 10000 "wordok is not of type word.ok"
-  end.
+  rewr simpl_word_exprs_getEq in * by (reflexivity || congruence).
 
-Ltac solve_word_eq OK :=
+Ltac solve_word_eq :=
   match goal with
-  | |- @eq (@word.rep _ _) ?x ?y =>
-    tryif (assert_succeeds (assert (word.sub x x = word.of_Z 0) by ring))
+  | |- @eq (Zmod _) ?x ?y =>
+    tryif (assert_succeeds (assert (Zmod.sub x x = Zmod.of_Z _ 0) by ring))
     then idtac
     else fail 10000 "ring is not available, did you forget 'Add Ring'?"
   | _ => fail 1 "wrong shape of goal"
@@ -124,11 +132,7 @@ Ltac solve_word_eq OK :=
   subst;
   try reflexivity;
   repeat match goal with
-         | x: ?T |- _ => lazymatch T with
-                         | word.ok _ => fail
-                         | _ => clear x
-                         end
+         | x: _ |- _ => clear x
          end;
-  simpl;
-  simpl_word_exprs OK;
+  simpl_word_exprs;
   (ring || (try reflexivity)).
