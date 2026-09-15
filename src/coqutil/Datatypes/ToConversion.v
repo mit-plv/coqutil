@@ -17,7 +17,7 @@ Notation "a 'to' R" :=
   (at level 15, no associativity, only parsing) : conversion_parse_scope.
 
 Require Import coqutil.Byte.
-Require Import coqutil.Word.Interface.
+From Stdlib Require Import Zmod.
 Require Import Coq.ZArith.ZArith.
 
 (* We define all 4*3 conversions between {byte, word, nat, Z}.
@@ -26,10 +26,10 @@ Require Import Coq.ZArith.ZArith.
 
 (* byte -> _ *)
 
-#[export] Hint Extern 1 (Conversion Init.Byte.byte ?b (@word.rep ?wi ?wo)) =>
-  exact (@word.of_Z wi wo (byte.unsigned b)) : typeclass_instances.
-Notation "b 'to' wo" :=
-  (@word.of_Z _ wo (byte.unsigned b))
+#[export] Hint Extern 1 (Conversion Init.Byte.byte ?b (Zmod ?m)) =>
+  exact (Zmod.of_Z m (byte.unsigned b)) : typeclass_instances.
+Notation "b 'to' 'word'" :=
+  (Zmod.of_Z _ (byte.unsigned b))
   (at level 15, only printing) : conversion_print_scope.
 #[export] Hint Extern 1 (Conversion Init.Byte.byte ?b nat) =>
   exact (Byte.to_nat b) : typeclass_instances.
@@ -44,20 +44,20 @@ Notation "b 'to' 'Z'" :=
 
 (* word -> _ *)
 
-#[export] Hint Extern 1 (Conversion (@word.rep ?wi ?wo) ?w Init.Byte.byte) =>
-  exact (byte.of_Z (@word.unsigned wi wo w)) : typeclass_instances.
+#[export] Hint Extern 1 (Conversion (Zmod ?m) ?w Init.Byte.byte) =>
+  exact (byte.of_Z (Zmod.unsigned w)) : typeclass_instances.
 Notation "w 'to' 'byte'" :=
-  (byte.of_Z (word.unsigned w))
+  (byte.of_Z (Zmod.unsigned w))
   (at level 15, only printing) : conversion_print_scope.
-#[export] Hint Extern 1 (Conversion (@word.rep ?wi ?wo) ?w nat) =>
-  exact (Z.to_nat (@word.unsigned wi wo w)) : typeclass_instances.
+#[export] Hint Extern 1 (Conversion (Zmod ?m) ?w nat) =>
+  exact (Z.to_nat (Zmod.unsigned w)) : typeclass_instances.
 Notation "w 'to' 'nat'" :=
-  (Z.to_nat (word.unsigned w))
+  (Z.to_nat (Zmod.unsigned w))
   (at level 15, only printing) : conversion_print_scope.
-#[export] Hint Extern 1 (Conversion (@word.rep ?wi ?wo) ?w Z) =>
-  exact (@word.unsigned wi wo w) : typeclass_instances.
+#[export] Hint Extern 1 (Conversion (Zmod ?m) ?w Z) =>
+  exact (Zmod.unsigned w) : typeclass_instances.
 Notation "w 'to' 'Z'" :=
-  (word.unsigned w)
+  (Zmod.unsigned w)
   (at level 15, only printing) : conversion_print_scope.
 
 (* nat -> _ *)
@@ -67,10 +67,10 @@ Notation "w 'to' 'Z'" :=
 Notation "n 'to' 'byte'" :=
   (byte.of_Z (Z.of_nat n))
   (at level 15, only printing) : conversion_print_scope.
-#[export] Hint Extern 1 (Conversion nat ?n (@word.rep ?wi ?wo)) =>
-  exact (@word.of_Z wi wo (Z.of_nat n)) : typeclass_instances.
-Notation "n 'to' wo" :=
-  (@word.of_Z _ wo (Z.of_nat n))
+#[export] Hint Extern 1 (Conversion nat ?n (Zmod ?m)) =>
+  exact (Zmod.of_Z m (Z.of_nat n)) : typeclass_instances.
+Notation "n 'to' 'word'" :=
+  (Zmod.of_Z _ (Z.of_nat n))
   (at level 15, only printing) : conversion_print_scope.
 #[export] Hint Extern 1 (Conversion nat ?n Z) =>
   exact (Z.of_nat n) : typeclass_instances.
@@ -86,10 +86,10 @@ Notation "n 'to' 'Z'" :=
 Notation "z 'to' 'byte'" :=
   (byte.of_Z z)
   (at level 15, only printing) : conversion_print_scope.
-#[export] Hint Extern 1 (Conversion Z ?z (@word.rep ?wi ?wo)) =>
-  exact (@word.of_Z wi wo z) : typeclass_instances.
-Notation "z 'to' wo" :=
-  (@word.of_Z _ wo z)
+#[export] Hint Extern 1 (Conversion Z ?z (Zmod ?m)) =>
+  exact (Zmod.of_Z m z) : typeclass_instances.
+Notation "z 'to' 'word'" :=
+  (Zmod.of_Z _ z)
   (at level 15, only printing) : conversion_print_scope.
 #[export] Hint Extern 1 (Conversion Z ?z nat) =>
   exact (Z.to_nat z) : typeclass_instances.
@@ -98,7 +98,8 @@ Notation "z 'to' 'nat'" :=
   (at level 15, only printing) : conversion_print_scope.
 
 Section Test.
-  Context {width: Z} {word: word.word width}.
+  Context {width: Z}.
+  Local Notation word := (bits width).
 
   Local Open Scope conversion_parse_scope.
   Local Open Scope conversion_print_scope.
@@ -106,7 +107,7 @@ Section Test.
   Goal True.
     epose (byte.and _ _ to word).
     pose (Z.mul (3%nat to Z) (4%nat to Z)).
-    pose (word.mul (2 to word) (word.mul (1%Z to word) (2%nat to word))).
+    pose (Zmod.mul (2 to word) (Zmod.mul (1%Z to word) (2%nat to word))).
     epose (Z.mul ((_: byte) to Z) (Nat.mul ((_: word) to nat) ((_: Z) to nat) to Z)).
     pose (Byte.x23 to word).
     epose ((_ : byte) to word) as x.
