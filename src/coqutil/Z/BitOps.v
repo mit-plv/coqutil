@@ -2,7 +2,7 @@ Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Z.bitblast.
 Require Import coqutil.Z.ZLib.
 Require Import coqutil.Z.Lia.
-Require Import coqutil.Z.div_mod_to_equations.
+Require Import Coq.micromega.Lia.
 
 
 Local Open Scope Z_scope.
@@ -22,14 +22,11 @@ Qed.
 Definition bitSlice(x: Z)(start eend: Z): Z :=
   Z.land (Z.shiftr x start) (Z.lnot (Z.shiftl (-1) (eend - start))).
 
-Definition bitSlice'(w start eend: Z): Z :=
-  (w / 2 ^ start) mod (2 ^ (eend - start)).
-
 Lemma bitSlice_alt: forall w start eend,
     0 <= start <= eend ->
-    bitSlice w start eend = bitSlice' w start eend.
+    bitSlice w start eend = (w / 2 ^ start) mod (2 ^ (eend - start)).
 Proof.
-  intros. unfold bitSlice, bitSlice'.
+  intros. unfold bitSlice.
   rewrite <- Z.land_ones by blia.
   rewrite <- Z.shiftr_div_pow2 by blia.
   f_equal.
@@ -47,7 +44,6 @@ Lemma bitSlice_range: forall sz z,
 Proof.
   intros.
   rewrite bitSlice_alt by blia.
-  unfold bitSlice'.
   change (2 ^ 0) with 1.
   rewrite Z.div_1_r.
   rewrite Z.sub_0_r.
@@ -60,7 +56,7 @@ Lemma bitSlice_split: forall sz1 sz2 v,
     0 <= sz2 ->
     bitSlice v sz1 (sz1 + sz2) * 2 ^ sz1 + bitSlice v 0 sz1 = bitSlice v 0 (sz1 + sz2).
 Proof.
-  intros. rewrite? bitSlice_alt by blia. unfold bitSlice'.
+  intros. rewrite? bitSlice_alt by blia.
   change (2 ^ 0)%Z with 1%Z.
   rewrite Z.div_1_r.
   rewrite! Z.sub_0_r.
@@ -79,7 +75,6 @@ Lemma bitSlice_all_nonneg: forall n v : Z,
 Proof.
   clear. intros.
   rewrite bitSlice_alt by blia.
-  unfold bitSlice'.
   change (2 ^ 0) with 1.
   rewrite Z.div_1_r.
   rewrite Z.sub_0_r.
@@ -94,7 +89,6 @@ Lemma bitSlice_all_neg: forall n v : Z,
 Proof.
   clear. intros.
   rewrite bitSlice_alt by blia.
-  unfold bitSlice'.
   change (2 ^ 0)%Z with 1%Z.
   rewrite Z.div_1_r.
   rewrite Z.sub_0_r.
@@ -154,7 +148,6 @@ Lemma mod20_bitSlice: forall n,
     n mod 2 = 0.
 Proof.
   intros. rewrite bitSlice_alt in H by Lia.lia.
-  unfold bitSlice' in *.
   Z.div_mod_to_equations.
   Lia.lia.
 Qed.

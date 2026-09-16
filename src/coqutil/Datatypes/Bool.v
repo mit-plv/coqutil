@@ -81,9 +81,3 @@ Proof. cbv; intuition fail. Qed.
 Resolution Lemmas
 *****************)
 
-Lemma Is_true_implies_eq_true b : Is_true b -> b = true.
-Proof. destruct b; intuition eauto. Qed.
-
-Lemma Is_true_implies_true_eq b : Is_true b -> true = b.
-Proof. destruct b; simpl; intuition eauto. Qed.
-

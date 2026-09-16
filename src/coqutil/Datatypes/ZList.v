@@ -345,10 +345,10 @@ Module List.
         0 < len l1 ->
         0 < len l2 ->
         compare_elem l1[0] l2[0] = Eq ->
-        List.compare compare_elem l1 l2 = List.compare compare_elem l1[1:] l2[1:].
+        ListDef.list_compare compare_elem l1 l2 = ListDef.list_compare compare_elem l1[1:] l2[1:].
     Proof.
       intros. destruct l1. 1: discriminate. destruct l2. 1: discriminate.
-      cbn in H1. simpl (List.compare _ (_ :: _) _). rewrite H1. reflexivity.
+      cbn in H1. simpl (ListDef.list_compare _ (_ :: _) _). rewrite H1. reflexivity.
     Qed.
   End WithAAndZNotations.
 End List.

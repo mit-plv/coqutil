@@ -291,18 +291,6 @@ Global Hint Resolve list_eqb_spec : typeclass_instances.
 Section Lexicographic.
   Context {T: Type} (compare_elem: T -> T -> comparison).
 
-  Fixpoint compare(a b: list T): comparison :=
-    match a, b with
-    | nil, nil => Eq
-    | nil, _ => Lt
-    | cons _ _, nil => Gt
-    | cons a_head a_tail, cons b_head b_tail =>
-        match compare_elem a_head b_head with
-        | Lt => Lt
-        | Gt => Gt
-        | Eq => compare a_tail b_tail
-        end
-    end.
 End Lexicographic.
 
 Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
@@ -396,7 +384,6 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     Qed.
   End WithStep.
 
-  Lemma length_nil : length (@nil A) = 0. Proof. reflexivity. Qed.
   Lemma length_cons x xs : length (@cons A x xs) = S (length xs).
   Proof. exact eq_refl. Qed.
 
@@ -404,12 +391,6 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
   Proof. revert xs; induction n, xs; auto; []; eapply IHn. Qed.
   Lemma tl_is_skipn1 (xs : list A) : tl xs = skipn 1 xs.
   Proof. destruct xs; reflexivity. Qed.
-  Lemma skipn_all_exact (xs : list A) : skipn (length xs) xs = nil.
-  Proof. induction xs; eauto. Qed.
-  Lemma skipn_0_l (xs : list A) : skipn 0 xs = xs.
-  Proof. exact eq_refl. Qed.
-  Lemma skipn_nil_r n : @skipn A n nil = nil.
-  Proof. induction n; auto. Qed.
   Lemma skipn_all n (xs : list A) (H : le (length xs) n) : skipn n xs = nil.
   Proof.
     generalize dependent xs; induction n, xs; cbn; auto; try blia; [].
@@ -428,56 +409,6 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     rewrite firstn_length, PeanoNat.Nat.min_comm.
     destruct (Nat.min_spec (length xs) n); blia.
   Qed.
-  Lemma length_tl_inbounds (xs : list A) : length (tl xs) = (length xs - 1)%nat.
-  Proof.
-    destruct xs; cbn [length tl]; blia.
-  Qed.
-  Lemma length_skipn n (xs : list A) :
-    length (skipn n xs) = (length xs - n)%nat.
-  Proof.
-    pose proof firstn_skipn n xs as HH; eapply (f_equal (@length _)) in HH; rewrite <-HH.
-    destruct (Compare_dec.le_lt_dec n (length xs)).
-    { rewrite app_length, length_firstn_inbounds; blia. }
-    { rewrite skipn_all, app_nil_r, firstn_all2, length_nil; blia. }
-  Qed.
-
-  Lemma skipn_nil n: skipn n (@nil A) = nil.
-  Proof. destruct n; reflexivity. Qed.
-
-  Lemma skipn_app n (xs ys : list A) : skipn n (xs ++ ys) = skipn n xs ++ skipn (n - length xs) ys.
-  Proof.
-    revert n ys.
-    induction xs; intros.
-    - simpl. rewrite skipn_nil. simpl. rewrite PeanoNat.Nat.sub_0_r. reflexivity.
-    - simpl. destruct n.
-      + simpl. reflexivity.
-      + simpl. apply IHxs.
-  Qed.
-
-  Lemma skipn_skipn n m (xs : list A) : skipn n (skipn m xs) = skipn (n + m) xs.
-  Proof.
-    revert m xs.
-    induction n; intros.
-    - simpl. reflexivity.
-    - change (S n + m) with (S (n + m)).
-      destruct xs as [|x xs].
-      + simpl. rewrite skipn_nil. reflexivity.
-      + destruct m as [|m].
-        * simpl. rewrite PeanoNat.Nat.add_0_r. reflexivity.
-        * change (skipn (S m) (x :: xs)) with (skipn m xs).
-          change (skipn (S (n + S m)) (x :: xs)) with (skipn (n + S m) xs).
-          rewrite <- IHn.
-          clear IHn x.
-          revert n m.
-          induction xs; intros.
-          { simpl. rewrite !skipn_nil. reflexivity. }
-          { destruct m as [|m].
-            - simpl. reflexivity.
-            - change (skipn (S m) (a :: xs)) with (skipn m xs).
-              change (skipn (S (S m)) (a :: xs)) with (skipn (S m) xs).
-              apply IHxs. }
-  Qed.
-
   Lemma nth_error_firstn: forall i (l: list A) j,
       j < i ->
       nth_error (firstn i l) j = nth_error l j.
@@ -535,16 +466,6 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       destruct (nth_error (map f l) i); try discriminate.
       specialize (HX ltac:(discriminate)).
       rewrite map_length in HX. blia. }
-  Qed.
-
-  Lemma nth_error_ext (xs ys : list A)
-    (H : forall i, nth_error xs i = nth_error ys i)
-    : xs = ys.
-  Proof.
-    generalize dependent ys; induction xs; intros;
-      pose proof H O as HO;
-      destruct ys; cbn in HO; inversion HO; trivial.
-    f_equal; eapply IHxs; exact (fun i => H (S i)).
   Qed.
 
   Lemma nth_error_ext_samelength (xs ys : list A)
@@ -642,14 +563,6 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     - apply IHn; lia.
   Qed.
 
-  Lemma nth_repeat_default (d: A): forall n i,
-      nth i (repeat d n) d = d.
-  Proof.
-    intros; destruct (Nat.lt_ge_cases i n).
-    - rewrite nth_repeat by lia; reflexivity.
-    - rewrite nth_overflow by (rewrite repeat_length; lia); reflexivity.
-  Qed.
-
   Lemma map_seq_nth_slice (l: list A) (d: A) :
     forall len start,
       map (fun idx => nth idx l d) (seq start len) =
@@ -666,7 +579,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       all: rewrite nth_seq by lia.
       + rewrite nth_firstn, nth_skipn by lia. f_equal. lia.
       + rewrite firstn_length, skipn_length in *.
-        rewrite nth_overflow, nth_repeat_default by lia.
+        rewrite nth_overflow, nth_repeat by lia.
         reflexivity.
   Qed.
 
@@ -726,14 +639,6 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
   Proof.
     revert l; induction n; destruct l;
       cbn [skipn firstn length]; rewrite ?IHn; reflexivity.
-  Qed.
-
-  Lemma firstn_map{B: Type}: forall (f: A -> B) (n: nat) (l: list A),
-      firstn n (map f l) = map f (firstn n l).
-  Proof.
-    induction n; intros.
-    - reflexivity.
-    - simpl. destruct l; simpl; congruence.
   Qed.
 
   Lemma firstn_seq: forall (n from len: nat),
@@ -1057,22 +962,12 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     reflexivity.
   Qed.
 
-  Lemma skipn_seq_step n start len :
-    skipn n (seq start len) = seq (start + n) (len - n).
-  Proof using.
-    revert start len.
-    induction n; destruct len; cbn; try reflexivity.
-    { repeat (f_equal; try lia). }
-    { rewrite IHn.
-      repeat (f_equal; try lia). }
-  Qed.
-
   Lemma fold_left_skipn_seq i count (step: A -> _) init :
     0 < i <= count ->
     step (fold_left step (rev (skipn i (seq 0 count))) init) (i-1) =
     fold_left step (rev (skipn (i-1) (seq 0 count))) init.
   Proof.
-    intros. rewrite !skipn_seq_step, !Nat.add_0_l.
+    intros. rewrite !skipn_seq, !Nat.add_0_l.
     replace (count - (i - 1)) with (S (count - i)) by lia.
     cbn [seq rev]. rewrite fold_left_app. cbn [fold_left].
     replace (S (i-1)) with i by lia.
@@ -1181,10 +1076,6 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
     rewrite skipn_app, skipn_all, Nat.add_comm, Nat.add_sub; simpl; (reflexivity || lia).
   Qed.
 
-  Lemma assoc_app_cons (l1 l2: list A) (a: A) :
-    l1 ++ a :: l2 = (l1 ++ [a]) ++ l2.
-  Proof. induction l1; simpl; congruence. Qed.
-
   Lemma replace_nth_eqn :
     forall (xs: list A) idx x,
       idx < length xs ->
@@ -1242,14 +1133,6 @@ Proof.
   induction l; simpl.
   - reflexivity.
   - intros H; rewrite (H a), IHl by auto; reflexivity.
-Qed.
-
-Lemma skipn_map{A B: Type}: forall (f: A -> B) (n: nat) (l: list A),
-    skipn n (map f l) = map f (skipn n l).
-Proof.
-  induction n; intros.
-  - reflexivity.
-  - simpl. destruct l; simpl; congruence.
 Qed.
 
 (** ** fold **)
@@ -1467,14 +1350,11 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma nth_error_0_r [A] (l : list A) : nth_error l 0 = hd_error l.
-Proof. destruct l; trivial. Qed.
-
 Lemma nth_error_as_skipn [A] (l : list A) i
   : nth_error l i = hd_error (skipn i l).
 Proof.
   erewrite <-nth_error_skipn', Nat.sub_diag by reflexivity.
-  eapply nth_error_0_r.
+  eapply nth_error_0.
 Qed.
 
 Lemma nth_error_listUpdate_error_diff: forall E l l' i j (e: E),
@@ -1674,7 +1554,7 @@ Lemma upds_replace: forall E (l xs: list E),
     length l = length xs -> upds l 0 xs = xs.
 Proof.
   intros.
-  rewrite upds_0_skipn, <-H, skipn_all_exact, app_nil_r by blia.
+  rewrite upds_0_skipn, <-H, skipn_all, app_nil_r by blia.
   reflexivity.
 Qed.
 

@@ -65,42 +65,12 @@ Module byte.
     reflexivity.
   Qed.
 
-  Lemma of_bits_inj: forall bs1 bs2, Byte.of_bits bs1 = Byte.of_bits bs2 -> bs1 = bs2.
-  Proof.
-    intros.
-    rewrite <- (Byte.to_bits_of_bits bs1) in *.
-    rewrite <- (Byte.to_bits_of_bits bs2) in *.
-    do 2 rewrite Byte.of_bits_to_bits in H.
-    f_equal.
-    assumption.
-  Qed.
-
-  Lemma to_bits_inj: forall b1 b2, Byte.to_bits b1 = Byte.to_bits b2 -> b1 = b2.
-  Proof.
-    intros.
-    rewrite <- (Byte.of_bits_to_bits b1) in *.
-    rewrite <- (Byte.of_bits_to_bits b2) in *.
-    do 2 rewrite Byte.to_bits_of_bits in H.
-    f_equal.
-    assumption.
-  Qed.
-
-  Lemma to_N_inj: forall b1 b2, Byte.to_N b1 = Byte.to_N b2 -> b1 = b2.
-  Proof.
-    intros.
-    enough (Some b1 = Some b2). 1: congruence.
-    rewrite <- (Byte.of_to_N b1).
-    rewrite <- (Byte.of_to_N b2).
-    f_equal.
-    assumption.
-  Qed.
-
   Lemma unsigned_inj: forall b1 b2, unsigned b1 = unsigned b2 -> b1 = b2.
   Proof.
     unfold unsigned. intros.
     apply N2Z.inj in H.
-    apply to_N_inj in H.
-    assumption.
+    pose proof Byte.of_to_N b1 as E1; pose proof Byte.of_to_N b2 as E2.
+    rewrite H in E1. congruence.
   Qed.
 
   Lemma unsigned_range: forall b, 0 <= unsigned b < 2 ^ 8.

@@ -1,6 +1,6 @@
 From Coq Require Import ZArith.
 Require Import Coq.ZArith.Znumtheory.
-Require Import coqutil.Z.div_mod_to_equations.
+Require Import Coq.micromega.Lia.
 Require Import coqutil.Z.Lia Btauto.
 Require Coq.setoid_ring.Ring_theory.
 From Stdlib Require Import Zmod Zmod.Bits.
