@@ -1,4 +1,5 @@
 From coqutil Require Import Tactics.ProveInversion.
+Require Import Coq.Arith.PeanoNat.
 
 (* A database of inversion rules for use in autorewrite *)
 
@@ -13,9 +14,7 @@ Lemma invert_eq_S_0 x : S x = 0 <-> False.
 Proof. prove_inversion_lemma. Qed.
 #[export] Hint Rewrite invert_eq_S_0 : inversion.
 
-Lemma invert_eq_S_S x y : S x = S y <-> x = y.
-Proof. prove_inversion_lemma. Qed.
-#[export] Hint Rewrite invert_eq_S_S : inversion.
+#[export] Hint Rewrite Nat.succ_inj_wd : inversion.
   
 
 Section __.

@@ -3,6 +3,7 @@
 Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Z.Lia.
 Require Import coqutil.Z.BitOps.
+Require Import Coq.micromega.Lia.
 Require Export Coq.setoid_ring.ZArithRing.
 Require Import Coq.btauto.Btauto.
 
@@ -13,14 +14,6 @@ Local Open Scope Z_scope.
 Tactic Notation "safe_ring_simplify" constr(i) "in" ident(C) :=
   first [ring_simplify i in C |
          let t := type of i in fail 1000 "No ring structure found for" t ].
-
-Lemma testbit_minus1: forall i,
-    0 <= i ->
-    Z.testbit (-1) i = true.
-Proof.
-  intros. rewrite (Z.bits_opp 1) by assumption.
-  simpl. rewrite Z.bits_0. reflexivity.
-Qed.
 
 Lemma testbit_above: forall {p n},
     0 <= n < 2 ^ p ->
@@ -96,7 +89,7 @@ Proof.
       pose proof (Z.log2_spec (Z.pred (- a))) as P.
       pose proof (Z.pow_lt_mono_r 2 l i).
       blia.
-    + subst. apply testbit_minus1. blia.
+    + subst. apply Z.bits_m1. blia.
     + rewrite Z.div_small in E by blia.
       cbv in E. discriminate.
   - assert (a < 0 \/ 0 <= a) as C by blia. destruct C as [C | C].
@@ -215,7 +208,7 @@ Qed.
     Z.shiftr_spec
     Z.lnot_spec
     Z.shiftl_spec
-    testbit_minus1
+    (Z.bits_m1 : forall n, 0 <= n -> Z.testbit (-1) n = true)
     Z.ones_spec_high
     Z.ones_spec_low
     testbit_if

@@ -94,7 +94,7 @@ Abort.
 
 Require Import Coq.ZArith.ZArith.
 Require Import coqutil.Map.Interface.
-Require Import coqutil.Word.Interface.
+From Stdlib Require Import Zmod.
 
 #[export] Instance MulNat(a b: nat): Multiplication a b (Nat.mul a b) := {}.
 Notation "a * b" := (Nat.mul a b) (only printing) : oo_scope.
@@ -114,9 +114,8 @@ Notation "a * b" := (Z.mul a b) (only printing) : oo_scope.
   @Multiplication Set Set Type a b (prod a b) | 6 := {}.
 Notation "a * b" := (prod a b) (only printing) : oo_scope.
 
-#[export] Instance MulWord{width: Z}{word: word.word width}(a b: word):
-  Multiplication a b (word.mul a b) := {}.
-Notation "a * b" := (word.mul a b) (only printing) : oo_scope.
+#[export] Instance MulZmod{m: Z}(a b: Zmod m): Multiplication a b (Zmod.mul a b) := {}.
+Notation "a * b" := (Zmod.mul a b) (only printing) : oo_scope.
 
 
 #[export] Instance AddNat(a b: nat): Addition a b (Nat.add a b) := {}.
@@ -128,9 +127,8 @@ Notation "a + b" := (N.add a b) (only printing) : oo_scope.
 #[export] Instance AddZ(a b: Z): Addition a b (Z.add a b) := {}.
 Notation "a + b" := (Z.add a b) (only printing) : oo_scope.
 
-#[export] Instance AddWord{width: Z}{word: word.word width}(a b: word):
-  Addition a b (word.add a b) := {}.
-Notation "a + b" := (word.add a b) (only printing) : oo_scope.
+#[export] Instance AddZmod{m: Z}(a b: Zmod m): Addition a b (Zmod.add a b) := {}.
+Notation "a + b" := (Zmod.add a b) (only printing) : oo_scope.
 
 
 #[export] Instance SubNat(a b: nat): Subtraction a b (Nat.sub a b) := {}.
@@ -142,9 +140,8 @@ Notation "a - b" := (N.sub a b) (only printing) : oo_scope.
 #[export] Instance SubZ(a b: Z): Subtraction a b (Z.sub a b) := {}.
 Notation "a - b" := (Z.sub a b) (only printing) : oo_scope.
 
-#[export] Instance SubWord{width: Z}{word: word.word width}(a b: word):
-  Subtraction a b (word.sub a b) := {}.
-Notation "a - b" := (word.sub a b) (only printing) : oo_scope.
+#[export] Instance SubZmod{m: Z}(a b: Zmod m): Subtraction a b (Zmod.sub a b) := {}.
+Notation "a - b" := (Zmod.sub a b) (only printing) : oo_scope.
 
 
 #[export] Instance DivNat(a b: nat): Division a b (Nat.div a b) := {}.
@@ -217,10 +214,11 @@ Section TestArith.
   Goal Type * nat = prod Type nat. srefl. Abort.
   Goal nat * Type * Set = prod (prod nat Type) Set. srefl. Abort.
 
-  Context {word: word.word 32} {mem: map.map word Byte.byte}.
+  Local Notation word := (bits 32).
+  Context {mem: map.map word Byte.byte}.
 
-  Goal forall (x y: word), x * y = word.mul x y. intros. srefl. Abort.
-  Goal forall (x y z: word), x * y * z = word.mul (word.mul x y) z.
+  Goal forall (x y: word), x * y = Zmod.mul x y. intros. srefl. Abort.
+  Goal forall (x y z: word), x * y * z = Zmod.mul (Zmod.mul x y) z.
     intros. srefl.
   Abort.
 
@@ -239,8 +237,8 @@ Section TestArith.
     epose (cons (x * y - z) nil).
     epose ((x * y) 1). (* works, but shelves unsatisfiable typeclass goals *)
     epose (cons (x * y - z) nil).
-    epose (cons (x * y - z) (cons (word.of_Z (a - b))
-                                   (cons (y + z * (word.of_Z (a * b))) nil))).
+    epose (cons (x * y - z) (cons (bits.of_Z 32 (a - b))
+                                   (cons (y + z * (bits.of_Z 32 (a * b))) nil))).
   Abort.
 End TestArith.
 

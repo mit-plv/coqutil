@@ -1,23 +1,28 @@
 From Coq Require Import List BinInt ZArith Lia Init.Byte.
-From coqutil Require Import Word.Interface Map.Interface Map.OfListWord Memory SeparationLogic Lift1Prop LittleEndianList.
+From Stdlib Require Import Zmod Zmod.Bits.
+From coqutil Require Import Map.Interface Map.OfListWord Memory SeparationLogic Lift1Prop LittleEndianList.
 From coqutil Require Import Word.Properties Map.Properties Tactics Macros.symmetry.
 
-Local Coercion word.unsigned : word.rep >-> Z.
+Local Coercion Zmod.unsigned : Zmod >-> Z.
 
 Section SeparationMap.
   Local Open Scope sep_scope.
   Local Coercion Z.of_nat : nat >-> Z.
   Local Infix "$+" := map.putmany (at level 70).
 
-  Context {width : Z} {word : Word.Interface.word width} {word_ok : word.ok word}.
+  Context {width : Z} (Hw : 0 < width).
+  Local Notation word := (bits width).
   Context [value] [map : map.map word value] {ok : map.ok map}.
-  Add Ring __wring: (@word.ring_theory width word word_ok).
+  Add Ring __wring: (Zmod.ring_theory (2 ^ width))
+      (preprocess [autorewrite with rew_word_morphism],
+       morphism (word.ring_morph (width := width)),
+       constants [word_cst]).
 
   (** * [++] *)
 
   Lemma sep_eq_of_list_word_at_app (a : word) (xs ys : list value)
     lxs (Hlxs : Z.of_nat (length xs) = lxs) (Htotal : length xs + length ys <= 2^width)
-    : Lift1Prop.iff1 ((xs ++ ys)$@a) (xs$@a * ys$@(word.add a (word.of_Z lxs))).
+    : Lift1Prop.iff1 ((xs ++ ys)$@a) (xs$@a * ys$@(Zmod.add a (bits.of_Z width lxs))).
   Proof.
     etransitivity.
     2: eapply sep_comm.
@@ -27,13 +32,13 @@ Section SeparationMap.
   Qed.
 
   Lemma list_word_at_app_of_adjacent_eq (a b : word) (xs ys : list value)
-    (Hl: word.unsigned (word.sub b a) = Z.of_nat (length xs))
+    (Hl: Zmod.unsigned (Zmod.sub b a) = Z.of_nat (length xs))
     (Htotal : length xs + length ys <= 2^width)
     : Lift1Prop.iff1 (xs$@a*ys$@b) ((xs++ys)$@a).
   Proof.
     etransitivity.
     2:symmetry; eapply sep_eq_of_list_word_at_app; trivial.
-    do 3 Morphisms.f_equiv. rewrite <-Hl, word.of_Z_unsigned. ring.
+    do 3 Morphisms.f_equiv. rewrite <-Hl, Zmod.of_Z_unsigned. ring.
   Qed.
 End SeparationMap.
 
@@ -42,9 +47,13 @@ Section SeparationMemory.
   Local Coercion Z.of_nat : nat >-> Z.
   Local Infix "$+" := map.putmany (at level 70).
 
-  Context {width : Z} {word : Word.Interface.word width} {word_ok : word.ok word}.
+  Context {width : Z} (Hw : 0 < width).
+  Local Notation word := (bits width).
   Context [mem : map.map word byte] {ok : map.ok mem}.
-  Add Ring __wring: (@word.ring_theory width word word_ok).
+  Add Ring __wring: (Zmod.ring_theory (2 ^ width))
+      (preprocess [autorewrite with rew_word_morphism],
+       morphism (word.ring_morph (width := width)),
+       constants [word_cst]).
 
   (** * Load *)
 
@@ -69,13 +78,13 @@ Section SeparationMemory.
   Lemma sep_of_load_bytes (m : mem) a n bs (H : load_bytes m a n = Some bs) :
     m =* map.remove_many m (map.keys (bs$@a)) * bs$@a.
   Proof.
-    eapply invert_load_bytes in H.
+    eapply invert_load_bytes in H; trivial.
     cbv [sep map.split sepclause_of_map]; eexists _, _; ssplit;
-      eauto using map.disjoint_remove_keys, word.eqb_spec.
+      eauto using map.disjoint_remove_keys, Zmod.eqb_spec.
   Qed.
 
   Lemma load_Z_of_sep bs a n R (m : mem) (Hsep: m =* bs$@a*R)
-    (Hl : length bs = n%nat) (Hlw : Z.of_nat n <= 2 ^ width) : 
+    (Hl : length bs = n%nat) (Hlw : Z.of_nat n <= 2 ^ width) :
     load_Z m a n = Some (LittleEndianList.le_combine bs).
   Proof. cbv [load_Z]. erewrite load_bytes_of_sep; eauto. Qed.
 
@@ -91,9 +100,9 @@ Section SeparationMemory.
 
   Lemma uncurried_load_Z_of_sep_word bs a (n : word) R (m : mem)
     (H : m =* bs$@a * R /\ Z.of_nat (length bs) = n) :
-    load_Z m a (Z.to_nat (word.unsigned n)) = Some (LittleEndianList.le_combine bs).
+    load_Z m a (Z.to_nat (Zmod.unsigned n)) = Some (LittleEndianList.le_combine bs).
   Proof.
-    case (word.unsigned_range n) as [].
+    case (bits.unsigned_range n ltac:(lia)) as [].
     eapply uncurried_load_Z_of_sep_Z; intuition eauto using Z.lt_le_incl.
   Qed.
 
@@ -109,12 +118,12 @@ Section SeparationMemory.
     eexists _, _; ssplit; eauto; [].
     rewrite <-map.putmany_assoc.
     eassert (_bs$@a $+ bs$@a = bs$@a) as ->.
-    { apply map.map_ext; intros k; rewrite !map.get_putmany_dec, ?map.get_of_list_word_at.
+    { apply map.map_ext; intros k; rewrite !map.get_putmany_dec, ?(map.get_of_list_word_at Hw).
       destruct nth_error eqn:?; trivial; []; rewrite ?nth_error_None in *; lia. }
     apply map.split_comm; split; trivial; [].
     apply map.disjoint_comm in disj; apply map.disjoint_comm.
     eapply map.sub_domain_disjoint; [exact disj|].
-    cbv [map.sub_domain]; intros k v; rewrite ?map.get_of_list_word_at.
+    cbv [map.sub_domain]; intros k v; rewrite ?(map.get_of_list_word_at Hw).
     intros ?%List.nth_error_Some_bound_index.
     destruct nth_error eqn:X; eauto; []; exfalso.
     eapply nth_error_None in X; lia.
@@ -143,16 +152,16 @@ Section SeparationMemory.
     length _bs = length bs -> map.sub_domain (m $+ bs$@a) m.
   Proof.
     cbv [map.sub_domain]; intros Hl k v.
-    rewrite map.get_putmany_dec, map.get_of_list_word_at.
+    rewrite map.get_putmany_dec, (map.get_of_list_word_at Hw).
     case nth_error eqn:E; inversion 1; eauto; apply List.nth_error_Some_bound_index in E.
     erewrite <-Hl, length_load_bytes in E by eassumption.
     pose proof E as E'; eapply nth_error_load_bytes in E; eauto.
-    erewrite Z2Nat.id, word.of_Z_unsigned, word.add_sub_r_same_r in E by apply word.unsigned_range.
+    erewrite Z2Nat.id, Zmod.of_Z_unsigned, word.add_sub_r_same_r in E by apply bits.unsigned_range, Z.lt_le_incl, Hw.
     rewrite <-E; case nth_error eqn:nE; eauto.
     apply length_load_bytes in H; apply nth_error_None in nE; lia.
   Qed.
 
-  Lemma store_bytes_in_sep a bs R (m0 m1 m : mem) 
+  Lemma store_bytes_in_sep a bs R (m0 m1 m : mem)
     (Hstore : store_bytes m0 a bs = Some m1) (Hsep: m =* m0*R) :
     exists m', store_bytes m a bs = Some m' /\ m' =* m1*R.
   Proof.
@@ -191,7 +200,7 @@ Section SeparationMemory.
     enough (map.keys (l$@a) = map.keys (bs$@a)) as Hkeys. {
       apply f_equal, map.map_ext; intros k.
       rewrite ?map.get_remove_many_dec, ?Hkeys, ?map.get_putmany_dec.
-      destruct find eqn:N; trivial. 
+      destruct find eqn:N; trivial.
       destruct (map.get (bs$@a)) eqn:G; trivial.
       eapply map.in_keys in G.
       eapply find_none, word.eqb_false in G; eauto; congruence. }

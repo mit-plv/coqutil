@@ -7,33 +7,6 @@ Local Open Scope bool_scope.
 
 Module Z.
 
-  Lemma testbit_minus1 i (H:0<=i) :
-    Z.testbit (-1) i = true.
-  Proof.
-    destruct i; try blia; exact eq_refl.
-  Qed.
-
-  Lemma testbit_mod_pow2 a n i (H:0<=n) :
-    Z.testbit (a mod 2 ^ n) i = (i <? n) && Z.testbit a i.
-  Proof.
-    destruct (Z.ltb_spec i n); rewrite
-      ?Z.mod_pow2_bits_low, ?Z.mod_pow2_bits_high by auto; auto.
-  Qed.
-
-  Lemma testbit_ones n i (H : 0 <= n) :
-    Z.testbit (Z.ones n) i = (0 <=? i) && (i <? n).
-  Proof.
-    destruct (Z.leb_spec 0 i), (Z.ltb_spec i n); cbn;
-      rewrite ?Z.testbit_neg_r, ?Z.ones_spec_low, ?Z.ones_spec_high by blia; trivial.
-  Qed.
-
-  Lemma testbit_ones_nonneg n i (Hn : 0 <= n) (Hi: 0 <= i) :
-    Z.testbit (Z.ones n) i = (i <? n).
-  Proof.
-    rewrite testbit_ones by blia.
-    destruct (Z.leb_spec 0 i); cbn; solve [trivial | blia].
-  Qed.
-
   Lemma shiftl_spec': forall a n m : Z,
       Z.testbit (Z.shiftl a n) m = negb (m <? 0) && Z.testbit a (m - n).
   Proof.
@@ -87,7 +60,7 @@ Module Z.
     intros.
     destruct (Z.ltb_spec i 0).
     - rewrite Z.testbit_neg_r; trivial.
-    - apply testbit_ones_nonneg; trivial.
+    - apply Z.testbit_ones_nonneg; trivial.
   Qed.
 
   Lemma testbit_minus1' : forall i : Z,
@@ -96,7 +69,7 @@ Module Z.
     intros.
     destruct (Z.ltb_spec i 0).
     - rewrite Z.testbit_neg_r; trivial.
-    - apply testbit_minus1; trivial.
+    - apply Z.bits_m1; trivial.
   Qed.
 
   Lemma or_to_plus: forall a b,
@@ -138,7 +111,7 @@ Module Z.
        Z.bits_opp
        Z.testbit_mod_pow2
        Z.testbit_ones_nonneg
-       Z.testbit_minus1
+       (Z.bits_m1 : forall n, 0 <= n -> Z.testbit (-1) n = true)
        using solve [auto with zarith]
     : z_bitwise_with_hyps.
 

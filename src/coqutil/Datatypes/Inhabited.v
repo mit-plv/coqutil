@@ -21,9 +21,8 @@ End InhabitedTests.
 
 (* TODO move code below to specific files *)
 
-Require Import coqutil.Word.Interface.
-Global Instance word_inhabited{width: BinInt.Z}{word: word.word width}: inhabited word :=
-  mk_inhabited (word.of_Z BinInt.Z0).
+From Stdlib Require Import Zmod.
+Global Instance Zmod_inhabited{m: BinInt.Z}: inhabited (Zmod m) := mk_inhabited Zmod.zero.
 
 Require Import coqutil.Map.Interface.
 Global Instance map_inhabited{key value: Type}{map: map.map key value}: inhabited map :=

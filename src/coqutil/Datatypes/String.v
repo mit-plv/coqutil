@@ -1,24 +1,31 @@
 Require Import coqutil.Decidable.
+Require Import Coq.micromega.Lia.
 Require Coq.NArith.BinNatDef.
 
 Require Export Coq.Strings.String. Local Open Scope string_scope.
 
 Module Ascii.
-  Definition ltb (c d : Ascii.ascii) : bool := BinNatDef.N.ltb (Ascii.N_of_ascii c) (Ascii.N_of_ascii d).
-
-  Lemma ltb_antirefl : forall k, ltb k k = false.
-  Proof. cbv [ltb]; intro; apply BinNat.N.ltb_irrefl. Qed.
-
-  Lemma ltb_trans : forall k1 k2 k3, ltb k1 k2 = true -> ltb k2 k3 = true -> ltb k1 k3 = true.
+  Lemma ltb_antirefl : forall k, Strings.Ascii.ltb k k = false.
   Proof.
-    cbv [ltb]; intros *; rewrite !BinNat.N.ltb_lt; intros; etransitivity; eassumption.
+    cbv [Strings.Ascii.ltb Strings.Ascii.compare]; intro; rewrite BinNat.N.compare_refl; reflexivity.
   Qed.
 
-  Lemma ltb_total : forall k1 k2, ltb k1 k2 = false -> ltb k2 k1 = false -> k1 = k2.
+  Lemma ltb_trans : forall k1 k2 k3, Strings.Ascii.ltb k1 k2 = true -> Strings.Ascii.ltb k2 k3 = true -> Strings.Ascii.ltb k1 k3 = true.
   Proof.
-    cbv [ltb]; intros k1 k2; rewrite !BinNat.N.ltb_ge; intros.
-    rewrite <- (Ascii.ascii_N_embedding k1), <- (Ascii.ascii_N_embedding k2); apply f_equal.
-    apply BinNat.N.le_antisymm; assumption.
+    cbv [Strings.Ascii.ltb Strings.Ascii.compare]; intros *.
+    destruct (BinNat.N.compare_spec (Ascii.N_of_ascii k1) (Ascii.N_of_ascii k2)),
+             (BinNat.N.compare_spec (Ascii.N_of_ascii k2) (Ascii.N_of_ascii k3)),
+             (BinNat.N.compare_spec (Ascii.N_of_ascii k1) (Ascii.N_of_ascii k3));
+      intros; try discriminate; try reflexivity; exfalso; Lia.lia.
+  Qed.
+
+  Lemma ltb_total : forall k1 k2, Strings.Ascii.ltb k1 k2 = false -> Strings.Ascii.ltb k2 k1 = false -> k1 = k2.
+  Proof.
+    cbv [Strings.Ascii.ltb Strings.Ascii.compare]; intros k1 k2.
+    destruct (BinNat.N.compare_spec (Ascii.N_of_ascii k1) (Ascii.N_of_ascii k2)),
+             (BinNat.N.compare_spec (Ascii.N_of_ascii k2) (Ascii.N_of_ascii k1));
+      intros; try discriminate; try (exfalso; Lia.lia).
+    rewrite <- (Ascii.ascii_N_embedding k1), <- (Ascii.ascii_N_embedding k2); apply f_equal; assumption.
   Qed.
 End Ascii.
 
@@ -28,7 +35,7 @@ Fixpoint ltb (a b : string) : bool :=
     | String x a', String y b' =>
       if Ascii.eqb x y
       then ltb a' b'
-      else Ascii.ltb x y
+      else Strings.Ascii.ltb x y
     | _, _ => false
   end.
 
