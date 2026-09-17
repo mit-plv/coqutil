@@ -123,4 +123,18 @@ Module Z.
   #[global] Hint Rewrite <-Z.ones_equiv
        using solve [auto with zarith] : z_bitwise.
 
+  Lemma smodulo_pow2 (w z : Z) :
+    Z.smodulo z (2 ^ w) = (z + 2 ^ (w - 1)) mod 2 ^ w - 2 ^ (w - 1).
+  Proof.
+    cbv [Z.smodulo Z.omodulo].
+    rewrite Z.sub_opp_r, Z.add_opp_r.
+    destruct (Z.ltb_spec w 0).
+    { rewrite !Z.pow_neg_r by blia. reflexivity. }
+    destruct (Z.eqb_spec w 0) as [->|].
+    { reflexivity. }
+    rewrite (Z.pow_sub_r 2 w 1) by blia.
+    rewrite Z.quot_div_nonneg by blia.
+    reflexivity.
+  Qed.
+
 End Z.

@@ -155,8 +155,7 @@ Qed.
 
 (** ** signExtend *)
 
-Definition signExtend(oldwidth: Z)(z: Z): Z :=
-  (z + 2^(oldwidth-1)) mod 2^oldwidth - 2^(oldwidth-1).
+Definition signExtend(oldwidth: Z)(z: Z): Z := Z.smodulo z (2 ^ oldwidth).
 
 Definition signExtend_bitwise(width n: Z): Z :=
   if Z.testbit n (width - 1)
@@ -169,6 +168,7 @@ Lemma signExtend_alt_bitwise: forall l n,
 Proof.
   intros.
   unfold signExtend, signExtend_bitwise.
+  rewrite Z.smodulo_pow2.
   assert (0 < 2 ^ l) as A by (apply Z.pow_pos_nonneg; blia).
   assert (0 < 2 ^ (l - 1)) as A' by (apply Z.pow_pos_nonneg; blia).
   destruct (Z.testbit n (l - 1)) eqn: E.
@@ -213,43 +213,3 @@ Proof.
     blia.
 Qed.
 
-Lemma signExtend_range: forall i z,
-    0 < i ->
-    - 2 ^ (i - 1) <= signExtend i z < 2 ^ (i - 1).
-Proof.
-  intros.
-  unfold signExtend.
-  pose proof (Z.mod_pos_bound (z + (2 ^ (i - 1))) (2 ^ i)) as P.
-  assert (0 < 2 ^ i) as A. {
-    apply Z.pow_pos_nonneg; blia.
-  }
-  specialize (P A).
-  replace (2 ^ i) with (2 ^ ((i - 1) + 1)) in * by (f_equal; blia).
-  rewrite Z.pow_add_r in * by blia.
-  change (2 ^ 1) with 2 in *.
-  remember (2 ^ (i - 1)) as B.
-  blia.
-Qed.
-
-Lemma signExtend_bounds: forall i z,
-    0 <= i -> - 2 ^ i <= signExtend (i + 1) z < 2 ^ i.
-Proof.
-  intros. pose proof (signExtend_range (i + 1) z) as P.
-  replace (i + 1 - 1) with i in P by Lia.lia. eapply P. Lia.lia.
-Qed.
-
-Lemma signExtend_nop: forall l w v,
-    - 2 ^ l <= v < 2 ^ l ->
-    0 <= l < w ->
-    signExtend w v = v.
-Proof.
-  intros.
-  unfold signExtend.
-  assert (2 ^ (w - 1) * 2 = 2 ^ w). {
-    replace w with (w - 1 + 1) at 2 by blia.
-    rewrite Z.pow_add_r by blia.
-    reflexivity.
-  }
-  pose proof (Z.pow_le_mono_r 2 l (w-1)).
-  rewrite Z.mod_small; blia.
-Qed.

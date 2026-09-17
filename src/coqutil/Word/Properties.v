@@ -2,6 +2,7 @@ From Coq Require Import ZArith.
 Require Import Coq.ZArith.Znumtheory.
 Require Import Coq.micromega.Lia.
 Require Import coqutil.Z.Lia Btauto.
+Require Import coqutil.Z.ZLib.
 Require Coq.setoid_ring.Ring_theory.
 From Stdlib Require Import Zmod Zmod.Bits.
 Require Import coqutil.Byte.
@@ -41,15 +42,7 @@ Module word.
     Lemma smodulo_pow2 z :
       Z.smodulo z (2 ^ width) = (z + 2 ^ (width - 1)) mod 2 ^ width - 2 ^ (width - 1).
     Proof.
-      cbv [Z.smodulo Z.omodulo].
-      rewrite Z.sub_opp_r, Z.add_opp_r.
-      destruct (Z.ltb_spec width 0).
-      { rewrite !Z.pow_neg_r by blia. reflexivity. }
-      destruct (Z.eqb_spec width 0) as [->|].
-      { reflexivity. }
-      rewrite (Z.pow_sub_r 2 width 1) by blia.
-      rewrite Z.quot_div_nonneg by blia.
-      reflexivity.
+      apply Z.smodulo_pow2.
     Qed.
 
     Lemma pow2_width_minus1 (Hw : 0 < width) : 2 ^ width = 2 * 2 ^ (width - 1).

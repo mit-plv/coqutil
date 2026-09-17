@@ -14,20 +14,8 @@ Section Lemmas. Local Set Default Proof Using "All".
     w = width ->
     bits.of_Z width (BitOps.signExtend w v) = bits.of_Z width v.
   Proof.
-    intros. subst. unfold BitOps.signExtend. apply bits.of_Z_inj.
-    destruct (Z.ltb_spec width 0).
-    { rewrite !Z.pow_neg_r, !Zmod_0_r by blia. blia. }
-    pose proof (Z.pow_pos_nonneg 2 width).
-    remember (2 ^ width) as M.
-    remember (2 ^ (width - 1)) as M2.
-    rewrite Z.add_mod by blia.
-    rewrite Zminus_mod by blia.
-    rewrite Z.mod_mod by blia.
-    rewrite <- (Z.mod_mod M2 M) at 2 by blia.
-    rewrite <- Zminus_mod by blia.
-    rewrite Z.add_simpl_r.
-    rewrite Z.mod_mod by blia.
-    reflexivity.
+    intros. subst. unfold BitOps.signExtend.
+    rewrite <-bits.signed_of_Z, Zmod.of_Z_signed. reflexivity.
   Qed.
 
 
