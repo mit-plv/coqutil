@@ -102,7 +102,7 @@ Proof.
   (* rewrite skipn_all by assumption. (* fails *) *)
 
   rewr (fun t => multimatch t with
-  | context[length (skipn ?LEN ?L)] => constr:(skipn_all LEN L)
+  | context[length (skipn ?LEN ?L)] => constr:(skipn_all2 LEN L)
   end)
   in * by assumption.
 
