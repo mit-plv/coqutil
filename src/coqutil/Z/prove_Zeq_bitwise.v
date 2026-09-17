@@ -260,7 +260,7 @@ Ltac Zbitwise :=
   try btauto.
 
 Ltac prove_Zeq_bitwise_pre :=
-  rewrite ?signExtend_alt_bitwise by blia; unfold signExtend_bitwise, bitSlice in *;
+  rewrite ?signExtend_alt_bitwise by blia; unfold signExtend_bitwise in *;
   subst;
   repeat match goal with
          | H: _ /\ _ |- _ => destruct H
