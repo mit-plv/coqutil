@@ -7,16 +7,6 @@ Require Import Coq.micromega.Lia.
 
 Local Open Scope Z_scope.
 
-Lemma or_to_plus: forall a b,
-    Z.land a b = 0 ->
-    Z.lor a b = a + b.
-Proof.
-  intros.
-  rewrite <- Z.lxor_lor by assumption.
-  symmetry. apply Z.add_nocarry_lxor. assumption.
-Qed.
-
-
 (** ** bitSlice *)
 
 Definition bitSlice(x: Z)(start eend: Z): Z :=
@@ -172,7 +162,7 @@ Proof.
   assert (0 < 2 ^ l) as A by (apply Z.pow_pos_nonneg; blia).
   assert (0 < 2 ^ (l - 1)) as A' by (apply Z.pow_pos_nonneg; blia).
   destruct (Z.testbit n (l - 1)) eqn: E.
-  - rewrite or_to_plus by Z.bitblast.
+  - rewrite Z.or_to_plus by Z.bitblast.
     rewrite Z.shiftl_mul_pow2 by blia.
     rewrite Z.land_ones by blia.
     apply Z.testbit_true in E; [|blia].

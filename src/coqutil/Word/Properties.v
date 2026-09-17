@@ -224,20 +224,12 @@ Module word.
       apply Znat.Z2Nat.inj_lt; trivial.
     Qed.
 
-    Lemma byte_wrap_word_wrap (w : Z) (H : 8 <= width) :
-      byte.wrap (w mod 2 ^ width) = byte.wrap w.
-    Proof.
-      cbv [byte.wrap].
-      rewrite <-Zmod_div_mod; trivial; [blia | apply Z.pow_pos_nonneg; blia |].
-      exists (2 ^ (width - 8)).
-      rewrite <-Z.pow_add_r by blia.
-      rewrite Z.sub_add.
-      reflexivity.
-    Qed.
     Lemma byte_swrap_word_wrap (w : Z) (H : 8 <= width) :
       byte.swrap (w mod 2 ^ width) = byte.swrap w.
     Proof.
-      rewrite <-byte.swrap_wrap, (byte_wrap_word_wrap _ H), byte.swrap_wrap; reflexivity.
+      rewrite <-byte.swrap_wrap; cbv [byte.wrap].
+      rewrite Z.mod_mod_divide; [apply byte.swrap_wrap|].
+      exists (2 ^ (width - 8)). rewrite <-Z.pow_add_r by lia. f_equal; lia.
     Qed.
 
     Definition broadcast (b : bool) : word := Zmod.opp (of_Z (Z.b2z b)).
