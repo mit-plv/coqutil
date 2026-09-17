@@ -1,5 +1,5 @@
 Require Import Coq.ZArith.ZArith.
-Require Import Coq.micromega.Lia.
+Require Export Coq.micromega.Lia.
 
 Ltac is_lia_bool p :=
   lazymatch p with
@@ -66,8 +66,8 @@ Abort.
 (* We have encountered cases where lia is insanely slower than omega,
    (https://github.com/coq/coq/issues/9848), but not the other way. *)
 Ltac compare_tacs tacA tacB :=
-  idtac; (* <-- needed to prevent invocations such as [intuition blia] from
-                applying blia right away instead of passing it to [intuition] *)
+  idtac; (* <-- needed to prevent invocations such as [intuition lia] from
+                applying lia right away instead of passing it to [intuition] *)
   lazymatch goal with
   | |- ?G =>
     let HA := fresh in let HB := fresh in
@@ -110,5 +110,3 @@ Goal True. compare_tacs ltac:(wait 10%Z; exact I) ltac:(loop_forever). Abort.
 
 *)
 
-(* bench-lia to be used by all code, unless lia doesn't work *)
-Ltac blia := lia.

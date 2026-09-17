@@ -26,8 +26,8 @@ Section LittleEndian.
   Proof.
     revert z; induction n; cbn [le_split le_combine]; intros.
     { rewrite Z.mod_1_r; trivial. }
-    { erewrite IHn, byte.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by blia.
-      unfold byte.wrap; rewrite <-! Z.land_ones by blia; prove_Zeq_bitwise. }
+    { erewrite IHn, byte.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by lia.
+      unfold byte.wrap; rewrite <-! Z.land_ones by lia; prove_Zeq_bitwise. }
   Qed.
   Notation le_combine_le_split := le_combine_split.
 
@@ -43,7 +43,7 @@ Section LittleEndian.
     { eapply byte.unsigned_inj.
       rewrite byte.unsigned_of_Z, <-byte.wrap_unsigned; cbv [byte.wrap].
       Z.bitblast; cbn; subst.
-      rewrite (Z.testbit_neg_r _ (i-8)) by blia.
+      rewrite (Z.testbit_neg_r _ (i-8)) by lia.
       Z.bitblast_core. }
     { rewrite <-IHbs.
       rewrite length_le_split.
@@ -85,20 +85,20 @@ Section LittleEndian.
   Proof.
     induction n; intros. { rewrite Z.shiftr_0_r; trivial. }
     cbn [Nat.add List.skipn le_split].
-    rewrite IHn, Z.shiftr_shiftr; repeat (blia || f_equal).
+    rewrite IHn, Z.shiftr_shiftr; repeat (lia || f_equal).
   Qed.
 
   Lemma skipn_le_split n m z (H: (n <= m)%nat) :
     List.skipn n (le_split m z) = le_split (m-n) (Z.shiftr z (8*n)).
   Proof.
-    replace m with (n+(m-n))%nat by blia.
-    rewrite skipn_le_split'; f_equal; blia.
+    replace m with (n+(m-n))%nat by lia.
+    rewrite skipn_le_split'; f_equal; lia.
   Qed.
 
   Lemma nth_error_le_split i n z (H: (i < n)%nat) :
     List.nth_error (le_split n z) i = Some (byte.of_Z (Z.shiftr z (8*i))).
   Proof.
-    rewrite <-List.hd_error_skipn, skipn_le_split, hd_error_le_split by blia; trivial.
+    rewrite <-List.hd_error_skipn, skipn_le_split, hd_error_le_split by lia; trivial.
   Qed.
 
   Lemma nth_default_le_split i n z (H: (i < n)%nat) d :
@@ -110,9 +110,9 @@ Section LittleEndian.
   Proof.
     induction n. { setoid_rewrite Z.mod_1_r; trivial. }
     intros [|bs b]; cbn [le_combine List.firstn].
-    { rewrite Z.mod_0_l; trivial. eapply Z.pow_nonzero; blia. }
+    { rewrite Z.mod_0_l; trivial. eapply Z.pow_nonzero; lia. }
     rewrite <-byte.wrap_unsigned; cbv [byte.wrap].
-    rewrite IHn, <-!Z.land_ones by blia.
+    rewrite IHn, <-!Z.land_ones by lia.
     prove_Zeq_bitwise.
   Qed.
 
@@ -122,7 +122,7 @@ Section LittleEndian.
       0 <= le_combine t < 2 ^ (8 * List.length t).
   Proof.
     rewrite <-(List.firstn_all t), le_combine_firstn, List.firstn_all.
-    eapply Z.mod_pos_bound, Z.pow_pos_nonneg; blia.
+    eapply Z.mod_pos_bound, Z.pow_pos_nonneg; lia.
   Qed.
 
   Lemma le_combine_app bs1 bs2:

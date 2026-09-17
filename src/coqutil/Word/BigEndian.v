@@ -39,10 +39,10 @@ Section BigEndian. Local Set Default Proof Using "All".
       | |- context [?F n t] => change (F n t) with (combine n t)
       end.
       pose proof (byte.unsigned_range b).
-      replace (8 * Z.of_nat (S n)) with (8 * Z.of_nat n + 8) by blia.
-      rewrite Z.pow_add_r by blia.
+      replace (8 * Z.of_nat (S n)) with (8 * Z.of_nat n + 8) by lia.
+      rewrite Z.pow_add_r by lia.
       rewrite Z.or_to_plus.
-      + rewrite (Z.shiftl_mul_pow2 (byte.unsigned b)) by blia. Lia.nia.
+      + rewrite (Z.shiftl_mul_pow2 (byte.unsigned b)) by lia. Lia.nia.
       + prove_Zeq_bitwise.
   Qed.
 
@@ -53,9 +53,9 @@ Section BigEndian. Local Set Default Proof Using "All".
     - cbn. intros. rewrite Z.mod_1_r. trivial.
     - cbn [split combine PrimitivePair.pair._1 PrimitivePair.pair._2]; intros.
       erewrite IHn; clear IHn.
-      rewrite byte.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by blia.
+      rewrite byte.unsigned_of_Z, Nat2Z.inj_succ, Z.mul_succ_l by lia.
       unfold byte.wrap.
-      rewrite <-! Z.land_ones by blia.
+      rewrite <-! Z.land_ones by lia.
       Z.bitblast.
   Qed.
 
@@ -70,7 +70,7 @@ Section BigEndian. Local Set Default Proof Using "All".
         rewrite byte.unsigned_of_Z, <-byte.wrap_unsigned; cbv [byte.wrap].
         pose proof combine_bound _2 as B.
         Z.bitblast. cbn. subst.
-        rewrite (testbit_above B) by blia.
+        rewrite (testbit_above B) by lia.
         Z.bitblast_core. }
       { etransitivity. 1: symmetry. 1: eapply IHn.
         rewrite combine_split.
@@ -78,9 +78,9 @@ Section BigEndian. Local Set Default Proof Using "All".
         f_equal.
         pose proof combine_bound _2 as B.
         rewrite <- (Z.mod_small _ _ B) at 2.
-        rewrite <-?Z.land_ones by blia.
+        rewrite <-?Z.land_ones by lia.
         Z.bitblast; subst; cbn.
-        rewrite (Z.testbit_neg_r _ (i - 8 * Z.of_nat n)) by blia.
+        rewrite (Z.testbit_neg_r _ (i - 8 * Z.of_nat n)) by lia.
         reflexivity. }
   Qed.
 

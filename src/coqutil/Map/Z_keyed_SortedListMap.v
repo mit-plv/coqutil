@@ -8,7 +8,7 @@ Local Unset Universe Minimization ToSet.
 #[global] Instance Zltb_strictorder: SortedList.parameters.strict_order Z.ltb.
 Proof.
   constructor; intros; rewrite ?Z.ltb_lt, ?Z.ltb_ge, ?Z.ltb_irrefl in *;
-    reflexivity || blia.
+    reflexivity || lia.
 Qed.
 
 #[global] Instance Zkeyed_map_params(V: Type): SortedList.parameters := {|

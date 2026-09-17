@@ -89,14 +89,14 @@ Module map.
       pose proof Nat.eqb_spec.
       cbv [of_list_nat].
       erewrite get_of_func_Some_supported; trivial; intros.
-      rewrite in_seq; split; try blia; cbn.
+      rewrite in_seq; split; try lia; cbn.
       apply nth_error_Some. congruence.
     Qed.
 
     Lemma get_of_list_nat_at a xs i : get (of_list_nat_at a xs) (a+i) = nth_error xs i.
     Proof.
       cbv [of_list_nat_at].
-      rewrite get_map_keys_always_invertible, get_of_list_nat; trivial; intros; blia.
+      rewrite get_map_keys_always_invertible, get_of_list_nat; trivial; intros; lia.
     Qed.
   End OfListNatAt.
 
@@ -115,16 +115,16 @@ Module map.
       erewrite get_of_func_Some_supported; trivial; intros.
       destruct (Z.ltb_spec k 0%Z) in *; try discriminate.
       eapply in_map_iff; exists (Z.to_nat k); rewrite ?in_seq;
-        repeat split; rewrite ?Znat.Z2Nat.id; try blia; cbn.
+        repeat split; rewrite ?Znat.Z2Nat.id; try lia; cbn.
       apply nth_error_Some. congruence.
     Qed.
 
     Lemma get_of_list_Z_at a xs i : get (of_list_Z_at a xs) i = Znth_error xs (i-a)%Z.
     Proof.
       cbv [of_list_Z_at].
-      replace i with (a+(i-a)) by blia.
-      rewrite get_map_keys_always_invertible, get_of_list_Z by (intros; blia).
-      f_equal; blia.
+      replace i with (a+(i-a)) by lia.
+      rewrite get_map_keys_always_invertible, get_of_list_Z by (intros; lia).
+      f_equal; lia.
     Qed.
 
     Lemma get_of_list_Z_at_app a xs ys :
@@ -135,13 +135,13 @@ Module map.
       rewrite Properties.map.get_putmany_dec, 3get_of_list_Z_at.
       cbv [Znth_error].
       destruct (Z.ltb_spec (k-a) 0), (Z.ltb_spec ((k - (a + Z.of_nat (length xs)))) 0);
-        try blia; try trivial.
-      { rewrite nth_error_app1 by blia; trivial. }
-      { rewrite nth_error_app2 by blia; trivial.
+        try lia; try trivial.
+      { rewrite nth_error_app1 by lia; trivial. }
+      { rewrite nth_error_app2 by lia; trivial.
         case (nth_error ys (Z.to_nat (k - (a + Z.of_nat (length xs))))) eqn:?.
-        { rewrite <-Heqo. f_equal. blia. }
+        { rewrite <-Heqo. f_equal. lia. }
         eapply nth_error_None in Heqo.
-        rewrite 2(proj2 (nth_error_None _ _)) by blia; trivial. }
+        rewrite 2(proj2 (nth_error_None _ _)) by lia; trivial. }
     Qed.
   End OfListZAt.
 End map.

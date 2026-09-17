@@ -331,7 +331,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       apply eq_of_eq_Some in H. subst l2.
       destruct i as [|j].
       + simpl. eauto.
-      + simpl. assert (j < List.length l1)%nat as D by blia. eauto.
+      + simpl. assert (j < List.length l1)%nat as D by lia. eauto.
   Qed.
 
   Lemma In_option_all: forall {l1: list (option A)} {l2: list A} {v1o: option A},
@@ -404,7 +404,7 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
       pose proof proj1 (nth_error_Some (map f l) i) as HX.
       destruct (nth_error (map f l) i); try discriminate.
       specialize (HX ltac:(discriminate)).
-      rewrite map_length in HX. blia. }
+      rewrite map_length in HX. lia. }
   Qed.
 
   Lemma nth_error_ext_samelength (xs ys : list A)
@@ -414,8 +414,8 @@ Section WithNonmaximallyInsertedA. Local Set Default Proof Using "All".
   Proof.
     eapply nth_error_ext; intros i.
     case (Compare_dec.le_lt_dec (length xs) i)as[|Hi]; eauto.
-    pose proof proj2 (nth_error_None xs i) ltac:(blia).
-    pose proof proj2 (nth_error_None ys i) ltac:(blia).
+    pose proof proj2 (nth_error_None xs i) ltac:(lia).
+    pose proof proj2 (nth_error_None ys i) ltac:(lia).
     congruence.
   Qed.
 
@@ -1040,8 +1040,8 @@ Lemma length_flat_map: forall [A B: Type] (f: A -> list B) n (l: list A),
     length (flat_map f l) = (n * length l)%nat.
 Proof.
   induction l; intros.
-  - simpl. blia.
-  - simpl. rewrite app_length. rewrite H. rewrite IHl; assumption || blia.
+  - simpl. lia.
+  - simpl. rewrite app_length. rewrite H. rewrite IHl; assumption || lia.
 Qed.
 
 Lemma flat_map_const_length[A B: Type]: forall (f: A -> list B) (n: nat) (l: list A),
@@ -1049,8 +1049,8 @@ Lemma flat_map_const_length[A B: Type]: forall (f: A -> list B) (n: nat) (l: lis
     length (flat_map f l) = (n * length l)%nat.
 Proof.
   intros. induction l.
-  - simpl. blia.
-  - simpl. rewrite app_length. rewrite IHl. rewrite H. blia.
+  - simpl. lia.
+  - simpl. rewrite app_length. rewrite IHl. rewrite H. lia.
 Qed.
 
 Lemma firstn_skipn_nth: forall (T: Type) (i: nat) (L: list T) (d: T),
@@ -1058,17 +1058,17 @@ Lemma firstn_skipn_nth: forall (T: Type) (i: nat) (L: list T) (d: T),
     List.firstn 1 (List.skipn i L) = [List.nth i L d].
 Proof.
   induction i; intros.
-  - simpl. destruct L; simpl in *; try (exfalso; blia). reflexivity.
-  - simpl. destruct L; try (simpl in *; exfalso; blia). simpl.
-    rewrite <- IHi; [reflexivity|]. simpl in *. blia.
+  - simpl. destruct L; simpl in *; try (exfalso; lia). reflexivity.
+  - simpl. destruct L; try (simpl in *; exfalso; lia). simpl.
+    rewrite <- IHi; [reflexivity|]. simpl in *. lia.
 Qed.
 
 Lemma firstn_nth: forall (T: Type) (i: nat) (L: list T) (d: T),
     i < List.length L -> List.firstn i L ++ [nth i L d] = List.firstn (S i) L.
 Proof.
   intros.
-  rewrite <-firstn_skipn_nth, firstn_skipn_comm, PeanoNat.Nat.add_comm by blia.
-  replace (firstn i L) with (firstn i (firstn (1 + i) L)) by (rewrite firstn_firstn, min_l by blia; auto).
+  rewrite <-firstn_skipn_nth, firstn_skipn_comm, PeanoNat.Nat.add_comm by lia.
+  replace (firstn i L) with (firstn i (firstn (1 + i) L)) by (rewrite firstn_firstn, min_l by lia; auto).
   rewrite firstn_skipn.
   reflexivity.
 Qed.
@@ -1089,11 +1089,11 @@ Lemma listUpdate_length: forall E i l (e: E),
   length (listUpdate l i e) = length l.
 Proof.
   induction i; intros.
-  - destruct l; simpl in *; [blia|reflexivity].
-  - destruct l; simpl in *; [blia|].
+  - destruct l; simpl in *; [lia|reflexivity].
+  - destruct l; simpl in *; [lia|].
     f_equal.
     apply IHi.
-    blia.
+    lia.
 Qed.
 
 Definition listUpdate_error{E: Type}(l: list E)(i: nat)(e: E): option (list E) :=
@@ -1116,18 +1116,18 @@ Proof.
   - unfold listUpdate_error in H.
     destruct_one_match_hyp; [|discriminate].
     destruct l.
-    + simpl in *; blia.
+    + simpl in *; lia.
     + unfold listUpdate in H. simpl in *. inversion H. rewrite <- H2 in H0.
       inversion H0. reflexivity.
   - unfold listUpdate_error in H.
     destruct_one_match_hyp; [|discriminate].
     destruct l.
-    + simpl in *; blia.
+    + simpl in *; lia.
     + unfold listUpdate in H. simpl in *. inversion H. rewrite <- H2 in H0.
       eapply IHi with (l := l).
       2: eassumption.
       unfold listUpdate_error.
-      destr (Nat.ltb i (length l)); [reflexivity|blia].
+      destr (Nat.ltb i (length l)); [reflexivity|lia].
 Qed.
 
 Lemma nth_error_skipn': forall E i j (l: list E),
@@ -1135,13 +1135,13 @@ Lemma nth_error_skipn': forall E i j (l: list E),
   nth_error (skipn i l) (j - i) = nth_error l j.
 Proof.
   induction i; intros.
-  - replace (j - 0) with j by blia. reflexivity.
+  - replace (j - 0) with j by lia. reflexivity.
   - simpl. destruct l.
     * destruct j; simpl; [reflexivity|].
       destruct (j - i); reflexivity.
-    * simpl. destruct j; [blia|].
-      replace (S j - S i) with (j - i) by blia.
-      rewrite IHi by blia.
+    * simpl. destruct j; [lia|].
+      replace (S j - S i) with (j - i) by lia.
+      rewrite IHi by lia.
       reflexivity.
 Qed.
 
@@ -1152,21 +1152,21 @@ Lemma nth_error_listUpdate_error_diff: forall E l l' i j (e: E),
 Proof.
   intros. unfold listUpdate_error in H.
   destruct_one_match_hyp; [|discriminate].
-  assert (j < i \/ i < j < length l \/ length l <= j) as C by blia.
+  assert (j < i \/ i < j < length l \/ length l <= j) as C by lia.
   destruct C as [C|[C|C]].
   - inversion H. clear H. subst l'. unfold listUpdate.
     rewrite nth_error_app1.
     + rewrite nth_error_firstn, (proj2 (Nat.ltb_lt _ _)) by assumption. reflexivity.
-    + pose proof (@firstn_length_le _ l i). blia.
+    + pose proof (@firstn_length_le _ l i). lia.
   - inversion H. subst l'. unfold listUpdate.
     pose proof (firstn_le_length i l).
-    rewrite nth_error_app2 by blia.
-    rewrite nth_error_app2 by (simpl; blia).
-    rewrite firstn_length_le by blia.
+    rewrite nth_error_app2 by lia.
+    rewrite nth_error_app2 by (simpl; lia).
+    rewrite firstn_length_le by lia.
     change (length [e]) with 1.
-    replace (j - i -1) with (j - (S i)) by blia.
+    replace (j - i -1) with (j - (S i)) by lia.
     apply nth_error_skipn'.
-    blia.
+    lia.
   - inversion H.
     pose proof (nth_error_None l j) as P.
     destruct P as [_ P]. rewrite P by assumption.
@@ -1198,7 +1198,7 @@ Lemma upds_length: forall E i (l xs: list E),
 Proof.
   intros; unfold upds.
   rewrite ?app_length, ?firstn_length, skipn_length.
-  blia.
+  lia.
 Qed.
 
 Lemma upds_cons_S: forall E i h (t xs: list E),
@@ -1214,8 +1214,8 @@ Lemma upds_same: forall E i l (xs : list E),
 Proof.
   intros.
   unfold upds.
-  replace (length l - i) with 0 by blia.
-  rewrite firstn_all2, skipn_all2, app_nil_r by blia.
+  replace (length l - i) with 0 by lia.
+  rewrite firstn_all2, skipn_all2, app_nil_r by lia.
   reflexivity.
 Qed.
 
@@ -1226,24 +1226,24 @@ Proof.
   rewrite ?firstn_app, ?skipn_app.
   rewrite <-?app_assoc.
   f_equal.
-  { rewrite firstn_firstn, min_r by blia.
+  { rewrite firstn_firstn, min_r by lia.
     reflexivity. }
   f_equal.
   { symmetry.
     apply firstn_all2.
-    rewrite ?firstn_length; blia. }
+    rewrite ?firstn_length; lia. }
   rewrite (proj1 (length_zero_iff_nil (firstn _ (skipn _ _)))), app_nil_l.
-  2:{ rewrite ?firstn_length, skipn_length; blia. }
+  2:{ rewrite ?firstn_length, skipn_length; lia. }
   f_equal.
   { rewrite ?app_length, ?firstn_length, ?skipn_length.
-    f_equal; blia. }
+    f_equal; lia. }
   rewrite ?(proj1 (length_zero_iff_nil (skipn _ (firstn _ _)))), ?app_nil_l.
-  2, 3: rewrite ?skipn_length, ?firstn_length; blia.
+  2, 3: rewrite ?skipn_length, ?firstn_length; lia.
   rewrite skipn_skipn, ?firstn_length, app_length.
   match goal with
   | |- skipn ?n _ = skipn ?m _ => rewrite <-(skipn_length_firstn n), <-(skipn_length_firstn m), ?firstn_length
   end.
-  f_equal; blia.
+  f_equal; lia.
 Qed.
 
 Lemma upds_app': forall E i j l (xs1 xs2: list E),
@@ -1260,9 +1260,9 @@ Proof.
   intros.
   unfold upds.
   rewrite firstn_app, skipn_app, app_length.
-  replace (i - length l1) with 0 by blia.
-  replace (length xs + i - length l1) with 0 by blia.
-  rewrite firstn_O, skipn_O, app_nil_r, ?(firstn_all2 xs), <-?app_assoc by blia.
+  replace (i - length l1) with 0 by lia.
+  replace (length xs + i - length l1) with 0 by lia.
+  rewrite firstn_O, skipn_O, app_nil_r, ?(firstn_all2 xs), <-?app_assoc by lia.
   reflexivity.
 Qed.
 
@@ -1273,13 +1273,13 @@ Proof.
   intros.
   unfold upds.
   rewrite ?firstn_app, ?skipn_app, PeanoNat.Nat.sub_0_r, firstn_O, app_nil_l, app_length.
-  replace (i - length l1) with 0 by blia.
-  rewrite firstn_O, skipn_length, PeanoNat.Nat.add_0_r, skipn_all2, ?app_nil_l, ?app_nil_r by blia.
+  replace (i - length l1) with 0 by lia.
+  rewrite firstn_O, skipn_length, PeanoNat.Nat.add_0_r, skipn_all2, ?app_nil_l, ?app_nil_r by lia.
   rewrite <-(firstn_skipn (length l1 - i)(firstn (length l1 + length l2 - i) xs)) at 1.
-  rewrite <-?app_assoc, firstn_firstn, min_l, firstn_skipn_comm by blia.
+  rewrite <-?app_assoc, firstn_firstn, min_l, firstn_skipn_comm by lia.
   f_equal; f_equal; f_equal; f_equal.
-  { f_equal; blia. }
-  blia.
+  { f_equal; lia. }
+  lia.
 Qed.
 
 Lemma upds_app2: forall E i l1 l2 (xs :list E),
@@ -1287,8 +1287,8 @@ Lemma upds_app2: forall E i l1 l2 (xs :list E),
 Proof.
   intros.
   unfold upds.
-  rewrite firstn_app, skipn_app, app_length, firstn_all2, skipn_all2, app_nil_l, <-?app_assoc by blia.
-  f_equal; f_equal; f_equal; f_equal; blia.
+  rewrite firstn_app, skipn_app, app_length, firstn_all2, skipn_all2, app_nil_l, <-?app_assoc by lia.
+  f_equal; f_equal; f_equal; f_equal; lia.
 Qed.
 
 Lemma upds_comm': forall E i j l (xs1 xs2 : list E),
@@ -1299,25 +1299,25 @@ Proof.
   destruct (PeanoNat.Nat.leb_spec j (length l)).
   { unfold upds.
     rewrite ?firstn_app, ?firstn_firstn, (min_r j), (min_l i), ?skipn_app, ?firstn_length,
-    skipn_skipn, firstn_skipn_comm, ?app_length, ?firstn_length, ?skipn_length, <-?app_assoc by blia.
+    skipn_skipn, firstn_skipn_comm, ?app_length, ?firstn_length, ?skipn_length, <-?app_assoc by lia.
     f_equal.
-    rewrite (min_l i), min_l, min_r, (min_l j), min_l by blia.
-    replace (i - j) with 0 by blia.
+    rewrite (min_l i), min_l, min_r, (min_l j), min_l by lia.
+    replace (i - j) with 0 by lia.
     simpl.
     f_equal.
-    { rewrite ?firstn_all2 by blia.
+    { rewrite ?firstn_all2 by lia.
       reflexivity. }
     f_equal; f_equal.
-    { f_equal; blia. }
+    { f_equal; lia. }
     { rewrite <-skipn_O at 1.
-      f_equal; [blia|f_equal].
-      blia. }
-    rewrite 2skipn_all2 by (rewrite firstn_length; blia).
+      f_equal; [lia|f_equal].
+      lia. }
+    rewrite 2skipn_all2 by (rewrite firstn_length; lia).
     simpl.
     rewrite skipn_skipn.
     f_equal.
-    blia. }
-  rewrite ?(upds_same _ j) by (rewrite ?upds_length; blia).
+    lia. }
+  rewrite ?(upds_same _ j) by (rewrite ?upds_length; lia).
   reflexivity.
 Qed.
 
@@ -1342,7 +1342,7 @@ Lemma upds_replace: forall E (l xs: list E),
     length l = length xs -> upds l 0 xs = xs.
 Proof.
   intros.
-  rewrite upds_0_skipn, <-H, skipn_all2, app_nil_r by blia.
+  rewrite upds_0_skipn, <-H, skipn_all2, app_nil_r by lia.
   reflexivity.
 Qed.
 
@@ -1366,7 +1366,7 @@ Proof.
   intros.
   unfold upd, upds.
   f_equal; f_equal.
-  rewrite firstn_all2; [auto|simpl; blia].
+  rewrite firstn_all2; [auto|simpl; lia].
 Qed.
 
 Lemma upd_0_skipn : forall E (l: list E) x,
@@ -1374,7 +1374,7 @@ Lemma upd_0_skipn : forall E (l: list E) x,
 Proof.
   intros; unfold upd.
   apply upds_0_skipn.
-  simpl; blia.
+  simpl; lia.
 Qed.
 
 Lemma upd_S_skipn : forall E i (pre l: list E) x,
@@ -1385,10 +1385,10 @@ Proof.
   intros.
   subst i.
   rewrite upd_firstn_skipn, firstn_app, firstn_all, PeanoNat.Nat.sub_diag, firstn_O, skipn_app, skipn_all2, skipn_skipn, app_nil_r, app_nil_l, ?app_assoc.
-  2:{ blia. }
-  2:{ rewrite app_length, skipn_length; blia. }
+  2:{ lia. }
+  2:{ rewrite app_length, skipn_length; lia. }
   repeat f_equal.
-  blia.
+  lia.
 Qed.
 
 Section MoreUpdLemmas.
@@ -1525,7 +1525,7 @@ Section WithZ. Local Set Default Proof Using "All".
   Proof.
     pose proof eq_sym (firstn_skipn (Z.to_nat i) xsys).
     split; trivial.
-    rewrite firstn_length_le, length_skipn; blia.
+    rewrite firstn_length_le, length_skipn; lia.
   Qed.
 
   Lemma splitZ_spec_n [A] (xsys : list A) i n
@@ -1538,7 +1538,7 @@ Section WithZ. Local Set Default Proof Using "All".
   Proof.
     pose proof eq_sym (firstn_skipn (Z.to_nat i) xsys).
     split; trivial.
-    rewrite firstn_length_le, length_skipn; blia.
+    rewrite firstn_length_le, length_skipn; lia.
   Qed.
 
   Lemma not_In_Z_seq: forall L x d,
@@ -1548,8 +1548,8 @@ Section WithZ. Local Set Default Proof Using "All".
     unfold not.
     induction L; cbn -[Z.add]; intros. 1: assumption.
     destruct H0.
-    - subst. blia.
-    - eapply IHL. 2: exact H0. blia.
+    - subst. lia.
+    - eapply IHL. 2: exact H0. lia.
   Qed.
 
   Lemma unfoldn_Z_seq_Forall: forall L start,
@@ -1557,8 +1557,8 @@ Section WithZ. Local Set Default Proof Using "All".
   Proof using.
     induction L; intros.
     - constructor.
-    - cbn -[Z.add Z.of_nat]. constructor. 1: blia.
-      eapply Forall_impl. 2: eapply IHL. cbv beta. intros. blia.
+    - cbn -[Z.add Z.of_nat]. constructor. 1: lia.
+      eapply Forall_impl. 2: eapply IHL. cbv beta. intros. lia.
   Qed.
 
   Lemma NoDup_unfoldn_Z_seq: forall n start,
@@ -1567,7 +1567,7 @@ Section WithZ. Local Set Default Proof Using "All".
     induction n; intros.
     - constructor.
     - cbn -[Z.add]. constructor. 2: eapply IHn.
-      eapply not_In_Z_seq. blia.
+      eapply not_In_Z_seq. lia.
   Qed.
 
   Lemma unfoldn_Z_seq_snoc: forall n start,
@@ -1576,7 +1576,7 @@ Section WithZ. Local Set Default Proof Using "All".
   Proof using.
     induction n; intros.
     - cbn. rewrite Z.add_0_r. reflexivity.
-    - cbn -[Z.add Z.of_nat]. f_equal. rewrite IHn. f_equal. f_equal. blia.
+    - cbn -[Z.add Z.of_nat]. f_equal. rewrite IHn. f_equal. f_equal. lia.
   Qed.
 End WithZ.
 
