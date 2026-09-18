@@ -22,9 +22,9 @@ Require Import coqutil.Tactics.autoforward.
   : fwd_rewrites.
 
 #[export] Hint Extern 1 (autoforward (List.Forall _ (cons _ _)) _)
-  => rapply @List.invert_Forall_cons : typeclass_instances.
+  => rapply (fun A (P : A -> Prop) a l => proj1 (@List.Forall_cons_iff A P a l)) : typeclass_instances.
 #[export] Hint Extern 1 (autoforward (NoDup (_ :: _)) _)
-  => rapply @List.invert_NoDup_cons : typeclass_instances.
+  => rapply (fun A (a : A) l => proj1 (@List.NoDup_cons_iff A a l)) : typeclass_instances.
 
 #[export] Instance notin_nil[A: Type](a: A): autoforward (~ List.In a (@nil A)) True.
 Proof. intros ?. constructor. Qed.

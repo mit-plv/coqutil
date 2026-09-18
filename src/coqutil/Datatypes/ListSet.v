@@ -257,7 +257,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Proof.
     intros. generalize dependent l1. induction l2; simpl; intros.
     - assumption.
-    - eapply IHl2. eapply NoDup_removeb. assumption.
+    - eapply IHl2. eapply NoDup_filter. assumption.
   Qed.
 
   Lemma list_diff_cons: forall (l1 l2: list E) (x: E),

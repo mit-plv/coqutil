@@ -773,7 +773,7 @@ Module map.
         get m k = Some v.
     Proof using.
       induction ks; intros.
-      - apply List.nth_error_nil_Some in H0. contradiction.
+      - rewrite List.nth_error_nil in H0. discriminate.
       - unfold getmany_of_list in *. simpl in *.
         destr (get m a); try discriminate.
         destr (List.option_all (List.map (get m) ks)); try discriminate.
@@ -844,7 +844,7 @@ Module map.
     Proof.
       induction ks; intros.
       - simpl in H. destruct vs; try discriminate.
-        replace m2 with m1 in * by congruence. apply List.nth_error_nil_Some in H1. contradiction.
+        replace m2 with m1 in * by congruence. rewrite List.nth_error_nil in H1. discriminate.
       - simpl in H.
         destruct vs; try discriminate.
         inversion H0. subst. clear H0.
@@ -906,7 +906,7 @@ Module map.
         exists v, List.nth_error vs i = Some v.
     Proof using.
       induction ks; intros.
-      - apply List.nth_error_nil_Some in H0. contradiction.
+      - rewrite List.nth_error_nil in H0. discriminate.
       - simpl in *. destruct vs; try discriminate.
         destruct i.
         + simpl in *. eexists. reflexivity.

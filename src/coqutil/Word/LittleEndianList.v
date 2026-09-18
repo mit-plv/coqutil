@@ -98,7 +98,7 @@ Section LittleEndian.
   Lemma nth_error_le_split i n z (H: (i < n)%nat) :
     List.nth_error (le_split n z) i = Some (byte.of_Z (Z.shiftr z (8*i))).
   Proof.
-    rewrite List.nth_error_as_skipn, skipn_le_split, hd_error_le_split by blia; trivial.
+    rewrite <-List.hd_error_skipn, skipn_le_split, hd_error_le_split by blia; trivial.
   Qed.
 
   Lemma nth_default_le_split i n z (H: (i < n)%nat) d :
