@@ -30,10 +30,10 @@ Module map.
     Proof.
       cbv [of_list_word].
       erewrite get_of_func_Some_supported; trivial; intros.
-      pose proof bits.unsigned_range k ltac:(blia).
+      pose proof bits.unsigned_range k ltac:(lia).
       eapply in_map_iff; exists (Z.to_nat (Zmod.unsigned k));
         rewrite ?in_seq; repeat split; rewrite ?Znat.Z2Nat.id;
-        try blia; try solve [eapply Zmod.of_Z_unsigned].
+        try lia; try solve [eapply Zmod.of_Z_unsigned].
       apply nth_error_Some. congruence.
     Qed.
     Lemma get_of_list_word_at a xs i : get (of_list_word_at a xs) i
@@ -54,7 +54,7 @@ Module map.
       <->
       (0 <= Zmod.unsigned (Zmod.sub i a) < Z.of_nat (length xs))%Z.
     Proof.
-      pose proof bits.unsigned_range (Zmod.sub i a) ltac:(blia).
+      pose proof bits.unsigned_range (Zmod.sub i a) ltac:(lia).
       rewrite get_of_list_word_at, nth_error_Some.
       rewrite Nat2Z.inj_lt, ?Znat.Z2Nat.id; intuition.
     Qed.
@@ -65,52 +65,52 @@ Module map.
     Proof.
       eapply map_ext; intros k.
       rewrite get_of_list_word_at.
-      pose proof bits.unsigned_range (Zmod.sub k a) ltac:(blia) as Hrange.
+      pose proof bits.unsigned_range (Zmod.sub k a) ltac:(lia) as Hrange.
       pose proof proj1 (nth_error_Some xs (Z.to_nat (Zmod.unsigned (Zmod.sub k a)))) as Hlength.
       destruct (nth_error xs (Z.to_nat (Zmod.unsigned (Zmod.sub k a)))) as [v|] eqn:Hv.
       { specialize (Hlength ltac:(discriminate)).
         erewrite Properties.map.get_putmany_right;
-          rewrite ?nth_error_app1, ?get_of_list_word_at by blia; eassumption. }
+          rewrite ?nth_error_app1, ?get_of_list_word_at by lia; eassumption. }
       clear Hlength; pose proof Hv as H'v; eapply nth_error_None in Hv; rename Hv into Hlength.
       rewrite Properties.map.get_putmany_left; rewrite get_of_list_word_at; trivial.
       rewrite nth_error_app2 by assumption.
       f_equal.
-      transitivity (Z.to_nat (Zmod.unsigned (Zmod.sub k a) - Z.of_nat (length xs))); try blia.
+      transitivity (Z.to_nat (Zmod.unsigned (Zmod.sub k a) - Z.of_nat (length xs))); try lia.
       f_equal.
       transitivity (Zmod.unsigned (Zmod.sub (Zmod.sub k a) (bits.of_Z width (Z.of_nat (length xs))))).
       2: f_equal; ring.
       symmetry.
       rewrite Zmod.unsigned_sub.
       rewrite (Zmod.unsigned_of_Z (Z.of_nat (length xs))).
-      rewrite (Z.mod_small (Z.of_nat (length xs))) by blia.
+      rewrite (Z.mod_small (Z.of_nat (length xs))) by lia.
       eapply Z.mod_small.
-      split; blia.
+      split; lia.
     Qed.
 
     Lemma adjacent_arrays_disjoint a xs ys (H : (Z.of_nat (length xs) + Z.of_nat (length ys) <= 2^width)%Z) :
       disjoint (of_list_word_at (Zmod.add a (bits.of_Z width (Z.of_nat (length xs)))) ys) (of_list_word_at a xs).
     Proof.
       intros k y x Hy Hx.
-      assert ((Z.of_nat (length xs) <= 2^width)%Z) by blia.
-      assert ((Z.of_nat (length ys) <= 2^width)%Z) by blia.
-      pose proof bits.unsigned_range (Zmod.sub k a) ltac:(blia) as Hrange.
-      pose proof bits.unsigned_range (Zmod.sub k (Zmod.add a (bits.of_Z width (Z.of_nat (length xs))))) ltac:(blia) as Hr2.
+      assert ((Z.of_nat (length xs) <= 2^width)%Z) by lia.
+      assert ((Z.of_nat (length ys) <= 2^width)%Z) by lia.
+      pose proof bits.unsigned_range (Zmod.sub k a) ltac:(lia) as Hrange.
+      pose proof bits.unsigned_range (Zmod.sub k (Zmod.add a (bits.of_Z width (Z.of_nat (length xs))))) ltac:(lia) as Hr2.
       rewrite get_of_list_word_at in *.
       repeat match goal with H: nth_error ?l ?i = Some _ |- _ =>
           let HH := fresh H in pose proof proj1 (nth_error_Some l i) as HH;
           destruct (nth_error l i) in *; specialize (HH ltac:(discriminate));
           inversion H; subst; clear H
       end.
-      replace (length xs) with (Z.to_nat (Z.of_nat (length xs))) in Hx0 by blia; eapply Z2Nat.inj_lt in Hx0; try blia.
-      replace (length ys) with (Z.to_nat (Z.of_nat (length ys))) in Hy0 by blia; eapply Z2Nat.inj_lt in Hy0; try blia.
+      replace (length xs) with (Z.to_nat (Z.of_nat (length xs))) in Hx0 by lia; eapply Z2Nat.inj_lt in Hx0; try lia.
+      replace (length ys) with (Z.to_nat (Z.of_nat (length ys))) in Hy0 by lia; eapply Z2Nat.inj_lt in Hy0; try lia.
 
       replace (Zmod.sub k (Zmod.add a (bits.of_Z width (Z.of_nat (length xs)))))
          with (Zmod.sub (Zmod.sub k a) (bits.of_Z width (Z.of_nat (length xs)))) in Hy0 by ring.
       set (Zmod.sub k a) as i in *.
       rewrite (Zmod.unsigned_sub i), Zmod.unsigned_of_Z in Hy0.
       rewrite Zminus_mod_idemp_r in Hy0.
-      rewrite <-(Z_mod_plus _ 1), Z.mul_1_l in Hy0 by blia.
-      rewrite Z.mod_small in Hy0; blia.
+      rewrite <-(Z_mod_plus _ 1), Z.mul_1_l in Hy0 by lia.
+      rewrite Z.mod_small in Hy0; lia.
     Qed.
 
     Lemma of_list_word_at_app_n
@@ -136,7 +136,7 @@ Module map.
       rewrite Zmod.unsigned_0, Znat.Z2Nat.inj_0; cbv [MapKeys.map.map_keys nth_error].
       rewrite Properties.map.fold_singleton.
       f_equal; cbn [Z.of_nat].
-      apply Zmod.unsigned_inj; rewrite Zmod.unsigned_add, Zmod.unsigned_0, Z.add_0_r, Z.mod_small; trivial; eapply bits.unsigned_range; blia.
+      apply Zmod.unsigned_inj; rewrite Zmod.unsigned_add, Zmod.unsigned_0, Z.add_0_r, Z.mod_small; trivial; eapply bits.unsigned_range; lia.
     Qed.
 
     Import ListNotations.

@@ -147,14 +147,14 @@ Module Z.
              let l := fresh "l" in remember i as l
            end;
     repeat match goal with
-           | i: Z, j: Z |- _ => replace i with j in * by blia; clear i
+           | i: Z, j: Z |- _ => replace i with j in * by lia; clear i
            end.
 
   Ltac bitblast_core :=
     rewrite_bitwise;
     discover_equal_testbit_indices;
     destruct_ltbs;
-    try (exfalso; blia);
+    try (exfalso; lia);
     try btauto.
 
   (* Note: The Coq Standard library already provides a tactic called "Z.bitwise", but

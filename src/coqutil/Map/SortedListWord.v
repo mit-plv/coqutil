@@ -13,8 +13,8 @@ Section __. Local Set Default Proof Using "All".
       repeat match goal with
              | H: context[Z.ltb ?a ?b] |- _ => destruct (Z.ltb_spec a b)
              | |- context[Z.ltb ?a ?b] => destruct (Z.ltb_spec a b)
-             end; try congruence; try blia; [].
-    apply Zmod.unsigned_inj; blia.
+             end; try congruence; try lia; [].
+    apply Zmod.unsigned_inj; lia.
   Qed.
 
   Context (value : Type).

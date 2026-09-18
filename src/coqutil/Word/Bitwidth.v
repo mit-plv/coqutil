@@ -55,6 +55,6 @@ Section WithBitwidth. Local Set Default Proof Using "All".
     Zmod.unsigned (bits.of_Z width k) mod 2 ^ Z.log2 width = k.
   Proof.
     destruct width_cases as [-> | ->]; rewrite bits.unsigned_of_Z_small; cbn;
-      try apply Z.mod_small; blia.
+      try apply Z.mod_small; lia.
   Qed.
 End WithBitwidth.

@@ -33,11 +33,11 @@ Module Z.
       2 ^ n = 0 \/ 0 <= a < 2 ^ n.
   Proof.
     intros.
-    assert (n < 0 \/ 0 <= n) as C by blia. destruct C as [C | C].
+    assert (n < 0 \/ 0 <= n) as C by lia. destruct C as [C | C].
     - left. rewrite (Z.pow_neg_r 2 n C) in *. rewrite Z.mod_0_r in H. auto.
     - right.
       rewrite <- H. apply Z.mod_pos_bound.
-      apply Z.pow_pos_nonneg; blia.
+      apply Z.pow_pos_nonneg; lia.
   Qed.
 
   Lemma mod_pow2_same_bounds: forall a n,
@@ -46,7 +46,7 @@ Module Z.
       0 <= a < 2 ^ n.
   Proof.
     intros. rewrite <- H. apply Z.mod_pos_bound.
-    apply Z.pow_pos_nonneg; blia.
+    apply Z.pow_pos_nonneg; lia.
   Qed.
 
   Lemma testbit_true_nonneg: forall a i,
@@ -57,9 +57,9 @@ Module Z.
   Proof.
     intros.
     apply Z.testbit_true in H1; [|assumption].
-    pose proof (Z.pow_pos_nonneg 2 i ltac:(blia) H0).
-    pose proof (Z.mul_div_le a (2 ^ i) ltac:(blia)).
-    pose proof (Z.div_pos a (2 ^ i) H ltac:(blia)).
+    pose proof (Z.pow_pos_nonneg 2 i ltac:(lia) H0).
+    pose proof (Z.mul_div_le a (2 ^ i) ltac:(lia)).
+    pose proof (Z.div_pos a (2 ^ i) H ltac:(lia)).
     assert (a / 2 ^ i <> 0); [|Lia.nia].
     intro E. rewrite E in H1. cbv in H1. discriminate H1.
   Qed.
@@ -72,13 +72,13 @@ Module Z.
     intros.
     apply Z.testbit_true; [assumption|].
     destruct H0 as [A B].
-    pose proof (Z.pow_pos_nonneg 2 i ltac:(blia) H) as Q.
+    pose proof (Z.pow_pos_nonneg 2 i ltac:(lia) H) as Q.
     apply (Z.div_le_mono _ _ _ Q) in A.
-    rewrite Z_div_same in A by blia.
+    rewrite Z_div_same in A by lia.
     pose proof (Z.div_lt_upper_bound a (2 ^ i) 2 Q) as P.
-    rewrite Z.pow_add_r, Z.pow_1_r in B by blia.
+    rewrite Z.pow_add_r, Z.pow_1_r in B by lia.
     specialize (P B).
-    replace (a / 2 ^ i) with 1 by blia.
+    replace (a / 2 ^ i) with 1 by lia.
     reflexivity.
   Qed.
 
@@ -89,11 +89,11 @@ Module Z.
       a < 2 ^ (i - 1).
   Proof.
     intros.
-    assert (2 ^ (i - 1) <= a < 2 ^ i \/ a < 2 ^ (i - 1)) as C by blia.
+    assert (2 ^ (i - 1) <= a < 2 ^ i \/ a < 2 ^ (i - 1)) as C by lia.
     destruct C as [C | C]; [exfalso|assumption].
     assert (Z.testbit a (i - 1) = true); [|congruence].
-    replace i with (i - 1 + 1) in C at 2 by blia.
-    apply testbit_true_nonneg'; blia.
+    replace i with (i - 1 + 1) in C at 2 by lia.
+    apply testbit_true_nonneg'; lia.
   Qed.
 
   Lemma shiftl_minus_one_neg: forall n,
@@ -108,10 +108,10 @@ Module Z.
       0 < sz.
   Proof.
     intros.
-    assert (0 < sz \/ sz - 1 < 0) as C by blia.
+    assert (0 < sz \/ sz - 1 < 0) as C by lia.
     destruct C as [C | C]; [assumption|exfalso].
     rewrite Z.pow_neg_r in H by assumption.
-    blia.
+    lia.
   Qed.
 
   (* Create HintDb z_bitwise discriminated. *) (* DON'T do this, COQBUG(5381) *)
@@ -129,11 +129,11 @@ Module Z.
     cbv [Z.smodulo Z.omodulo].
     rewrite Z.sub_opp_r, Z.add_opp_r.
     destruct (Z.ltb_spec w 0).
-    { rewrite !Z.pow_neg_r by blia. reflexivity. }
+    { rewrite !Z.pow_neg_r by lia. reflexivity. }
     destruct (Z.eqb_spec w 0) as [->|].
     { reflexivity. }
-    rewrite (Z.pow_sub_r 2 w 1) by blia.
-    rewrite Z.quot_div_nonneg by blia.
+    rewrite (Z.pow_sub_r 2 w 1) by lia.
+    rewrite Z.quot_div_nonneg by lia.
     reflexivity.
   Qed.
 

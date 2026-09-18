@@ -46,7 +46,7 @@ Module word.
     Qed.
 
     Lemma pow2_width_minus1 (Hw : 0 < width) : 2 ^ width = 2 * 2 ^ (width - 1).
-    Proof. rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; blia. Qed.
+    Proof. rewrite <-Z.pow_succ_r, Z.sub_1_r, Z.succ_pred; lia. Qed.
 
     Lemma ring_morph :
       Ring_theory.ring_morph (@Zmod.zero (2 ^ width)) Zmod.one Zmod.add Zmod.mul Zmod.sub Zmod.opp Logic.eq
@@ -73,29 +73,29 @@ Module word.
       (H : Zmod.unsigned x + Zmod.unsigned y < 2 ^ width) :
       Zmod.unsigned (Zmod.add x y) = Zmod.unsigned x + Zmod.unsigned y.
     Proof.
-      pose proof bits.unsigned_range x ltac:(blia); pose proof bits.unsigned_range y ltac:(blia).
-      rewrite Zmod.unsigned_add. apply Z.mod_small. blia.
+      pose proof bits.unsigned_range x ltac:(lia); pose proof bits.unsigned_range y ltac:(lia).
+      rewrite Zmod.unsigned_add. apply Z.mod_small. lia.
     Qed.
     Lemma unsigned_sub_nowrap (x y : word) (Hw : 0 < width)
       (H : 0 <= Zmod.unsigned x - Zmod.unsigned y) :
       Zmod.unsigned (Zmod.sub x y) = Zmod.unsigned x - Zmod.unsigned y.
     Proof.
-      pose proof bits.unsigned_range x ltac:(blia); pose proof bits.unsigned_range y ltac:(blia).
-      rewrite Zmod.unsigned_sub. apply Z.mod_small. blia.
+      pose proof bits.unsigned_range x ltac:(lia); pose proof bits.unsigned_range y ltac:(lia).
+      rewrite Zmod.unsigned_sub. apply Z.mod_small. lia.
     Qed.
     Lemma unsigned_mul_nowrap (x y : word) (Hw : 0 < width)
       (H : Zmod.unsigned x * Zmod.unsigned y < 2 ^ width) :
       Zmod.unsigned (Zmod.mul x y) = Zmod.unsigned x * Zmod.unsigned y.
     Proof.
-      pose proof bits.unsigned_range x ltac:(blia); pose proof bits.unsigned_range y ltac:(blia).
+      pose proof bits.unsigned_range x ltac:(lia); pose proof bits.unsigned_range y ltac:(lia).
       rewrite Zmod.unsigned_mul. apply Z.mod_small.
-      split; [apply Z.mul_nonneg_nonneg|]; blia.
+      split; [apply Z.mul_nonneg_nonneg|]; lia.
     Qed.
     Lemma unsigned_opp_nowrap (x : word) (Hw : 0 < width) (H : Zmod.unsigned x <> 0) :
       Zmod.unsigned (Zmod.opp x) = 2 ^ width - Zmod.unsigned x.
     Proof.
-      pose proof bits.unsigned_range x ltac:(blia).
-      rewrite Zmod.unsigned_opp, Z.mod_opp_l_nz, bits.mod_to_Z; trivial; [blia|].
+      pose proof bits.unsigned_range x ltac:(lia).
+      rewrite Zmod.unsigned_opp, Z.mod_opp_l_nz, bits.mod_to_Z; trivial; [lia|].
       rewrite bits.mod_to_Z; trivial.
     Qed.
     Lemma unsigned_opp_0 (x : word) (H : Zmod.unsigned x = 0) : Zmod.unsigned (Zmod.opp x) = 0.
@@ -137,17 +137,17 @@ Module word.
     Lemma and_m1_r (x : word) (Hw : 0 < width) : Zmod.and x (Zmod.opp Zmod.one) = x.
     Proof.
       apply Zmod.unsigned_inj.
-      rewrite bits.unsigned_and, bits.unsigned_m1, Z.land_ones, bits.mod_to_Z; blia.
+      rewrite bits.unsigned_and, bits.unsigned_m1, Z.land_ones, bits.mod_to_Z; lia.
     Qed.
     Lemma xor_m1_l (x : word) (Hw : 0 < width) : Zmod.xor (Zmod.opp Zmod.one) x = Zmod.not x.
     Proof.
       apply Zmod.unsigned_inj.
       rewrite bits.unsigned_xor, bits.unsigned_m1, bits.unsigned_not.
       apply Z.bits_inj'; intros i Hi.
-      rewrite Z.lxor_spec, Z.ldiff_spec, Z.testbit_ones_nonneg by blia.
+      rewrite Z.lxor_spec, Z.ldiff_spec, Z.testbit_ones_nonneg by lia.
       destruct (Z.ltb_spec i width).
       { destruct (Z.testbit _ _); reflexivity. }
-      { rewrite bits.testbit_high by blia. reflexivity. }
+      { rewrite bits.testbit_high by lia. reflexivity. }
     Qed.
     Lemma lor_0_iff (x y : word) : Zmod.or x y = Zmod.zero <-> x = Zmod.zero /\ y = Zmod.zero.
     Proof.
@@ -168,22 +168,22 @@ Module word.
       Zmod.signed (Zmod.not x) = Z.lnot (Zmod.signed x).
     Proof.
       rewrite signed_not. apply Z.smod_pow2_small; trivial.
-      pose proof bits.signed_range' x ltac:(blia). pose proof pow2_width_minus1 Hw.
-      cbv [Z.lnot]. blia.
+      pose proof bits.signed_range' x ltac:(lia). pose proof pow2_width_minus1 Hw.
+      cbv [Z.lnot]. lia.
     Qed.
     Lemma signed_xor (x y : word) (Hw : 0 < width) :
       Zmod.signed (Zmod.xor x y) = Z.smodulo (Z.lxor (Zmod.signed x) (Zmod.signed y)) (2 ^ width).
     Proof.
       rewrite <-Zmod.smod_unsigned, bits.unsigned_xor.
       apply Z.smod_inj_mod.
-      rewrite <-(bits.mod_signed x), <-(bits.mod_signed y), <-!Z.land_ones by blia.
+      rewrite <-(bits.mod_signed x), <-(bits.mod_signed y), <-!Z.land_ones by lia.
       apply Z.bits_inj'; intros i Hi.
       rewrite !Z.land_spec, !Z.lxor_spec, !Z.land_spec. btauto.
     Qed.
 
     Lemma if_zero (t : bool) (Hw : 0 < width)
       (H : Zmod.unsigned (if t then one else zero) = 0) : t = false.
-    Proof. destruct t; trivial. rewrite bits.unsigned_1 in H by blia. discriminate. Qed.
+    Proof. destruct t; trivial. rewrite bits.unsigned_1 in H by lia. discriminate. Qed.
     Lemma if_nonzero (t : bool)
       (H : Zmod.unsigned (if t then one else zero) <> 0) : t = true.
     Proof. destruct t; trivial. rewrite Zmod.unsigned_0 in H. case (H eq_refl). Qed.
@@ -197,21 +197,21 @@ Module word.
       if andb b1 b2 then one else zero.
     Proof.
       destruct b1, b2; cbn [andb]; apply Zmod.unsigned_inj;
-        rewrite bits.unsigned_and, ?Zmod.unsigned_0, ?bits.unsigned_1 by blia; reflexivity.
+        rewrite bits.unsigned_and, ?Zmod.unsigned_0, ?bits.unsigned_1 by lia; reflexivity.
     Qed.
     Lemma or_bool_to_word (b1 b2 : bool) (Hw : 0 < width) :
       Zmod.or (if b1 then one else zero) (if b2 then one else zero) =
       if orb b1 b2 then one else zero.
     Proof.
       destruct b1, b2; cbn [orb]; apply Zmod.unsigned_inj;
-        rewrite bits.unsigned_or, ?Zmod.unsigned_0, ?bits.unsigned_1 by blia; reflexivity.
+        rewrite bits.unsigned_or, ?Zmod.unsigned_0, ?bits.unsigned_1 by lia; reflexivity.
     Qed.
 
     Lemma decrement_nonzero_lt (x : word) (Hw : 0 < width) (H : Zmod.unsigned x <> 0) :
       Zmod.unsigned (Zmod.sub x Zmod.one) < Zmod.unsigned x.
     Proof.
-      pose proof bits.unsigned_range x ltac:(blia).
-      rewrite Zmod.unsigned_sub, bits.unsigned_1, Z.mod_small; blia.
+      pose proof bits.unsigned_range x ltac:(lia).
+      rewrite Zmod.unsigned_sub, bits.unsigned_1, Z.mod_small; lia.
     Qed.
 
     Lemma well_founded_lt_unsigned (Hw : 0 < width) :
@@ -219,8 +219,8 @@ Module word.
     Proof.
       simple refine (Wf_nat.well_founded_lt_compat _ (fun x => Z.to_nat (Zmod.unsigned x)) _ _).
       cbv beta; intros a b H.
-      pose proof proj1 (bits.unsigned_range a ltac:(blia)).
-      pose proof proj1 (bits.unsigned_range b ltac:(blia)).
+      pose proof proj1 (bits.unsigned_range a ltac:(lia)).
+      pose proof proj1 (bits.unsigned_range b ltac:(lia)).
       apply Znat.Z2Nat.inj_lt; trivial.
     Qed.
 
@@ -242,7 +242,7 @@ Module word.
       Z.testbit (Zmod.unsigned (broadcast b)) i = ((0 <=? i) && (i <? width) && b)%bool.
     Proof.
       case b.
-      { rewrite unsigned_broadcast_true, Bool.andb_true_r, Z.testbit_ones by blia. reflexivity. }
+      { rewrite unsigned_broadcast_true, Bool.andb_true_r, Z.testbit_ones by lia. reflexivity. }
       { rewrite unsigned_broadcast_false, Bool.andb_false_r. apply Z.testbit_0_l. }
     Qed.
     Lemma not_broadcast (b : bool) : Zmod.not (broadcast b) = broadcast (negb b).
@@ -258,20 +258,20 @@ Module word.
       case b; split; trivial; try discriminate.
       { intros H%(f_equal Zmod.unsigned).
         rewrite unsigned_broadcast_true, Zmod.unsigned_0, Z.ones_equiv in H.
-        pose proof proj1 (Z.pow_gt_1 2 width ltac:(blia)) Hw. blia. }
+        pose proof proj1 (Z.pow_gt_1 2 width ltac:(lia)) Hw. lia. }
       { intros _. cbv [broadcast Z.b2z]. rewrite Zmod.of_Z_0. apply Zmod.opp_zero. }
     Qed.
 
     Lemma srs_msb (w : word) (Hw : 0 < width) :
       Zmod.srs w (width - 1) = broadcast (Z.testbit (Zmod.unsigned w) (width - 1)).
     Proof.
-      rewrite bits.testbit_sign by blia.
-      pose proof bits.signed_range' w ltac:(blia).
-      apply (Zmod.signed_inj _). rewrite Zmod.signed_srs, Z.shiftr_div_pow2 by blia.
+      rewrite bits.testbit_sign by lia.
+      pose proof bits.signed_range' w ltac:(lia).
+      apply (Zmod.signed_inj _). rewrite Zmod.signed_srs, Z.shiftr_div_pow2 by lia.
       destruct (Z.ltb_spec (Zmod.signed w) 0); cbv [broadcast Z.b2z].
-      { rewrite Zmod.of_Z_1, bits.signed_m1 by blia.
-        symmetry; apply Z.div_unique_pos with (r := Zmod.signed w + 2 ^ (width - 1)); blia. }
-      { rewrite Zmod.of_Z_0, Zmod.opp_zero, Zmod.signed_0. apply Z.div_small; blia. }
+      { rewrite Zmod.of_Z_1, bits.signed_m1 by lia.
+        symmetry; apply Z.div_unique_pos with (r := Zmod.signed w + 2 ^ (width - 1)); lia. }
+      { rewrite Zmod.of_Z_0, Zmod.opp_zero, Zmod.signed_0. apply Z.div_small; lia. }
     Qed.
   End WithWidth.
 End word.

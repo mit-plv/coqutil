@@ -33,7 +33,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
   Proof using.
     induction l.
     - simpl. reflexivity.
-    - simpl. destruct_one_match; simpl; blia.
+    - simpl. destruct_one_match; simpl; lia.
   Qed.
 
   Lemma find_list_union_r_cons_None_Some: forall (l1 l2: list E) a a0 e,
@@ -94,7 +94,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
         destr (find (eeq a) (list_union eeq l1 (a0 :: l2))).
         * pose proof find_list_union_r_cons_Some_None as P.
           specialize P with (1 := E1) (2 := E0). destruct P. subst.
-          specialize (IHl1 l2 e). blia.
+          specialize (IHl1 l2 e). lia.
         * simpl. apply le_n_S. eapply IHl1.
   Qed.
 
@@ -102,8 +102,8 @@ Section ListSetProofs. Local Set Default Proof Using "All".
       (length (list_union eeq l1 l2) <= length l1 + length l2)%nat.
   Proof.
     induction l2.
-    - pose proof (length_list_union_nil_r l1). blia.
-    - pose proof (length_list_union_cons_r l1 l2 a). simpl. blia.
+    - pose proof (length_list_union_nil_r l1). lia.
+    - pose proof (length_list_union_cons_r l1 l2 a). simpl. lia.
   Qed.
 
   Lemma list_union_empty_l: forall l,
@@ -331,7 +331,7 @@ Section ListSetProofs. Local Set Default Proof Using "All".
     - cbn. rewrite list_diff_cons.
       destruct (find (eeq a) l2) eqn:F.
       + auto.
-      + cbn. blia.
+      + cbn. lia.
   Qed.
 
   Lemma subset_of_list_diff:
