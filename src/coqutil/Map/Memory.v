@@ -95,8 +95,8 @@ Section Memory.
     : exists bs, load_bytes m a n = Some bs.
   Proof.
     destruct (load_bytes m a n) eqn:HX; eauto.
-    eapply load_bytes_None in HX; destruct HX as (?&?&?). firstorder congruence.
-    exact nil.
+    eapply load_bytes_None in HX; destruct HX as (?&?&?).
+    edestruct H; eauto. congruence.
   Qed.
 
   Import Word.Properties.
