@@ -19,7 +19,11 @@
    injection constant [unsigned] (and [eqb]), and [zify_bits_pre] folds the
    occurrences of [Zmod.unsigned]/[Zmod.eqb] into them first.  The folding is
    driven by the [ZifyBitsFold] instances that the functor declares, so no
-   central list of widths is needed anywhere in the tactics. *)
+   central list of widths is needed anywhere in the tactics.
+
+   [bits_lia] runs these steps itself.  [ZifyBitsHooks] installs them as the
+   zify hooks, so that plain [lia] sees words too; that is opt-in because an
+   explicit [zify] in an existing proof then also translates word equalities. *)
 From Stdlib Require Import ZArith Lia ZifyClasses ZifyInst ZifyBool Zify.
 From Stdlib Require Import Zmod Zmod.Bits.
 Require Import coqutil.Z.ZLib.
@@ -310,11 +314,6 @@ Ltac zify_bits_fold_literal_mods :=
 Ltac zify_bits_pre := zify_bits_shamt; zify_bits_fold.
 Ltac zify_bits_post := autounfold with zify_bits_width in *; zify_bits_fold_literal_mods.
 
-(* Hook into every [zify] (so every [lia]): fold before, unfold widths after.
-   Both are no-ops on goals without words of a registered width. *)
-Ltac Zify.zify_pre_hook ::= zify_bits_pre.
-Ltac Zify.zify_post_hook ::= zify_bits_post.
-
 (* A [Bitwidth width] hypothesis on a variable width: case split so that the
    literal-width instances apply. *)
 Ltac zify_bits_split_width :=
@@ -326,4 +325,5 @@ Ltac zify_bits_split_width :=
 (* The closing tactic.  [lia] alone (one zify pass) does not relate [mod] and
    [/] to the rest, and micromega does not evaluate [2 ^ 64]: zify's
    translation does, so the euclidean equations need a zify pass after them. *)
-Ltac bits_lia := zify_bits_split_width; zify; Z.div_mod_to_equations; lia.
+Ltac bits_lia :=
+  zify_bits_split_width; zify_bits_pre; zify; zify_bits_post; Z.div_mod_to_equations; lia.

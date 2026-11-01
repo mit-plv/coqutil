@@ -87,7 +87,8 @@ Proof. intros. bits_lia. Qed.
 Goal forall (x : w64), Zmod.signed x < 0 -> Zmod.unsigned (Zmod.srs x 63) = 2 ^ 64 - 1.
 Proof. intros. bits_lia. Qed.
 
-(* plain lia, through the hooks, on goals that need no euclidean equations *)
+(* plain lia, through the opt-in hooks, on goals that need no euclidean equations *)
+Require Import coqutil.Word.ZifyBitsHooks.
 Goal forall (x y : w32), Zmod.unsigned x + Zmod.unsigned y < 2 ^ 33.
 Proof. intros. lia. Qed.
 Goal forall (x y : w64), x = y -> Zmod.unsigned x = Zmod.unsigned y.
