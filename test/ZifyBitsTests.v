@@ -107,3 +107,19 @@ End WithWidth.
 (* no word in the goal: the hooks must not get in the way *)
 Goal forall (a b : nat) (c : Z), (a < b)%nat -> Z.of_nat a < Z.of_nat b + c \/ c < 0.
 Proof. intros. lia. Qed.
+
+(* The width-unfold pass only unfolds the width constants of the instantiated
+   modules, and only where they occur: a user term with another constant, a
+   variable exponent or a literal power stays as written. *)
+Definition my_width : Z := 32.
+Goal forall (w u : Z) (x : bits 32), 0 <= u < 2 ^ w -> u < 2 ^ my_width -> Zmod.unsigned x < 2 ^ 32 ->
+  u + Zmod.unsigned x < 2 ^ w + 2 ^ my_width + 2 ^ 32 - 1.
+Proof.
+  intros w u x Hw Hm Hx.
+  zify_bits_pre; zify; zify_bits_post.
+  lazymatch type of Hw with 0 <= u < 2 ^ w => idtac end.
+  lazymatch type of Hm with u < 2 ^ my_width => idtac end.
+  lazymatch goal with |- context [2 ^ my_width] => idtac end.
+  lazymatch goal with |- context [2 ^ Width32.width] => fail "width constant left" | _ => idtac end.
+  unfold my_width in *. lia.
+Qed.
