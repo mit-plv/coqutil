@@ -114,8 +114,8 @@ Ltac unique_inversion :=
 
 Ltac simpl_Z_eqb :=
   match goal with
-  | H: _ =? _ = true  |- _ => apply Z.eqb_eq in H; subst
-  | H: _ =? _ = false |- _ => apply Z.eqb_neq in H
+  | H: (_ =? _) = true  |- _ => apply Z.eqb_eq in H; subst
+  | H: (_ =? _) = false |- _ => apply Z.eqb_neq in H
   end.
 
 Ltac simp_step :=

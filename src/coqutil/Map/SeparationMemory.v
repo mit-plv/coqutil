@@ -8,7 +8,7 @@ Local Coercion Zmod.unsigned : Zmod >-> Z.
 Section SeparationMap.
   Local Open Scope sep_scope.
   Local Coercion Z.of_nat : nat >-> Z.
-  Local Infix "$+" := map.putmany (at level 70).
+  Local Infix "$+" := map.putmany (at level 69).
 
   Context {width : Z} (Hw : 0 < width).
   Local Notation word := (bits width).
@@ -45,7 +45,7 @@ End SeparationMap.
 Section SeparationMemory.
   Local Open Scope sep_scope.
   Local Coercion Z.of_nat : nat >-> Z.
-  Local Infix "$+" := map.putmany (at level 70).
+  Local Infix "$+" := map.putmany (at level 69).
 
   Context {width : Z} (Hw : 0 < width).
   Local Notation word := (bits width).
