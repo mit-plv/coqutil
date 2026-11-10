@@ -10,7 +10,7 @@ Ltac exact_sym_under_binders pf :=
   | _     => exact (RelationClasses.symmetry pf)
   end.
 Notation "symmetry! pf" := (ltac:(exact_sym_under_binders pf))
-                             (at level 10, only parsing).
+                             (at level 10, pf at level 10, only parsing).
 
 Goal (forall y z, z = y+y -> y+y=z) ->
      (forall y, let z := y+y in y+y=z) ->
