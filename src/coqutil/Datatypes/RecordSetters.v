@@ -596,8 +596,8 @@ Module RecordSetterTests.
     Import DoubleBraceUpdate.
 
     Goal forall r: foo (foo nat 4) 2,
-        (id r){{fieldA->fieldA ::= Nat.add 1;
-                fieldA->fieldC := r.(fieldC) }}.(fieldA).(fieldA) =
+        ((id r){{fieldA->fieldA ::= Nat.add 1;
+                fieldA->fieldC := r.(fieldC) }}).(fieldA).(fieldA) =
           S r.(fieldA).(fieldA).
     Proof. intros. reflexivity. Qed.
 

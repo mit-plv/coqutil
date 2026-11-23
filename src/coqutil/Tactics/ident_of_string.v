@@ -20,7 +20,7 @@ Ltac2 string_of_constr_string (s : constr) : string :=
     match kind s with
     | App _ args =>
       if Int.equal (Array.length args) 2 then
-        String.set ret i (match kind (Array.get args 0) with App _ b => Char.of_int (
+        (String.set ret i (match kind (Array.get args 0) with App _ b => Char.of_int (
             Int.add (if equal (Array.get b 0) t then 1 else 0) (
             Int.add (if equal (Array.get b 1) t then 2 else 0) (
             Int.add (if equal (Array.get b 2) t then 4 else 0) (
@@ -30,7 +30,7 @@ Ltac2 string_of_constr_string (s : constr) : string :=
             Int.add (if equal (Array.get b 6) t then 64 else 0) (
                     (if equal (Array.get b 7) t then 128 else 0)))))))))
           | _ => Control.throw No_value end);
-        fill (Int.add i 1) (Array.get args 1)
+        fill (Int.add i 1) (Array.get args 1))
       else ()
     | _ => ()
     end in
