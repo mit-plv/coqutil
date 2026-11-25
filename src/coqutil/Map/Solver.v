@@ -430,7 +430,7 @@ Ltac preprocess_impl mapok stopearly :=
       revert_all_maps okname;
       let mname := fresh "M" in
       match type of keq_spec_name with
-      | EqDecider ?f => generalize keq_spec_name; generalize (f: K -> K -> bool)
+      | EqDecider ?f => generalize keq_spec_name; generalize (f:> K -> K -> bool)
       end;
       generalize okname;
       generalize Inst as mname;
